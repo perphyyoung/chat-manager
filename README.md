@@ -1,73 +1,96 @@
 # chat-manager
 
-This template should help get you started developing with Vue 3 in Vite.
+基于 Vue 3 + Vite + Electron 的桌面对话式文档管理应用。
 
-## Recommended IDE Setup
+## 技术栈
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- **前端框架**: Vue 3 + TypeScript
+- **构建工具**: Vite + electron-vite
+- **桌面应用**: Electron 42
+- **打包工具**: electron-builder
+- **状态管理**: Pinia
+- **路由**: Vue Router
 
-## Recommended Browser Setup
+## 开发
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+### 环境要求
 
-## Type Support for `.vue` Imports in TS
+- Node.js >= 20.19.0 或 >= 22.12.0
+- pnpm >= 8.0.0
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## 项目设置
 
 ```sh
 pnpm install
 ```
 
-### Compile and Hot-Reload for Development
+### Electron 开发模式
 
 ```sh
 pnpm dev
 ```
 
-### Type-Check, Compile and Minify for Production
+启动 Electron 应用并开启热重载。
+
+### 构建生产版本
 
 ```sh
 pnpm build
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+构建并打包为可执行文件（Windows: `.exe`, macOS: `.dmg`, Linux: `.AppImage`）。
+
+### 预览构建结果
+
+```sh
+pnpm preview
+```
+
+构建后预览 Electron 应用。
+
+### 构建为目录形式
+
+```sh
+pnpm build:dir
+```
+
+构建但不打包，适合调试。
+
+## 测试
+
+### 单元测试 (Vitest)
 
 ```sh
 pnpm test:unit
 ```
 
-### Run End-to-End Tests with [Playwright](https://playwright.dev)
+### 端到端测试 (Playwright)
 
 ```sh
-# Install browsers for the first run
+# 首次运行安装浏览器
 npx playwright install
 
-# When testing on CI, must build the project first
+# 运行 E2E 测试（需要先构建）
 pnpm build
-
-# Runs the end-to-end tests
 pnpm test:e2e
-# Runs the tests only on Chromium
-pnpm test:e2e --project=chromium
-# Runs the tests of a specific file
-pnpm test:e2e tests/example.spec.ts
-# Runs the tests in debug mode
-pnpm test:e2e --debug
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### TypeScript 类型检查
 
 ```sh
-pnpm lint
+pnpm type-check
 ```
+
+### 代码检查和格式化
+
+```sh
+# 检查并修复代码
+pnpm lint
+
+# 格式化代码
+pnpm format
+```
+
+## 自定义配置
+
+See [Vite Configuration Reference](https://vite.dev/config/).
