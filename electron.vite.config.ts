@@ -33,6 +33,11 @@ export default defineConfig({
   renderer: {
     root: ".",
     plugins: [vue()],
+    resolve: {
+      alias: {
+        "@": fileURLToPath(new URL("./src", import.meta.url)),
+      },
+    },
     build: {
       outDir: "out/renderer",
       rollupOptions: {
