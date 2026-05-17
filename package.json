@@ -12,6 +12,7 @@
     "test:unit": "vitest",
     "test:e2e": "playwright test",
     "type-check": "vue-tsc --build",
+    "check": "run-s type-check lint",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
