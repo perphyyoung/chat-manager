@@ -48,3 +48,5 @@ playwright-report/
 dist-electron
 release
 out
+# Added by code-review-graph
+.code-review-graph/
