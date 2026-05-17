@@ -1,13 +1,13 @@
 /// <reference types="vite/client" />
 
 interface ElectronAPI {
-  ping: () => void
+  onOpenSettings: (callback: () => void) => void;
 }
 
 declare global {
   interface Window {
-    electronAPI: ElectronAPI
+    electronAPI: ElectronAPI;
   }
 }
 
-export {}
+export {};

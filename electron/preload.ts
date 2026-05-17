@@ -1,7 +1,7 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  ping: () => {
-    console.log('ping from preload')
+  onOpenSettings: (callback: () => void) => {
+    ipcRenderer.on('open-settings', callback)
   },
 })

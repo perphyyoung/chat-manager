@@ -9,6 +9,17 @@
   --color-text-secondary: #6b7280;
 }
 
+.dark {
+  --color-primary: #6366f1;
+  --color-background: #0f0f0f;
+  --color-surface: #1a1a1a;
+  --color-border: #2a2a2a;
+  --color-hover: #252525;
+  --color-active: #1e1b4b;
+  --color-text: #e5e5e5;
+  --color-text-secondary: #9ca3af;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -20,4 +31,6 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-background);
+  color: var(--color-text);
 }
