@@ -1,11 +1,23 @@
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow, Menu, ipcMain } from "electron";
 import path from "node:path";
+import logger from "electron-log";
+
+logger.initialize();
+logger.transports.file.resolvePathFn = () => path.join(process.cwd(), "cm.log");
+
+ipcMain.handle("log-to-file", (_, level: string, message: string) => {
+  const logMethod =
+    (logger as Record<string, (msg: string) => void>)[level] || logger.info;
+  logMethod(message);
+});
 
 const DIST = path.join(__dirname, "../renderer");
 const VITE_PUBLIC = app.isPackaged ? DIST : path.join(DIST, "../public");
 
 process.env.DIST = DIST;
 process.env.VITE_PUBLIC = VITE_PUBLIC;
+
+logger.info("App starting...");
 
 let win: BrowserWindow | null;
 
@@ -82,6 +94,7 @@ function createMenu() {
 }
 
 app.whenReady().then(() => {
+  logger.info("App ready");
   createWindow();
   createMenu();
 
