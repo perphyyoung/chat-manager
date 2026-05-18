@@ -5,6 +5,7 @@ import SettingsModal from './components/Settings/SettingsModal.vue'
 import { useDocumentStore } from './stores/document'
 import { useSettingsStore } from './stores/settings'
 import { mockDocuments } from './data/mockData'
+import { LogLevel } from './constants/logLevel'
 
 const documentStore = useDocumentStore()
 const settingsStore = useSettingsStore()
@@ -26,7 +27,7 @@ onMounted(() => {
   if (window.electronAPI.onOpenSettings) {
     window.electronAPI.onOpenSettings(openSettings)
   } else {
-    logToFile('error', 'window.electronAPI.onOpenSettings not available')
+    logToFile(LogLevel.ERROR, 'window.electronAPI.onOpenSettings not available')
   }
 })
 </script>
