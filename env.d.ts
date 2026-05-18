@@ -2,6 +2,7 @@
 
 interface ElectronAPI {
   onOpenSettings: (callback: () => void) => void;
+  logToFile: (level: string, message: string) => void;
 }
 
 declare global {

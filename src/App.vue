@@ -10,6 +10,11 @@ const documentStore = useDocumentStore()
 const settingsStore = useSettingsStore()
 const isSettingsOpen = ref(false)
 
+function logToFile(level: string, message: string) {
+  console.log(`[App.vue] ${message}`)
+  window.electronAPI.logToFile(level, message)
+}
+
 function openSettings() {
   isSettingsOpen.value = true
 }
@@ -18,7 +23,11 @@ onMounted(() => {
   documentStore.initDocuments(mockDocuments)
   settingsStore.init()
 
-  window.electronAPI?.onOpenSettings(openSettings)
+  if (window.electronAPI.onOpenSettings) {
+    window.electronAPI.onOpenSettings(openSettings)
+  } else {
+    logToFile('error', 'window.electronAPI.onOpenSettings not available')
+  }
 })
 </script>
 

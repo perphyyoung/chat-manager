@@ -27,6 +27,9 @@ export default defineConfig({
           index: path.resolve(__dirname, "electron/preload.ts"),
         },
         external: ["electron"],
+        output: {
+          format: "cjs",
+        },
       },
     },
   },
