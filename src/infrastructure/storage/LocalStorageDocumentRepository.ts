@@ -1,7 +1,27 @@
 import type { DocumentRepository } from "../../domain/repositories";
-import type { Document } from "../../domain/entities";
-import type { DocumentDTO } from "../../application/dto";
-import { DocumentSerializer } from "../persistence/DocumentSerializer";
+import {
+  Document,
+  Question,
+  Conversation,
+  Message,
+} from "../../domain/entities";
+
+interface StoredDocument {
+  id: string;
+  title: string;
+  questions: { id: string; text: string; order: number }[];
+  conversation: {
+    id: string;
+    messages: {
+      id: string;
+      type: "question" | "answer";
+      content: string;
+      questionId?: string;
+      createdAt?: string;
+      editedAt?: string;
+    }[];
+  };
+}
 
 export class LocalStorageDocumentRepository implements DocumentRepository {
   private readonly STORAGE_KEY = "documents";
@@ -12,8 +32,8 @@ export class LocalStorageDocumentRepository implements DocumentRepository {
       return [];
     }
     try {
-      const dtos: DocumentDTO[] = JSON.parse(data);
-      return DocumentSerializer.fromDTOs(dtos);
+      const stored: StoredDocument[] = JSON.parse(data);
+      return stored.map((d) => this.toDocument(d));
     } catch {
       return [];
     }
@@ -27,13 +47,11 @@ export class LocalStorageDocumentRepository implements DocumentRepository {
   async save(document: Document): Promise<void> {
     const documents = await this.findAll();
     const index = documents.findIndex((d) => d.id === document.id);
-
     if (index >= 0) {
       documents[index] = document;
     } else {
       documents.push(document);
     }
-
     await this.saveAll(documents);
   }
 
@@ -49,7 +67,27 @@ export class LocalStorageDocumentRepository implements DocumentRepository {
   }
 
   private async saveAll(documents: Document[]): Promise<void> {
-    const dtos = DocumentSerializer.toDTOs(documents);
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(dtos));
+    localStorage.setItem(
+      this.STORAGE_KEY,
+      JSON.stringify(documents.map((d) => d.toJSON())),
+    );
+  }
+
+  private toDocument(stored: StoredDocument): Document {
+    const messages = stored.conversation.messages.map(
+      (m) =>
+        new Message(
+          m.id,
+          m.type,
+          m.content,
+          m.questionId,
+          m.createdAt ? new Date(m.createdAt) : undefined,
+        ),
+    );
+    const conversation = new Conversation(stored.conversation.id, messages);
+    const questions = stored.questions.map(
+      (q) => new Question(q.id, q.text, q.order),
+    );
+    return new Document(stored.id, stored.title, questions, conversation);
   }
 }

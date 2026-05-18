@@ -3,3 +3,23 @@ max_cycles = 0
 max_coupling = "B"
 max_cc = 25
 no_god_files = true
+
+[[layers]]
+name = "domain"
+paths = ["src/domain/**"]
+order = 1
+
+[[layers]]
+name = "infrastructure"
+paths = ["src/infrastructure/**"]
+order = 2
+
+[[layers]]
+name = "application"
+paths = ["src/application/**"]
+order = 3
+
+[[layers]]
+name = "presentation"
+paths = ["src/presentation/**"]
+order = 4

@@ -1,137 +1,89 @@
-import { DocumentSerializer } from "../persistence/DocumentSerializer";
+import {
+  Document,
+  Question,
+  Conversation,
+  Message,
+} from "../../domain/entities";
 
-const mockData = [
-  {
-    id: "1",
-    title: "项目初始化",
-    questions: [
-      { id: "q1", text: "如何创建新项目？", order: 1 },
-      { id: "q2", text: "项目需要哪些依赖？", order: 2 },
-      { id: "q3", text: "如何配置开发环境？", order: 3 },
+export const mockDocuments = [
+  new Document(
+    "1",
+    "项目初始化",
+    [
+      new Question("q1", "如何创建新项目？", 1),
+      new Question("q2", "项目需要哪些依赖？", 2),
+      new Question("q3", "如何配置开发环境？", 3),
     ],
-    conversation: {
-      id: "conv1",
-      messages: [
-        {
-          id: "m1",
-          type: "question" as const,
-          content: "如何创建新项目？",
-          questionId: "q1",
-        },
-        {
-          id: "m2",
-          type: "answer" as const,
-          content:
-            "使用 pnpm create 命令创建新项目：pnpm create vite@latest my-project --template vue-ts",
-          questionId: "q1",
-        },
-        {
-          id: "m3",
-          type: "question" as const,
-          content: "项目需要哪些依赖？",
-          questionId: "q2",
-        },
-        {
-          id: "m4",
-          type: "answer" as const,
-          content:
-            "主要依赖包括：Vue 3, Vite, TypeScript, Pinia, Vue Router。可选：Vitest, Playwright",
-          questionId: "q2",
-        },
-        {
-          id: "m5",
-          type: "question" as const,
-          content: "如何配置开发环境？",
-          questionId: "q3",
-        },
-        {
-          id: "m6",
-          type: "answer" as const,
-          content:
-            "1. 安装 Node.js >= 20.19.0\n2. 安装 pnpm: npm install -g pnpm\n3. 安装项目依赖: pnpm install\n4. 运行开发服务器: pnpm dev",
-          questionId: "q3",
-        },
-      ],
-    },
-  },
-  {
-    id: "2",
-    title: "组件开发",
-    questions: [
-      { id: "q4", text: "如何创建组件？", order: 1 },
-      { id: "q5", text: "组件之间如何通信？", order: 2 },
+    new Conversation("conv1", [
+      new Message("m1", "question", "如何创建新项目？", "q1"),
+      new Message(
+        "m2",
+        "answer",
+        "使用 pnpm create 命令创建新项目：pnpm create vite@latest my-project --template vue-ts",
+        "q1",
+      ),
+      new Message("m3", "question", "项目需要哪些依赖？", "q2"),
+      new Message(
+        "m4",
+        "answer",
+        "主要依赖包括：Vue 3, Vite, TypeScript, Pinia, Vue Router。可选：Vitest, Playwright",
+        "q2",
+      ),
+      new Message("m5", "question", "如何配置开发环境？", "q3"),
+      new Message(
+        "m6",
+        "answer",
+        "1. 安装 Node.js >= 20.19.0\n2. 安装 pnpm: npm install -g pnpm\n3. 安装项目依赖: pnpm install\n4. 运行开发服务器: pnpm dev",
+        "q3",
+      ),
+    ]),
+  ),
+  new Document(
+    "2",
+    "组件开发",
+    [
+      new Question("q4", "如何创建组件？", 1),
+      new Question("q5", "组件之间如何通信？", 2),
     ],
-    conversation: {
-      id: "conv2",
-      messages: [
-        {
-          id: "m7",
-          type: "question" as const,
-          content: "如何创建组件？",
-          questionId: "q4",
-        },
-        {
-          id: "m8",
-          type: "answer" as const,
-          content:
-            "在 src/components 目录下创建 .vue 文件，使用 Vue 3 的 Composition API",
-          questionId: "q4",
-        },
-        {
-          id: "m9",
-          type: "question" as const,
-          content: "组件之间如何通信？",
-          questionId: "q5",
-        },
-        {
-          id: "m10",
-          type: "answer" as const,
-          content:
-            "可以使用 Props/Emits, Pinia Store, 或 Provide/Inject 进行组件间通信",
-          questionId: "q5",
-        },
-      ],
-    },
-  },
-  {
-    id: "3",
-    title: "状态管理",
-    questions: [
-      { id: "q6", text: "为什么使用 Pinia？", order: 1 },
-      { id: "q7", text: "如何定义 Store？", order: 2 },
+    new Conversation("conv2", [
+      new Message("m7", "question", "如何创建组件？", "q4"),
+      new Message(
+        "m8",
+        "answer",
+        "在 src/components 目录下创建 .vue 文件，使用 Vue 3 的 Composition API",
+        "q4",
+      ),
+      new Message("m9", "question", "组件之间如何通信？", "q5"),
+      new Message(
+        "m10",
+        "answer",
+        "可以使用 Props/Emits, Pinia Store, 或 Provide/Inject 进行组件间通信",
+        "q5",
+      ),
+    ]),
+  ),
+  new Document(
+    "3",
+    "状态管理",
+    [
+      new Question("q6", "为什么使用 Pinia？", 1),
+      new Question("q7", "如何定义 Store？", 2),
     ],
-    conversation: {
-      id: "conv3",
-      messages: [
-        {
-          id: "m11",
-          type: "question" as const,
-          content: "为什么使用 Pinia？",
-          questionId: "q6",
-        },
-        {
-          id: "m12",
-          type: "answer" as const,
-          content:
-            "Pinia 是 Vue 官方推荐的状态管理库，比 Vuex 更简单，支持 TypeScript，模块化设计",
-          questionId: "q6",
-        },
-        {
-          id: "m13",
-          type: "question" as const,
-          content: "如何定义 Store？",
-          questionId: "q7",
-        },
-        {
-          id: "m14",
-          type: "answer" as const,
-          content:
-            "使用 defineStore 创建 store，支持 Options API 和 Composition API 两种写法",
-          questionId: "q7",
-        },
-      ],
-    },
-  },
+    new Conversation("conv3", [
+      new Message("m11", "question", "为什么使用 Pinia？", "q6"),
+      new Message(
+        "m12",
+        "answer",
+        "Pinia 是 Vue 官方推荐的状态管理库，比 Vuex 更简单，支持 TypeScript，模块化设计",
+        "q6",
+      ),
+      new Message("m13", "question", "如何定义 Store？", "q7"),
+      new Message(
+        "m14",
+        "answer",
+        "使用 defineStore 创建 store，支持 Options API 和 Composition API 两种写法",
+        "q7",
+      ),
+    ]),
+  ),
 ];
-
-export const mockDocuments = DocumentSerializer.fromDTOs(mockData);
