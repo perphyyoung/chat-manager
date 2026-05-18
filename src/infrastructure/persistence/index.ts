@@ -1,0 +1,1 @@
+export { DocumentSerializer } from "./DocumentSerializer";
