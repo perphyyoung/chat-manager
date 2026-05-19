@@ -1,6 +1,6 @@
 import type { DocumentRepository } from "../../domain/repositories";
 import type { EventBus } from "../../domain/events/EventBus";
-import { Document, Conversation } from "../../domain/entities";
+import { Document } from "../../domain/entities";
 import {
   DocumentSelectedEvent,
   DocumentsLoadedEvent,
@@ -43,10 +43,7 @@ export class DocumentApplicationService {
     questionTexts: string[] = [],
   ): Promise<Document> {
     const id = `doc${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const conversation = new Conversation(
-      `conv${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    );
-    const document = new Document(id, title, [], conversation);
+    const document = new Document(id, title, []);
 
     for (const text of questionTexts) {
       document.addQuestion(text);

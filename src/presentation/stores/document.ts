@@ -2,10 +2,11 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { Document } from "@/domain/entities";
 import { DocumentApplicationService } from "@/application/services/DocumentApplicationService";
-import { LocalStorageDocumentRepository } from "@/infrastructure/storage/LocalStorageDocumentRepository";
+import { SqliteDocumentRepository } from "@/infrastructure/storage/SqliteDocumentRepository";
 import { globalEventBus } from "@/domain/events";
+import { mockDocuments } from "@/infrastructure/data/mockData";
 
-const documentRepo = new LocalStorageDocumentRepository();
+const documentRepo = new SqliteDocumentRepository();
 const documentService = new DocumentApplicationService(
   documentRepo,
   globalEventBus,
@@ -47,7 +48,14 @@ export const useDocumentStore = defineStore("document", () => {
 
   async function loadDocuments() {
     const docs = await documentService.loadAllDocuments();
-    documents.value = docs;
+    if (docs.length === 0) {
+      for (const mock of mockDocuments) {
+        await documentRepo.save(mock);
+      }
+      documents.value = mockDocuments;
+    } else {
+      documents.value = docs;
+    }
   }
 
   return {

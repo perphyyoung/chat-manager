@@ -1,6 +1,35 @@
 import { app, BrowserWindow, Menu, ipcMain, globalShortcut } from "electron";
 import path from "node:path";
 import logger from "electron-log";
+import { getDatabase, closeDatabase } from "./database";
+
+interface DocRow {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface QuestionRow {
+  id: string;
+  document_id: string;
+  text: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AnswerRow {
+  id: string;
+  question_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ExistsRow {
+  "1": number;
+}
 
 logger.initialize();
 logger.transports.file.resolvePathFn = () => path.join(process.cwd(), "cm.log");
@@ -14,6 +43,151 @@ ipcMain.handle("log-to-file", (_, level: string, message: string) => {
   };
   const logMethod = logLevels[level] || logger.info;
   logMethod(message);
+});
+
+// Document IPC handlers
+ipcMain.handle("db:findAll", () => {
+  const database = getDatabase();
+  const docs = database.prepare("SELECT * FROM documents ORDER BY updated_at DESC").all() as DocRow[];
+
+  return docs.map((doc) => {
+    const questions = database
+      .prepare("SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order")
+      .all(doc.id) as QuestionRow[];
+    const answers = database
+      .prepare("SELECT * FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)")
+      .all(doc.id) as AnswerRow[];
+    return {
+      id: doc.id,
+      title: doc.title,
+      createdAt: doc.created_at,
+      updatedAt: doc.updated_at,
+      questions: questions.map((q) => ({
+        id: q.id,
+        text: q.text,
+        order: q.sort_order,
+        createdAt: q.created_at,
+        updatedAt: q.updated_at,
+      })),
+      answers: answers.map((a) => ({
+        id: a.id,
+        questionId: a.question_id,
+        content: a.content,
+        createdAt: a.created_at,
+        updatedAt: a.updated_at,
+      })),
+    };
+  });
+});
+
+ipcMain.handle("db:findById", (_, id: string) => {
+  const database = getDatabase();
+  const doc = database.prepare("SELECT * FROM documents WHERE id = ?").get(id) as DocRow | undefined;
+  if (!doc) {
+    return null;
+  }
+
+  const questions = database
+    .prepare("SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order")
+    .all(doc.id) as QuestionRow[];
+  const answers = database
+    .prepare("SELECT * FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)")
+    .all(doc.id) as AnswerRow[];
+
+  return {
+    id: doc.id,
+    title: doc.title,
+    createdAt: doc.created_at,
+    updatedAt: doc.updated_at,
+    questions: questions.map((q) => ({
+      id: q.id,
+      text: q.text,
+      order: q.sort_order,
+      createdAt: q.created_at,
+      updatedAt: q.updated_at,
+    })),
+    answers: answers.map((a) => ({
+      id: a.id,
+      questionId: a.question_id,
+      content: a.content,
+      createdAt: a.created_at,
+      updatedAt: a.updated_at,
+    })),
+  };
+});
+
+ipcMain.handle("db:save", (_, documentJson: string) => {
+  const database = getDatabase();
+  const doc = JSON.parse(documentJson);
+  const now = new Date().toISOString();
+
+  const transaction = database.transaction(() => {
+    database
+      .prepare(
+        "INSERT INTO documents (id, title, created_at, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at",
+      )
+      .run(doc.id, doc.title, doc.createdAt ?? now, doc.updatedAt ?? now);
+
+    database.prepare("DELETE FROM questions WHERE document_id = ?").run(doc.id);
+    for (const q of doc.questions ?? []) {
+      database
+        .prepare("INSERT INTO questions (id, document_id, text, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(q.id, doc.id, q.text, q.order, q.createdAt ?? now, q.updatedAt ?? now);
+    }
+
+    database.prepare("DELETE FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)").run(doc.id);
+    for (const a of doc.answers ?? []) {
+      database
+        .prepare(
+          "INSERT INTO answers (id, question_id, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+        )
+        .run(a.id, a.questionId, a.content, a.createdAt ?? now, a.updatedAt ?? now);
+    }
+  });
+
+  transaction();
+});
+
+ipcMain.handle("db:delete", (_, id: string) => {
+  const database = getDatabase();
+  database.prepare("DELETE FROM documents WHERE id = ?").run(id);
+});
+
+ipcMain.handle("db:exists", (_, id: string) => {
+  const database = getDatabase();
+  const row = database.prepare("SELECT 1 FROM documents WHERE id = ?").get(id) as ExistsRow | undefined;
+  return !!row;
+});
+
+// Answer IPC handlers
+ipcMain.handle("answer:findByQuestionId", (_, questionId: string) => {
+  const database = getDatabase();
+  const answer = database.prepare("SELECT * FROM answers WHERE question_id = ?").get(questionId) as AnswerRow | undefined;
+  if (!answer) return null;
+  return {
+    id: answer.id,
+    questionId: answer.question_id,
+    content: answer.content,
+    createdAt: answer.created_at,
+    updatedAt: answer.updated_at,
+  };
+});
+
+ipcMain.handle("answer:save", (_, answerJson: string) => {
+  const database = getDatabase();
+  const answer = JSON.parse(answerJson);
+  const now = new Date().toISOString();
+
+  database
+    .prepare(
+      "INSERT INTO answers (id, question_id, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(question_id) DO UPDATE SET content = excluded.content, updated_at = excluded.updated_at",
+    )
+    .run(answer.id, answer.questionId, answer.content, answer.createdAt ?? now, answer.updatedAt ?? now);
+});
+
+ipcMain.handle("answer:delete", (_, id: string) => {
+  const database = getDatabase();
+  database.prepare("DELETE FROM answers WHERE id = ?").run(id);
 });
 
 function openSettings() {
@@ -53,7 +227,6 @@ function createWindow() {
     win.loadFile(path.join(DIST, "index.html"));
   }
 
-  // Log preload injection
   win.webContents.on("preload-error", (_, preloadPath, error) => {
     logger.error(`Preload error for ${preloadPath}: ${error.message}`);
   });
@@ -115,10 +288,10 @@ function createMenu() {
 }
 
 app.whenReady().then(() => {
+  getDatabase();
   createWindow();
   createMenu();
 
-  // Register global shortcut Ctrl+,
   const shortcutRegistered = globalShortcut.register("Ctrl+,", openSettings);
   if (!shortcutRegistered) {
     logger.error("Failed to register global shortcut Ctrl+,");
@@ -132,8 +305,8 @@ app.whenReady().then(() => {
 });
 
 app.on("will-quit", () => {
-  // Unregister all global shortcuts
   globalShortcut.unregisterAll();
+  closeDatabase();
 });
 
 app.on("window-all-closed", () => {

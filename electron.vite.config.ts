@@ -14,7 +14,7 @@ export default defineConfig({
         input: {
           index: path.resolve(__dirname, "electron/main.ts"),
         },
-        external: ["electron"],
+        external: ["electron", "better-sqlite3"],
       },
     },
   },

@@ -15,7 +15,7 @@ export {
 } from "./QuestionEvents";
 export { ThemeToggledEvent, SettingsChangedEvent } from "./SettingsEvents";
 export {
-  MessageSentEvent,
-  MessageEditedEvent,
-  MessageDeletedEvent,
-} from "./ConversationEvents";
+  AnswerCreatedEvent,
+  AnswerUpdatedEvent,
+  AnswerDeletedEvent,
+} from "./AnswerEvents";

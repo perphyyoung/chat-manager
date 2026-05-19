@@ -4,7 +4,6 @@ import ThreeColumnLayout from './components/Layout/ThreeColumnLayout.vue'
 import SettingsModal from './components/Settings/SettingsModal.vue'
 import { useDocumentStore } from './stores/document'
 import { useSettingsStore } from './stores/settings'
-import { mockDocuments } from '@/infrastructure/data/mockData'
 import { LogLevel } from '@/infrastructure/constants/logLevel'
 
 const documentStore = useDocumentStore()
@@ -21,7 +20,7 @@ function openSettings() {
 }
 
 onMounted(() => {
-  documentStore.initDocuments(mockDocuments)
+  documentStore.loadDocuments()
   settingsStore.init()
 
   if (window.electronAPI.onOpenSettings) {

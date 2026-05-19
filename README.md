@@ -6,7 +6,7 @@
 
 - **前端框架**: Vue 3 + TypeScript
 - **构建工具**: Vite + electron-vite
-- **桌面应用**: Electron 42
+- **桌面应用**: Electron 41.2.0
 - **打包工具**: electron-builder
 - **状态管理**: Pinia
 - **路由**: Vue Router
@@ -20,48 +20,42 @@
 
 ## 项目设置
 
+### 1. 安装依赖
+
 ```sh
 pnpm install
 ```
 
-### Electron 开发模式
+### 2. 重建原生模块
+
+由于使用 better-sqlite3 需要针对 Electron 版本编译：
+
+```sh
+npx @electron/rebuild -m . -o better-sqlite3
+```
+
+### 3. 启动开发服务器
 
 ```sh
 pnpm dev
 ```
 
-启动 Electron 应用并开启热重载。
+**注意**: Electron 版本锁定在 41.2.0 以确保与 better-sqlite3 兼容。请勿手动升级 Electron 版本。
 
 ### 构建生产版本
 
 ```sh
-pnpm build
+pnpm release
 ```
 
 构建并打包为可执行文件（Windows: `.exe`, macOS: `.dmg`, Linux: `.AppImage`）。
-
-### 预览构建结果
-
-```sh
-pnpm preview
-```
-
-构建后预览 Electron 应用。
-
-### 构建为目录形式
-
-```sh
-pnpm build:dir
-```
-
-构建但不打包，适合调试。
 
 ## 测试
 
 ### 单元测试 (Vitest)
 
 ```sh
-pnpm test:unit
+pnpm test
 ```
 
 ### 端到端测试 (Playwright)
@@ -72,7 +66,7 @@ npx playwright install
 
 # 运行 E2E 测试（需要先构建）
 pnpm build
-pnpm test:e2e
+pnpm e2e
 ```
 
 ### TypeScript 类型检查

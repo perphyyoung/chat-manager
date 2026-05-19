@@ -1,19 +1,19 @@
 import type { SettingsRepository, Settings } from "../../domain/repositories";
 
+const STORAGE_KEY = "chat-manager-settings";
+
 const DEFAULT_SETTINGS: Settings = {
   darkMode: false,
 };
 
 export class LocalStorageSettingsRepository implements SettingsRepository {
-  private readonly STORAGE_KEY = "settings";
-
   async getSettings(): Promise<Settings> {
-    const data = localStorage.getItem(this.STORAGE_KEY);
-    if (!data) {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) {
       return { ...DEFAULT_SETTINGS };
     }
     try {
-      const parsed = JSON.parse(data) as Settings;
+      const parsed = JSON.parse(stored) as Settings;
       return { ...DEFAULT_SETTINGS, ...parsed };
     } catch {
       return { ...DEFAULT_SETTINGS };
@@ -21,7 +21,7 @@ export class LocalStorageSettingsRepository implements SettingsRepository {
   }
 
   async saveSettings(settings: Settings): Promise<void> {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
   }
 
   async getItem<T>(key: string): Promise<T | undefined> {
@@ -29,9 +29,9 @@ export class LocalStorageSettingsRepository implements SettingsRepository {
     return settings[key] as T | undefined;
   }
 
-  async setItem<T>(key: string, value: T): Promise<void> {
+  async setItem(key: string, value: unknown): Promise<void> {
     const settings = await this.getSettings();
-    settings[key] = value;
+    (settings as Record<string, unknown>)[key] = value;
     await this.saveSettings(settings);
   }
 }
