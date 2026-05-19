@@ -130,6 +130,15 @@ export const useDocumentStore = defineStore("document", () => {
     } else {
       documents.value = docs;
     }
+    // 自动选中排序后的第一个文档
+    const sorted = sortDocuments(
+      documents.value,
+      documentSortField.value,
+      documentSortOrder.value,
+    );
+    if (sorted.length > 0 && !selectedDocumentId.value) {
+      selectDocument(sorted[0]!.id);
+    }
   }
 
   async function createDocument(title: string): Promise<void> {
