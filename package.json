@@ -6,7 +6,7 @@
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite build && electron .",
-    "test": "vitest",
+    "test": "vitest src/",
     "e2e": "playwright test --project=chromium",
     "release": "electron-vite build && electron-builder",
     "type-check": "vue-tsc --build",
