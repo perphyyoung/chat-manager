@@ -309,6 +309,45 @@ class AnswerDeletedEvent { constructor(public readonly answerId: string) }
 
 ---
 
+## 9. 排序功能
+
+### 9.1 排序字段
+
+| 类型 | 字段 | 说明 |
+|------|------|------|
+| 文档排序 | `createdAt` | 创建时间 |
+| 文档排序 | `updatedAt` | 更新时间 |
+| 文档排序 | `title` | 文档标题（中文拼音排序） |
+| 问题排序 | `sortOrder` | 出现顺序（文档中的原始顺序） |
+| 问题排序 | `createdAt` | 创建时间 |
+| 问题排序 | `updatedAt` | 更新时间 |
+| 问题排序 | `title` | 问题文本（中文拼音排序） |
+
+### 9.2 排序方向
+
+- `asc` - 升序（从小到大）
+- `desc` - 降序（从大到小，默认）
+
+### 9.3 持久化
+
+排序偏好保存到 `localStorage`，键名为 `chat-manager-sort-preferences`：
+
+```typescript
+interface SortPreferences {
+  documentSortField: SortField;      // 文档排序字段
+  documentSortOrder: SortOrder;      // 文档排序方向
+  questionSortField: QuestionSortField;  // 问题排序字段
+  questionSortOrder: SortOrder;      // 问题排序方向
+}
+```
+
+### 9.4 默认排序
+
+- 文档列表：按 `createdAt` 降序（最新创建的在前）
+- 问题列表：按 `sortOrder` 升序（按文档中的原始顺序）
+
+---
+
 ## 9. 界面组件
 
 ```typescript

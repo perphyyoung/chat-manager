@@ -20,10 +20,71 @@ const answerService = new AnswerApplicationService(
   globalEventBus,
 );
 
+export type SortField = "createdAt" | "updatedAt" | "title";
+export type QuestionSortField = SortField | "sortOrder";
+export type SortOrder = "asc" | "desc";
+
+interface SortPreferences {
+  documentSortField: SortField;
+  documentSortOrder: SortOrder;
+  questionSortField: QuestionSortField;
+  questionSortOrder: SortOrder;
+}
+
+const STORAGE_KEY = "chat-manager-sort-preferences";
+
+function loadSortPreferences(): SortPreferences {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as SortPreferences;
+      // 验证值是否有效
+      const validFields: SortField[] = ["createdAt", "updatedAt", "title"];
+      const validQuestionFields: QuestionSortField[] = ["createdAt", "updatedAt", "title", "sortOrder"];
+      const validOrders: SortOrder[] = ["asc", "desc"];
+      if (
+        validFields.includes(parsed.documentSortField) &&
+        validOrders.includes(parsed.documentSortOrder) &&
+        validQuestionFields.includes(parsed.questionSortField) &&
+        validOrders.includes(parsed.questionSortOrder)
+      ) {
+        return parsed;
+      }
+    }
+  } catch {
+    // 解析失败使用默认值
+  }
+  return {
+    documentSortField: "createdAt",
+    documentSortOrder: "desc",
+    questionSortField: "sortOrder",
+    questionSortOrder: "asc",
+  };
+}
+
+function saveSortPreferences(preferences: SortPreferences) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
+  } catch {
+    // 保存失败静默处理
+  }
+}
+
 export const useDocumentStore = defineStore("document", () => {
   const documents = ref<Document[]>([]);
   const selectedDocumentId = ref<string | null>(null);
   const activeQuestionId = ref<string | null>(null);
+
+  // 从本地存储加载排序偏好
+  const savedPreferences = loadSortPreferences();
+
+  // 文档排序状态
+  const documentSortField = ref<SortField>(savedPreferences.documentSortField);
+  const documentSortOrder = ref<SortOrder>(savedPreferences.documentSortOrder);
+
+  // 问题排序状态
+  const questionSortField = ref<QuestionSortField>(savedPreferences.questionSortField);
+  const questionSortOrder = ref<SortOrder>(savedPreferences.questionSortOrder);
 
   const selectedDocument = computed(() => {
     return (
@@ -32,7 +93,12 @@ export const useDocumentStore = defineStore("document", () => {
   });
 
   const selectedDocumentQuestions = computed(() => {
-    return selectedDocument.value?.questions || [];
+    const questions = selectedDocument.value?.questions || [];
+    return sortQuestions(questions, questionSortField.value, questionSortOrder.value);
+  });
+
+  const sortedDocuments = computed(() => {
+    return sortDocuments(documents.value, documentSortField.value, documentSortOrder.value);
   });
 
   function selectDocument(id: string) {
@@ -102,17 +168,154 @@ export const useDocumentStore = defineStore("document", () => {
     setActiveQuestion(newQuestion.id);
   }
 
+  // 排序相关函数
+  function setDocumentSortField(field: SortField) {
+    documentSortField.value = field;
+    saveSortPreferences({
+      documentSortField: field,
+      documentSortOrder: documentSortOrder.value,
+      questionSortField: questionSortField.value,
+      questionSortOrder: questionSortOrder.value,
+    });
+  }
+
+  function setDocumentSortOrder(order: SortOrder) {
+    documentSortOrder.value = order;
+    saveSortPreferences({
+      documentSortField: documentSortField.value,
+      documentSortOrder: order,
+      questionSortField: questionSortField.value,
+      questionSortOrder: questionSortOrder.value,
+    });
+  }
+
+  function toggleDocumentSortOrder() {
+    const newOrder = documentSortOrder.value === "asc" ? "desc" : "asc";
+    documentSortOrder.value = newOrder;
+    saveSortPreferences({
+      documentSortField: documentSortField.value,
+      documentSortOrder: newOrder,
+      questionSortField: questionSortField.value,
+      questionSortOrder: questionSortOrder.value,
+    });
+  }
+
+  function setQuestionSortField(field: QuestionSortField) {
+    questionSortField.value = field;
+    saveSortPreferences({
+      documentSortField: documentSortField.value,
+      documentSortOrder: documentSortOrder.value,
+      questionSortField: field,
+      questionSortOrder: questionSortOrder.value,
+    });
+  }
+
+  function setQuestionSortOrder(order: SortOrder) {
+    questionSortOrder.value = order;
+    saveSortPreferences({
+      documentSortField: documentSortField.value,
+      documentSortOrder: documentSortOrder.value,
+      questionSortField: questionSortField.value,
+      questionSortOrder: order,
+    });
+  }
+
+  function toggleQuestionSortOrder() {
+    const newOrder = questionSortOrder.value === "asc" ? "desc" : "asc";
+    questionSortOrder.value = newOrder;
+    saveSortPreferences({
+      documentSortField: documentSortField.value,
+      documentSortOrder: documentSortOrder.value,
+      questionSortField: questionSortField.value,
+      questionSortOrder: newOrder,
+    });
+  }
+
   return {
     documents,
+    sortedDocuments,
     selectedDocumentId,
     activeQuestionId,
     selectedDocument,
     selectedDocumentQuestions,
+    documentSortField,
+    documentSortOrder,
+    questionSortField,
+    questionSortOrder,
     selectDocument,
     setActiveQuestion,
     initDocuments,
     loadDocuments,
     createDocument,
     addQuestionAndAnswer,
+    setDocumentSortField,
+    setDocumentSortOrder,
+    toggleDocumentSortOrder,
+    setQuestionSortField,
+    setQuestionSortOrder,
+    toggleQuestionSortOrder,
   };
 });
+
+// 排序辅助函数
+interface SortableDocument {
+  id: string;
+  title: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface SortableQuestion {
+  id: string;
+  text: string;
+  createdAt: Date;
+  updatedAt: Date;
+  order: number;
+}
+
+function sortDocuments<T extends SortableDocument>(
+  docs: readonly T[],
+  field: SortField,
+  order: SortOrder,
+): T[] {
+  return [...docs].sort((a, b) => {
+    let result = 0;
+    switch (field) {
+      case "createdAt":
+        result = a.createdAt.getTime() - b.createdAt.getTime();
+        break;
+      case "updatedAt":
+        result = a.updatedAt.getTime() - b.updatedAt.getTime();
+        break;
+      case "title":
+        result = a.title.localeCompare(b.title, "zh-CN");
+        break;
+    }
+    return order === "asc" ? result : -result;
+  });
+}
+
+function sortQuestions<T extends SortableQuestion>(
+  questions: readonly T[],
+  field: QuestionSortField,
+  order: SortOrder,
+): T[] {
+  return [...questions].sort((a, b) => {
+    let result = 0;
+    switch (field) {
+      case "createdAt":
+        result = a.createdAt.getTime() - b.createdAt.getTime();
+        break;
+      case "updatedAt":
+        result = a.updatedAt.getTime() - b.updatedAt.getTime();
+        break;
+      case "title":
+        result = a.text.localeCompare(b.text, "zh-CN");
+        break;
+      case "sortOrder":
+        result = a.order - b.order;
+        break;
+    }
+    return order === "asc" ? result : -result;
+  });
+}

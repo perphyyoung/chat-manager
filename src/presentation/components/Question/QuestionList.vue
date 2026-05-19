@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useDocumentStore } from '../../stores/document'
+import { useDocumentStore, type QuestionSortField } from '../../stores/document'
 import QuestionItem from './QuestionItem.vue'
 
 const documentStore = useDocumentStore()
@@ -9,6 +9,14 @@ const showAddDialog = ref(false)
 const newQuestionText = ref('')
 const newAnswerContent = ref('')
 const isCreating = ref(false)
+const showSortMenu = ref(false)
+
+const sortFieldLabels: Record<QuestionSortField, string> = {
+  createdAt: '创建时间',
+  updatedAt: '更新时间',
+  title: '文本',
+  sortOrder: '出现顺序',
+}
 
 async function handleCreateQA() {
   if (!newQuestionText.value.trim() || !newAnswerContent.value.trim()) return
@@ -32,12 +40,65 @@ function handleCancel() {
   newAnswerContent.value = ''
   showAddDialog.value = false
 }
+
+function handleSortFieldChange(field: QuestionSortField) {
+  documentStore.setQuestionSortField(field)
+  showSortMenu.value = false
+}
 </script>
 
 <template>
   <div class="question-list">
     <div class="question-list__header">
       <h2>问题列表</h2>
+      <div v-if="documentStore.selectedDocument" class="sort-controls">
+        <button
+          class="sort-order-btn"
+          :title="documentStore.questionSortOrder === 'asc' ? '升序' : '降序'"
+          @click="documentStore.toggleQuestionSortOrder()"
+        >
+          <svg
+            v-if="documentStore.questionSortOrder === 'asc'"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <polyline points="5 12 12 5 19 12"></polyline>
+          </svg>
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <polyline points="5 12 12 19 19 12"></polyline>
+          </svg>
+        </button>
+        <div class="sort-field-wrapper">
+          <button class="sort-field-btn" @click="showSortMenu = !showSortMenu">
+            {{ sortFieldLabels[documentStore.questionSortField] }}
+            <svg
+              class="dropdown-icon"
+              :class="{ open: showSortMenu }"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div v-if="showSortMenu" class="sort-menu">
+            <button
+              v-for="(label, field) in sortFieldLabels"
+              :key="field"
+              class="sort-menu-item"
+              :class="{ active: documentStore.questionSortField === field }"
+              @click="handleSortFieldChange(field)"
+            >
+              {{ label }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="question-list__items">
       <QuestionItem
@@ -113,6 +174,9 @@ function handleCancel() {
 .question-list__header {
   padding: 16px;
   border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .question-list__header h2 {
@@ -120,6 +184,105 @@ function handleCancel() {
   font-size: 16px;
   font-weight: 600;
   color: var(--color-text);
+}
+
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-order-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.sort-order-btn:hover {
+  background-color: var(--color-hover);
+  color: var(--color-text);
+}
+
+.sort-order-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sort-field-wrapper {
+  position: relative;
+}
+
+.sort-field-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sort-field-btn:hover {
+  background-color: var(--color-hover);
+  color: var(--color-text);
+}
+
+.dropdown-icon {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s;
+}
+
+.dropdown-icon.open {
+  transform: rotate(180deg);
+}
+
+.sort-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 100px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.sort-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background-color: transparent;
+  color: var(--color-text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.sort-menu-item:hover {
+  background-color: var(--color-hover);
+}
+
+.sort-menu-item.active {
+  color: var(--color-primary);
+  font-weight: 500;
 }
 
 .question-list__items {
