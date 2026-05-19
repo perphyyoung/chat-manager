@@ -10,11 +10,19 @@ interface Props {
   isActive: boolean
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  click: [questionId: string]
+}>()
+
+function handleClick() {
+  emit('click', props.question.id)
+}
 </script>
 
 <template>
-  <div class="question-item" :class="{ 'question-item--active': isActive }">
+  <div class="question-item" :class="{ 'question-item--active': isActive }" @click="handleClick">
     <div class="question-item__number">{{ question.order }}</div>
     <div class="question-item__text">{{ question.text }}</div>
   </div>

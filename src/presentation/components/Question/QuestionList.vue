@@ -45,6 +45,10 @@ function handleSortFieldChange(field: QuestionSortField) {
   documentStore.setQuestionSortField(field)
   showSortMenu.value = false
 }
+
+function handleQuestionClick(questionId: string) {
+  documentStore.setActiveQuestion(questionId)
+}
 </script>
 
 <template>
@@ -106,6 +110,7 @@ function handleSortFieldChange(field: QuestionSortField) {
         :key="question.id"
         :question="question"
         :is-active="question.id === documentStore.activeQuestionId"
+        @click="handleQuestionClick"
       />
     </div>
     <div v-if="!documentStore.selectedDocument" class="question-list__empty">

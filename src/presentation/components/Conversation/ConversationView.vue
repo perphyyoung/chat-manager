@@ -29,12 +29,34 @@ function scrollToBottom() {
   })
 }
 
+function scrollToQuestion(questionId: string) {
+  nextTick(() => {
+    if (!messagesContainer.value) return
+    const targetElement = messagesContainer.value.querySelector(
+      `[data-question-id="${questionId}"]`,
+    )
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  })
+}
+
 watch(
   () => documentStore.selectedDocument?.answers,
   () => {
     scrollToBottom()
   },
   { immediate: true, deep: true },
+)
+
+// 监听 activeQuestionId 变化，滚动到对应问题
+watch(
+  () => documentStore.activeQuestionId,
+  (questionId) => {
+    if (questionId) {
+      scrollToQuestion(questionId)
+    }
+  },
 )
 </script>
 
@@ -46,6 +68,7 @@ watch(
           v-for="{ question, answer } in qaPairs"
           :key="question.id"
           class="qa-pair"
+          :data-question-id="question.id"
         >
           <!-- 问题：右对齐，主题色背景 -->
           <QuestionBubble :text="question.text" />
