@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useDocumentStore, type SortField } from '../../stores/document'
 import DocumentItem from './DocumentItem.vue'
+import DocumentContextMenu from './DocumentContextMenu.vue'
 
 const documentStore = useDocumentStore()
 
@@ -9,6 +10,25 @@ const showAddDialog = ref(false)
 const newDocumentTitle = ref('')
 const isCreating = ref(false)
 const showSortMenu = ref(false)
+
+// 右键菜单状态
+const contextMenu = ref<{
+  show: boolean
+  x: number
+  y: number
+  documentId: string | null
+}>({
+  show: false,
+  x: 0,
+  y: 0,
+  documentId: null,
+})
+
+// 编辑对话框状态
+const showEditDialog = ref(false)
+const editDocumentTitle = ref('')
+const isEditing = ref(false)
+const editingDocumentId = ref<string | null>(null)
 
 const sortFieldLabels: Record<SortField, string> = {
   createdAt: '创建时间',
@@ -37,6 +57,62 @@ function handleCancel() {
 function handleSortFieldChange(field: SortField) {
   documentStore.setDocumentSortField(field)
   showSortMenu.value = false
+}
+
+// 右键菜单处理
+function handleContextMenu(event: MouseEvent, documentId: string) {
+  contextMenu.value = {
+    show: true,
+    x: event.clientX,
+    y: event.clientY,
+    documentId,
+  }
+}
+
+function closeContextMenu() {
+  contextMenu.value.show = false
+  contextMenu.value.documentId = null
+}
+
+// 编辑文档
+function handleEditDocument() {
+  if (!contextMenu.value.documentId) return
+  const doc = documentStore.documents.find((d) => d.id === contextMenu.value.documentId)
+  if (doc) {
+    editingDocumentId.value = doc.id
+    editDocumentTitle.value = doc.title
+    showEditDialog.value = true
+  }
+  closeContextMenu()
+}
+
+async function handleUpdateDocument() {
+  if (!editDocumentTitle.value.trim() || !editingDocumentId.value) return
+
+  isEditing.value = true
+  try {
+    await documentStore.updateDocumentTitle(editingDocumentId.value, editDocumentTitle.value.trim())
+    showEditDialog.value = false
+    editDocumentTitle.value = ''
+    editingDocumentId.value = null
+  } finally {
+    isEditing.value = false
+  }
+}
+
+function handleCancelEdit() {
+  editDocumentTitle.value = ''
+  editingDocumentId.value = null
+  showEditDialog.value = false
+}
+
+// 删除文档
+async function handleDeleteDocument() {
+  if (!contextMenu.value.documentId) return
+  if (confirm('确定要删除这个文档吗？此操作不可恢复。')) {
+    await documentStore.deleteDocument(contextMenu.value.documentId)
+  }
+  closeContextMenu()
 }
 </script>
 
@@ -100,8 +176,19 @@ function handleSortFieldChange(field: SortField) {
         :document="doc"
         :is-active="doc.id === documentStore.selectedDocumentId"
         @click="documentStore.selectDocument(doc.id)"
+        @contextmenu="handleContextMenu"
       />
     </div>
+
+    <!-- 右键菜单 -->
+    <DocumentContextMenu
+      v-if="contextMenu.show"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      @edit="handleEditDocument"
+      @delete="handleDeleteDocument"
+      @close="closeContextMenu"
+    />
 
     <!-- 浮动添加按钮 -->
     <button class="fab" title="添加文档" @click="showAddDialog = true">
@@ -130,6 +217,30 @@ function handleSortFieldChange(field: SortField) {
             @click="handleCreateDocument"
           >
             {{ isCreating ? '创建中...' : '创建' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑文档对话框 -->
+    <div v-if="showEditDialog" class="dialog-overlay" @click.self="handleCancelEdit">
+      <div class="dialog">
+        <h3>编辑文档标题</h3>
+        <input
+          v-model="editDocumentTitle"
+          type="text"
+          placeholder="请输入文档标题"
+          class="dialog-input"
+          @keyup.enter="handleUpdateDocument"
+        />
+        <div class="dialog-actions">
+          <button class="btn-secondary" @click="handleCancelEdit">取消</button>
+          <button
+            class="btn-primary"
+            :disabled="!editDocumentTitle.trim() || isEditing"
+            @click="handleUpdateDocument"
+          >
+            {{ isEditing ? '保存中...' : '保存' }}
           </button>
         </div>
       </div>

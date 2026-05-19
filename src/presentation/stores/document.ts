@@ -147,6 +147,47 @@ export const useDocumentStore = defineStore("document", () => {
     selectDocument(doc.id);
   }
 
+  async function updateDocumentTitle(
+    documentId: string,
+    newTitle: string,
+  ): Promise<void> {
+    await documentService.updateDocumentTitle(documentId, newTitle);
+    // 刷新文档列表
+    const updatedDoc = await documentService.getDocument(documentId);
+    if (updatedDoc) {
+      const index = documents.value.findIndex((d) => d.id === documentId);
+      if (index !== -1) {
+        // 使用 splice 替换元素以触发响应式更新
+        documents.value.splice(index, 1, updatedDoc);
+      }
+    }
+  }
+
+  async function deleteDocument(documentId: string): Promise<void> {
+    await documentService.deleteDocument(documentId);
+    // 从列表中移除
+    const index = documents.value.findIndex((d) => d.id === documentId);
+    if (index !== -1) {
+      documents.value.splice(index, 1);
+    }
+    // 如果删除的是当前选中的文档，清空选中状态
+    if (selectedDocumentId.value === documentId) {
+      selectedDocumentId.value = null;
+      activeQuestionId.value = null;
+      // 自动选中下一个文档（如果存在）
+      if (documents.value.length > 0) {
+        const sorted = sortDocuments(
+          documents.value,
+          documentSortField.value,
+          documentSortOrder.value,
+        );
+        if (sorted.length > 0) {
+          selectDocument(sorted[0]!.id);
+        }
+      }
+    }
+  }
+
   async function addQuestionAndAnswer(
     questionText: string,
     answerContent: string,
@@ -256,6 +297,8 @@ export const useDocumentStore = defineStore("document", () => {
     initDocuments,
     loadDocuments,
     createDocument,
+    updateDocumentTitle,
+    deleteDocument,
     addQuestionAndAnswer,
     setDocumentSortField,
     setDocumentSortOrder,

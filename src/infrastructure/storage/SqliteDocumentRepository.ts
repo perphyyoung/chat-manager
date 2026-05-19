@@ -39,6 +39,7 @@ function toDocument(stored: DocumentDTO): Document {
     questions,
     answers,
     new Date(stored.createdAt),
+    new Date(stored.updatedAt),
   );
 }
 

@@ -10,11 +10,24 @@ interface Props {
   isActive: boolean
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  contextmenu: [event: MouseEvent, documentId: string]
+}>()
+
+function handleContextMenu(event: MouseEvent) {
+  event.preventDefault()
+  emit('contextmenu', event, props.document.id)
+}
 </script>
 
 <template>
-  <div class="document-item" :class="{ 'document-item--active': isActive }">
+  <div
+    class="document-item"
+    :class="{ 'document-item--active': isActive }"
+    @contextmenu="handleContextMenu"
+  >
     <div class="document-item__icon">📄</div>
     <div class="document-item__content">
       <div class="document-item__title">{{ document.title }}</div>

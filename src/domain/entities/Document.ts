@@ -10,16 +10,14 @@ export interface DocumentSummary {
 }
 
 export class Document {
-  private _updatedAt: Date;
-
   constructor(
     public readonly id: string,
     private _title: string,
     private _questions: Question[] = [],
     private _answers: Answer[] = [],
     private readonly _createdAt: Date = new Date(),
+    private _updatedAt: Date = _createdAt,
   ) {
-    this._updatedAt = _createdAt;
     this.validateTitle(_title);
   }
 
