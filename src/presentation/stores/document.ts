@@ -2,13 +2,21 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { Document } from "@/domain/entities";
 import { DocumentApplicationService } from "@/application/services/DocumentApplicationService";
+import { AnswerApplicationService } from "@/application/services/AnswerApplicationService";
 import { SqliteDocumentRepository } from "@/infrastructure/storage/SqliteDocumentRepository";
+import { SqliteAnswerRepository } from "@/infrastructure/storage/SqliteAnswerRepository";
 import { globalEventBus } from "@/domain/events";
 import { mockDocuments } from "@/infrastructure/data/mockData";
 
 const documentRepo = new SqliteDocumentRepository();
+const answerRepo = new SqliteAnswerRepository();
 const documentService = new DocumentApplicationService(
   documentRepo,
+  globalEventBus,
+);
+const answerService = new AnswerApplicationService(
+  documentRepo,
+  answerRepo,
   globalEventBus,
 );
 
@@ -58,6 +66,42 @@ export const useDocumentStore = defineStore("document", () => {
     }
   }
 
+  async function createDocument(title: string): Promise<void> {
+    const doc = await documentService.createDocument(title);
+    documents.value.push(doc);
+    selectDocument(doc.id);
+  }
+
+  async function addQuestionAndAnswer(
+    questionText: string,
+    answerContent: string,
+  ): Promise<void> {
+    if (!selectedDocumentId.value) {
+      throw new Error("No document selected");
+    }
+    const docId = selectedDocumentId.value;
+    await documentService.addQuestion(docId, questionText);
+    const updatedDoc = await documentService.getDocument(docId);
+    if (!updatedDoc) {
+      throw new Error("Document not found after adding question");
+    }
+    // 找到新添加的问题（最后一个）
+    const newQuestion = updatedDoc.questions[updatedDoc.questions.length - 1];
+    if (!newQuestion) {
+      throw new Error("Failed to add question");
+    }
+    await answerService.addAnswer(docId, newQuestion.id, answerContent);
+    // 刷新当前文档数据
+    const finalDoc = await documentService.getDocument(docId);
+    if (finalDoc) {
+      const index = documents.value.findIndex((d) => d.id === docId);
+      if (index !== -1) {
+        documents.value[index] = finalDoc;
+      }
+    }
+    setActiveQuestion(newQuestion.id);
+  }
+
   return {
     documents,
     selectedDocumentId,
@@ -68,5 +112,7 @@ export const useDocumentStore = defineStore("document", () => {
     setActiveQuestion,
     initDocuments,
     loadDocuments,
+    createDocument,
+    addQuestionAndAnswer,
   };
 });
