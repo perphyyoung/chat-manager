@@ -41,12 +41,15 @@ function scrollToQuestion(questionId: string) {
   })
 }
 
+// 监听回答变化，只在新增回答时滚动到底部
 watch(
-  () => documentStore.selectedDocument?.answers,
-  () => {
-    scrollToBottom()
+  () => documentStore.selectedDocument?.answers.length,
+  (newLength, oldLength) => {
+    // 只有在新增回答时才滚动到底部
+    if (newLength && oldLength && newLength > oldLength) {
+      scrollToBottom()
+    }
   },
-  { immediate: true, deep: true },
 )
 
 // 监听 activeQuestionId 变化，滚动到对应问题

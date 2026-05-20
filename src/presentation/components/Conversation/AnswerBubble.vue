@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { Marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import Prism from 'prismjs'
@@ -35,6 +35,7 @@ interface Props {
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'update', id: string, content: string): void
+  (e: 'beforeUpdate'): void
 }>()
 
 const isEditing = ref(false)
@@ -72,24 +73,18 @@ const renderedContent = computed(() => {
 function startEdit() {
   editContent.value = props.content
   isEditing.value = true
-  // 自动调整高度并聚焦
-  nextTick(() => {
-    if (textareaRef.value) {
-      adjustTextareaHeight()
-      textareaRef.value.focus()
-    }
-  })
 }
 
-function adjustTextareaHeight() {
-  const textarea = textareaRef.value
-  if (!textarea) return
-  // 重置高度以获取正确的 scrollHeight
-  textarea.style.height = 'auto'
-  // 设置新高度（最小120px，最大400px）
-  const newHeight = Math.max(120, Math.min(textarea.scrollHeight, 400))
-  textarea.style.height = `${newHeight}px`
-}
+// 监听编辑模式变化，自动聚焦
+watch(isEditing, (newVal) => {
+  if (newVal) {
+    nextTick(() => {
+      if (textareaRef.value) {
+        textareaRef.value.focus()
+      }
+    })
+  }
+})
 
 function saveEdit() {
   if (editContent.value.trim()) {
@@ -101,10 +96,6 @@ function saveEdit() {
 function cancelEdit() {
   isEditing.value = false
   editContent.value = ''
-}
-
-function handleInput() {
-  adjustTextareaHeight()
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -144,14 +135,17 @@ function formatCode() {
     if (!code) continue
 
     // 检查是否已格式化（第一行是否包含 // language:）
-    const firstLine = code.split('\n')[0]?.trim()
-    if (firstLine && !firstLine.startsWith('// language:')) {
+    const lines = code.split('\n')
+    // 找到第一个非空行
+    const firstNonEmptyLine = lines.find((line) => line.trim())
+    if (!firstNonEmptyLine || !firstNonEmptyLine.startsWith('// language:')) {
       const newCode = `// language: ${lang}\n${code}`
       formatted = formatted.replace(match[0], `\`\`\`${lang}\n${newCode}\`\`\``)
     }
   }
 
   if (formatted !== props.content) {
+    emit('beforeUpdate')
     emit('update', props.answerId, formatted)
   }
   closeContextMenu()
@@ -159,7 +153,7 @@ function formatCode() {
 </script>
 
 <template>
-  <div class="answer-bubble" :class="{ 'is-editing': isEditing }">
+  <div class="answer-bubble">
     <!-- 渲染模式 -->
     <div
       v-if="!isEditing"
@@ -168,25 +162,6 @@ function formatCode() {
       @contextmenu="handleContextMenu"
       v-html="renderedContent"
     />
-    <!-- 编辑模式 -->
-    <div v-else class="answer-bubble__edit">
-      <div class="edit-header">
-        <span class="edit-hint">编辑模式</span>
-        <span class="edit-shortcut">Ctrl+Enter 保存 · ESC 取消</span>
-      </div>
-      <textarea
-        ref="textareaRef"
-        v-model="editContent"
-        class="edit-textarea"
-        placeholder="输入回答内容..."
-        @input="handleInput"
-        @keydown="handleKeydown"
-      />
-      <div class="edit-actions">
-        <button class="btn-cancel" @click="cancelEdit">取消</button>
-        <button class="btn-save" @click="saveEdit">保存</button>
-      </div>
-    </div>
 
     <!-- 右键菜单 -->
     <Teleport to="body">
@@ -204,6 +179,29 @@ function formatCode() {
           <div class="context-menu-item" @click="formatCode">
             <span class="context-menu-icon">✨</span>
             <span class="context-menu-text">格式化</span>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 全屏编辑模式 -->
+    <Teleport to="body">
+      <div v-if="isEditing" class="fullscreen-edit-overlay" @click="cancelEdit">
+        <div class="fullscreen-edit-container" @click.stop>
+          <div class="fullscreen-edit-header">
+            <span class="edit-title">编辑回答</span>
+            <span class="edit-shortcut">Ctrl+Enter 保存 · ESC 取消</span>
+          </div>
+          <textarea
+            ref="textareaRef"
+            v-model="editContent"
+            class="fullscreen-edit-textarea"
+            placeholder="输入回答内容..."
+            @keydown="handleKeydown"
+          />
+          <div class="fullscreen-edit-actions">
+            <button class="btn-cancel" @click="cancelEdit">取消</button>
+            <button class="btn-save" @click="saveEdit">保存</button>
           </div>
         </div>
       </div>
@@ -313,109 +311,6 @@ function formatCode() {
   margin: 12px 0;
 }
 
-/* 编辑模式样式 - 全宽布局 */
-.answer-bubble.is-editing {
-  max-width: 100%;
-  width: 100%;
-}
-
-.answer-bubble__edit {
-  width: 100%;
-  background-color: var(--color-surface);
-  border: 2px solid var(--color-primary);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.edit-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.edit-hint {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.edit-shortcut {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-
-.edit-textarea {
-  width: 100%;
-  min-height: 120px;
-  max-height: 400px;
-  padding: 12px 16px;
-  background-color: var(--color-background);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.7;
-  resize: vertical;
-  outline: none;
-  font-family: 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
-}
-
-.edit-textarea:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-alpha);
-}
-
-.edit-textarea::placeholder {
-  color: var(--color-text-secondary);
-}
-
-.edit-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 16px;
-  justify-content: flex-end;
-}
-
-.btn-save,
-.btn-cancel {
-  padding: 8px 20px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-save {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.btn-save:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.btn-cancel {
-  background-color: transparent;
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-}
-
-.btn-cancel:hover {
-  background-color: var(--color-border);
-  color: var(--color-text);
-}
-
 /* 右键菜单 */
 .context-menu-overlay {
   position: fixed;
@@ -456,6 +351,104 @@ function formatCode() {
 
 .context-menu-text {
   font-size: 13px;
+  color: var(--color-text);
+}
+
+/* 全屏编辑模式 */
+.fullscreen-edit-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--color-background);
+  display: flex;
+  flex-direction: column;
+  z-index: 10000;
+}
+
+.fullscreen-edit-container {
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-background);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fullscreen-edit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.edit-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.fullscreen-edit-textarea {
+  flex: 1;
+  width: 100%;
+  padding: 24px;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  border: none;
+  font-size: 15px;
+  line-height: 1.8;
+  resize: none;
+  outline: none;
+  font-family: 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
+  overflow-y: auto;
+}
+
+.fullscreen-edit-textarea::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.fullscreen-edit-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  justify-content: flex-end;
+}
+
+.btn-save,
+.btn-cancel {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-save {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-save:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-cancel {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.btn-cancel:hover {
+  background-color: var(--color-border);
   color: var(--color-text);
 }
 </style>
