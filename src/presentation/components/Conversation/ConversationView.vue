@@ -12,11 +12,11 @@ const qaPairs = computed(() => {
   const doc = documentStore.selectedDocument
   if (!doc) return []
 
-  return doc.questions.map(question => {
-    const answer = doc.answers.find(a => a.questionId === question.id)
+  return doc.questions.map((question) => {
+    const answer = doc.answers.find((a) => a.questionId === question.id)
     return {
       question,
-      answer
+      answer,
     }
   })
 })
@@ -72,17 +72,16 @@ watch(
         >
           <!-- 问题：右对齐，主题色背景 -->
           <QuestionBubble :text="question.text" />
-          
+
           <!-- 回答：左对齐，表面色背景 -->
           <AnswerBubble
             v-if="answer"
+            :key="`${documentStore.selectedDocumentId}-${answer.id}`"
             :content="answer.content"
             :answer-id="answer.id"
             @update="documentStore.updateAnswerContent"
           />
-          <div v-else class="answer-placeholder">
-            暂无回答
-          </div>
+          <div v-else class="answer-placeholder">暂无回答</div>
         </div>
       </div>
     </div>

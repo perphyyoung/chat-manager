@@ -1,3 +1,5 @@
+@import 'prismjs/themes/prism-tomorrow.css';
+
 :root {
   --color-primary: #4f46e5;
   --color-background: #f9fafb;

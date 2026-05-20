@@ -20,7 +20,9 @@
     "better-sqlite3": "^12.10.0",
     "electron-log": "^5.4.4",
     "marked": "^18.0.3",
+    "marked-highlight": "^2.2.4",
     "pinia": "^3.0.4",
+    "prismjs": "^1.30.0",
     "vue": "^3.5.32",
     "vue-router": "^5.0.4"
   },
@@ -31,6 +33,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/jsdom": "^28.0.1",
     "@types/node": "^24.12.2",
+    "@types/prismjs": "^1.26.6",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vitest/eslint-plugin": "^1.6.16",
     "@vue/eslint-config-typescript": "^14.7.0",
