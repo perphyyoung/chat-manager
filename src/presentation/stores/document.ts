@@ -218,6 +218,22 @@ export const useDocumentStore = defineStore("document", () => {
     setActiveQuestion(newQuestion.id);
   }
 
+  async function updateAnswerContent(answerId: string, content: string): Promise<void> {
+    if (!selectedDocumentId.value) {
+      throw new Error("No document selected");
+    }
+    const docId = selectedDocumentId.value;
+    await answerService.updateAnswer(docId, answerId, content);
+    // 刷新当前文档数据
+    const updatedDoc = await documentService.getDocument(docId);
+    if (updatedDoc) {
+      const index = documents.value.findIndex((d) => d.id === docId);
+      if (index !== -1) {
+        documents.value.splice(index, 1, updatedDoc);
+      }
+    }
+  }
+
   // 排序相关函数
   function setDocumentSortField(field: SortField) {
     documentSortField.value = field;
@@ -300,6 +316,7 @@ export const useDocumentStore = defineStore("document", () => {
     updateDocumentTitle,
     deleteDocument,
     addQuestionAndAnswer,
+    updateAnswerContent,
     setDocumentSortField,
     setDocumentSortOrder,
     toggleDocumentSortOrder,

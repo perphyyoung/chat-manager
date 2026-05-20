@@ -77,6 +77,8 @@ watch(
           <AnswerBubble
             v-if="answer"
             :content="answer.content"
+            :answer-id="answer.id"
+            @update="documentStore.updateAnswerContent"
           />
           <div v-else class="answer-placeholder">
             暂无回答
