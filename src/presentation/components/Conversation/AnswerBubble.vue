@@ -3,6 +3,12 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { Marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import Prism from 'prismjs'
+import { EditorView, keymap } from '@codemirror/view'
+import { EditorState } from '@codemirror/state'
+import { markdown } from '@codemirror/lang-markdown'
+import { oneDark } from '@codemirror/theme-one-dark'
+import { defaultKeymap } from '@codemirror/commands'
+import { languages } from '@codemirror/language-data'
 
 // 加载常用语言支持
 import 'prismjs/components/prism-javascript'
@@ -40,7 +46,8 @@ const emit = defineEmits<{
 
 const isEditing = ref(false)
 const editContent = ref('')
-const textareaRef = ref<HTMLTextAreaElement | null>(null)
+const editorContainer = ref<HTMLElement | null>(null)
+const editorView = ref<EditorView | null>(null)
 
 // 右键菜单状态
 const contextMenu = ref({
@@ -75,16 +82,46 @@ function startEdit() {
   isEditing.value = true
 }
 
-// 监听编辑模式变化，自动聚焦
+// 监听编辑模式变化，初始化 CodeMirror
 watch(isEditing, (newVal) => {
   if (newVal) {
     nextTick(() => {
-      if (textareaRef.value) {
-        textareaRef.value.focus()
-      }
+      initCodeMirror()
     })
+  } else {
+    destroyCodeMirror()
   }
 })
+
+// 初始化 CodeMirror
+function initCodeMirror() {
+  if (!editorContainer.value) return
+
+  editorView.value = new EditorView({
+    state: EditorState.create({
+      doc: editContent.value,
+      extensions: [
+        markdown({ codeLanguages: languages }),
+        oneDark,
+        keymap.of(defaultKeymap),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            editContent.value = update.state.doc.toString()
+          }
+        }),
+      ],
+    }),
+    parent: editorContainer.value,
+  })
+}
+
+// 销毁 CodeMirror
+function destroyCodeMirror() {
+  if (editorView.value) {
+    editorView.value.destroy()
+    editorView.value = null
+  }
+}
 
 function saveEdit() {
   if (editContent.value.trim()) {
@@ -96,17 +133,6 @@ function saveEdit() {
 function cancelEdit() {
   isEditing.value = false
   editContent.value = ''
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  // Ctrl+Enter 保存
-  if (e.ctrlKey && e.key === 'Enter') {
-    saveEdit()
-  }
-  // ESC 取消
-  if (e.key === 'Escape') {
-    cancelEdit()
-  }
 }
 
 // 右键菜单
@@ -190,15 +216,9 @@ function formatCode() {
         <div class="fullscreen-edit-container" @click.stop>
           <div class="fullscreen-edit-header">
             <span class="edit-title">编辑回答</span>
-            <span class="edit-shortcut">Ctrl+Enter 保存 · ESC 取消</span>
+            <span class="edit-shortcut">Ctrl+S 保存 · ESC 取消</span>
           </div>
-          <textarea
-            ref="textareaRef"
-            v-model="editContent"
-            class="fullscreen-edit-textarea"
-            placeholder="输入回答内容..."
-            @keydown="handleKeydown"
-          />
+          <div ref="editorContainer" class="fullscreen-edit-editor" />
           <div class="fullscreen-edit-actions">
             <button class="btn-cancel" @click="cancelEdit">取消</button>
             <button class="btn-save" @click="saveEdit">保存</button>
@@ -391,23 +411,21 @@ function formatCode() {
   color: var(--color-text);
 }
 
-.fullscreen-edit-textarea {
+.fullscreen-edit-editor {
   flex: 1;
   width: 100%;
-  padding: 24px;
-  background-color: var(--color-background);
-  color: var(--color-text);
-  border: none;
-  font-size: 15px;
-  line-height: 1.8;
-  resize: none;
-  outline: none;
-  font-family: 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
-.fullscreen-edit-textarea::placeholder {
-  color: var(--color-text-secondary);
+/* CodeMirror 样式调整 */
+.fullscreen-edit-editor :deep(.cm-editor) {
+  height: 100%;
+  font-size: 15px;
+  font-family: 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
+}
+
+.fullscreen-edit-editor :deep(.cm-scroller) {
+  overflow: auto;
 }
 
 .fullscreen-edit-actions {
