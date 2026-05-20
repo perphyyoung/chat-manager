@@ -9,6 +9,7 @@ import { markdown } from '@codemirror/lang-markdown'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { defaultKeymap } from '@codemirror/commands'
 import { languages } from '@codemirror/language-data'
+import { search, searchKeymap, highlightSelectionMatches } from '@codemirror/search'
 
 // 加载常用语言支持
 import 'prismjs/components/prism-javascript'
@@ -74,7 +75,8 @@ marked.setOptions({
 })
 
 const renderedContent = computed(() => {
-  return marked.parse(props.content)
+  const result = marked.parse(props.content) as string
+  return result
 })
 
 function startEdit() {
@@ -93,7 +95,7 @@ watch(isEditing, (newVal) => {
   }
 })
 
-// 初始化 CodeMirror
+// 初始化 CodeMirror（使用官方搜索）
 function initCodeMirror() {
   if (!editorContainer.value) return
 
@@ -103,16 +105,23 @@ function initCodeMirror() {
       extensions: [
         markdown({ codeLanguages: languages }),
         oneDark,
-        keymap.of(defaultKeymap),
+        search({ top: true }), // 官方搜索面板，显示在顶部
+        keymap.of([...defaultKeymap, ...searchKeymap]),
+        highlightSelectionMatches(), // 高亮选中的匹配
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             editContent.value = update.state.doc.toString()
           }
         }),
+        // 确保编辑器可聚焦
+        EditorView.contentAttributes.of({ tabindex: '0' }),
       ],
     }),
     parent: editorContainer.value,
   })
+
+  // 确保编辑器获得焦点
+  editorView.value.focus()
 }
 
 // 销毁 CodeMirror
@@ -414,6 +423,7 @@ function formatCode() {
   flex: 1;
   width: 100%;
   overflow: hidden;
+  position: relative;
 }
 
 /* CodeMirror 样式调整 */
@@ -425,6 +435,87 @@ function formatCode() {
 
 .fullscreen-edit-editor :deep(.cm-scroller) {
   overflow: auto;
+}
+
+/* 搜索面板样式 - 悬浮在右上角 */
+.fullscreen-edit-editor :deep(.cm-panels) {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  left: auto;
+  z-index: 100;
+  width: auto;
+  min-width: 320px;
+}
+
+.fullscreen-edit-editor :deep(.cm-panels.cm-panels-top) {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.fullscreen-edit-editor :deep(.cm-search) {
+  background-color: var(--color-surface);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+}
+
+/* 搜索框样式 */
+.fullscreen-edit-editor :deep(.cm-search input:first-of-type) {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--color-text);
+  font-size: 14px;
+  width: 150px;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    width 0.2s;
+}
+
+.fullscreen-edit-editor :deep(.cm-search input:first-of-type):focus {
+  border-color: var(--color-primary);
+  width: 180px;
+}
+
+/* 隐藏替换框 */
+.fullscreen-edit-editor :deep(.cm-search input:last-of-type) {
+  display: none;
+}
+
+/* 隐藏 replace、replace all 按钮 */
+.fullscreen-edit-editor
+  :deep(.cm-search button:not(:nth-child(2)):not(:nth-child(3)):not(:last-child)) {
+  display: none;
+}
+
+/* next、previous、close 按钮样式 */
+.fullscreen-edit-editor :deep(.cm-search button) {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 13px;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+}
+
+.fullscreen-edit-editor :deep(.cm-search button:hover) {
+  background-color: var(--color-hover);
+  border-color: var(--color-primary);
+}
+
+/* 隐藏所有选项标签（match case、regexp、whole word等） */
+.fullscreen-edit-editor :deep(.cm-search label) {
+  display: none;
 }
 
 .fullscreen-edit-actions {
