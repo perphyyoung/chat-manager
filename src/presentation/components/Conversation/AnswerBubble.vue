@@ -216,7 +216,6 @@ function formatCode() {
         <div class="fullscreen-edit-container" @click.stop>
           <div class="fullscreen-edit-header">
             <span class="edit-title">编辑回答</span>
-            <span class="edit-shortcut">Ctrl+S 保存 · ESC 取消</span>
           </div>
           <div ref="editorContainer" class="fullscreen-edit-editor" />
           <div class="fullscreen-edit-actions">
