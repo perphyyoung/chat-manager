@@ -42,20 +42,8 @@ onUnmounted(() => {
 
 <template>
   <div class="context-menu" :style="{ left: `${x}px`, top: `${y}px` }">
-    <button class="menu-item" @click="handleEdit">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-      </svg>
-      <span>编辑标题</span>
-    </button>
-    <button class="menu-item menu-item--danger" @click="handleDelete">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="3 6 5 6 21 6"></polyline>
-        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-      </svg>
-      <span>删除文档</span>
-    </button>
+    <button class="menu-item" @click="handleEdit">编辑标题</button>
+    <button class="menu-item menu-item--danger" @click="handleDelete">删除文档</button>
   </div>
 </template>
 
@@ -72,9 +60,7 @@ onUnmounted(() => {
 }
 
 .menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: block;
   width: 100%;
   padding: 10px 12px;
   border: none;
@@ -96,11 +82,5 @@ onUnmounted(() => {
 
 .menu-item--danger:hover {
   background-color: rgba(239, 68, 68, 0.1);
-}
-
-.menu-item svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
 }
 </style>

@@ -82,13 +82,9 @@ function handleContextMenu(event: MouseEvent, questionId: string) {
   }
 }
 
-function closeContextMenu() {
-  contextMenu.value.show = false
-}
-
 // 删除功能
 function handleDeleteClick() {
-  closeContextMenu()
+  contextMenu.value.show = false
   showDeleteConfirm.value = true
 }
 
@@ -114,7 +110,7 @@ function cancelDelete() {
 
 // 编辑功能
 function handleEditClick() {
-  closeContextMenu()
+  contextMenu.value.show = false
   editQuestionText.value = contextMenu.value.questionText
   showEditDialog.value = true
 }
@@ -264,24 +260,12 @@ function cancelEdit() {
     <Teleport to="body">
       <div
         v-if="contextMenu.show"
-        class="context-menu-overlay"
-        @click="closeContextMenu"
-        @contextmenu.prevent
+        class="context-menu"
+        :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
+        @click.stop
       >
-        <div
-          class="context-menu"
-          :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
-          @click.stop
-        >
-          <div class="context-menu-item" @click="handleEditClick">
-            <span class="context-menu-icon">✏️</span>
-            <span class="context-menu-text">编辑问题</span>
-          </div>
-          <div class="context-menu-item context-menu-item--danger" @click="handleDeleteClick">
-            <span class="context-menu-icon">🗑️</span>
-            <span class="context-menu-text">删除问题</span>
-          </div>
-        </div>
+        <button class="menu-item" @click="handleEditClick">编辑问题</button>
+        <button class="menu-item menu-item--danger" @click="handleDeleteClick">删除问题</button>
       </div>
     </Teleport>
 
@@ -667,42 +651,38 @@ function cancelEdit() {
 }
 
 .context-menu {
-  position: absolute;
+  position: fixed;
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 140px;
+  z-index: 1000;
   overflow: hidden;
 }
 
-.context-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background-color: transparent;
+  color: var(--color-text);
+  font-size: 13px;
+  text-align: left;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
-.context-menu-item:hover {
+.menu-item:hover {
   background-color: var(--color-hover);
 }
 
-.context-menu-item--danger:hover {
-  background-color: rgba(239, 68, 68, 0.1);
-}
-
-.context-menu-item--danger .context-menu-text {
+.menu-item--danger {
   color: #ef4444;
 }
 
-.context-menu-icon {
-  font-size: 14px;
-}
-
-.context-menu-text {
-  font-size: 13px;
-  color: var(--color-text);
+.menu-item--danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
 }
 </style>
