@@ -11,6 +11,24 @@ const newAnswerContent = ref('')
 const isCreating = ref(false)
 const showSortMenu = ref(false)
 
+// 右键菜单状态
+const contextMenu = ref({
+  show: false,
+  x: 0,
+  y: 0,
+  questionId: '',
+  questionText: '',
+})
+
+// 删除确认对话框状态
+const showDeleteConfirm = ref(false)
+const isDeleting = ref(false)
+
+// 编辑对话框状态
+const showEditDialog = ref(false)
+const editQuestionText = ref('')
+const isEditing = ref(false)
+
 const sortFieldLabels: Record<QuestionSortField, string> = {
   createdAt: '创建时间',
   updatedAt: '更新时间',
@@ -48,6 +66,82 @@ function handleSortFieldChange(field: QuestionSortField) {
 
 function handleQuestionClick(questionId: string) {
   documentStore.setActiveQuestion(questionId)
+}
+
+// 右键菜单处理
+function handleContextMenu(event: MouseEvent, questionId: string) {
+  const question = documentStore.selectedDocument?.getQuestionById(questionId)
+  if (!question) return
+
+  contextMenu.value = {
+    show: true,
+    x: event.clientX,
+    y: event.clientY,
+    questionId,
+    questionText: question.text,
+  }
+}
+
+function closeContextMenu() {
+  contextMenu.value.show = false
+}
+
+// 删除功能
+function handleDeleteClick() {
+  closeContextMenu()
+  showDeleteConfirm.value = true
+}
+
+async function confirmDelete() {
+  if (!contextMenu.value.questionId) return
+
+  isDeleting.value = true
+  try {
+    await documentStore.deleteQuestionAndAnswer(contextMenu.value.questionId)
+    showDeleteConfirm.value = false
+    contextMenu.value.questionId = ''
+    contextMenu.value.questionText = ''
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+function cancelDelete() {
+  showDeleteConfirm.value = false
+  contextMenu.value.questionId = ''
+  contextMenu.value.questionText = ''
+}
+
+// 编辑功能
+function handleEditClick() {
+  closeContextMenu()
+  editQuestionText.value = contextMenu.value.questionText
+  showEditDialog.value = true
+}
+
+async function confirmEdit() {
+  if (!contextMenu.value.questionId || !editQuestionText.value.trim()) return
+
+  isEditing.value = true
+  try {
+    await documentStore.updateQuestionText(
+      contextMenu.value.questionId,
+      editQuestionText.value.trim(),
+    )
+    showEditDialog.value = false
+    editQuestionText.value = ''
+    contextMenu.value.questionId = ''
+    contextMenu.value.questionText = ''
+  } finally {
+    isEditing.value = false
+  }
+}
+
+function cancelEdit() {
+  showEditDialog.value = false
+  editQuestionText.value = ''
+  contextMenu.value.questionId = ''
+  contextMenu.value.questionText = ''
 }
 </script>
 
@@ -111,6 +205,7 @@ function handleQuestionClick(questionId: string) {
         :question="question"
         :is-active="question.id === documentStore.activeQuestionId"
         @click="handleQuestionClick"
+        @context-menu="handleContextMenu"
       />
     </div>
     <div v-if="!documentStore.selectedDocument" class="question-list__empty">
@@ -160,6 +255,76 @@ function handleQuestionClick(questionId: string) {
             @click="handleCreateQA"
           >
             {{ isCreating ? '创建中...' : '创建' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右键菜单 -->
+    <Teleport to="body">
+      <div
+        v-if="contextMenu.show"
+        class="context-menu-overlay"
+        @click="closeContextMenu"
+        @contextmenu.prevent
+      >
+        <div
+          class="context-menu"
+          :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
+          @click.stop
+        >
+          <div class="context-menu-item" @click="handleEditClick">
+            <span class="context-menu-icon">✏️</span>
+            <span class="context-menu-text">编辑问题</span>
+          </div>
+          <div class="context-menu-item context-menu-item--danger" @click="handleDeleteClick">
+            <span class="context-menu-icon">🗑️</span>
+            <span class="context-menu-text">删除问题</span>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 删除确认对话框 -->
+    <div v-if="showDeleteConfirm" class="dialog-overlay" @click.self="cancelDelete">
+      <div class="dialog dialog--confirm">
+        <h3>确认删除</h3>
+        <p class="confirm-message">
+          确定要删除问题 "<strong>{{ contextMenu.questionText }}</strong
+          >" 吗？<br />
+          对应的回答也将被一并删除。
+        </p>
+        <div class="dialog-actions">
+          <button class="btn-secondary" @click="cancelDelete">取消</button>
+          <button class="btn-danger" :disabled="isDeleting" @click="confirmDelete">
+            {{ isDeleting ? '删除中...' : '删除' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑问题对话框 -->
+    <div v-if="showEditDialog" class="dialog-overlay" @click.self="cancelEdit">
+      <div class="dialog">
+        <h3>编辑问题</h3>
+        <div class="dialog-field">
+          <label>问题文本</label>
+          <input
+            v-model="editQuestionText"
+            type="text"
+            placeholder="请输入问题"
+            class="dialog-input"
+            @keyup.enter="confirmEdit"
+          />
+        </div>
+        <div class="dialog-actions">
+          <button class="btn-secondary" @click="cancelEdit">取消</button>
+          <button
+            class="btn-primary"
+            :disabled="!editQuestionText.trim() || isEditing"
+            @click="confirmEdit"
+          >
+            {{ isEditing ? '保存中...' : '保存' }}
           </button>
         </div>
       </div>
@@ -452,5 +617,92 @@ function handleQuestionClick(questionId: string) {
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* 删除按钮 */
+.btn-danger {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 确认对话框 */
+.dialog--confirm {
+  max-width: 360px;
+}
+
+.confirm-message {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.confirm-message strong {
+  color: var(--color-primary);
+}
+
+/* 右键菜单 */
+.context-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+}
+
+.context-menu {
+  position: absolute;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  overflow: hidden;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+  background-color: var(--color-hover);
+}
+
+.context-menu-item--danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.context-menu-item--danger .context-menu-text {
+  color: #ef4444;
+}
+
+.context-menu-icon {
+  font-size: 14px;
+}
+
+.context-menu-text {
+  font-size: 13px;
+  color: var(--color-text);
 }
 </style>

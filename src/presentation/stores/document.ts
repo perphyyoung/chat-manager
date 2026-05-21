@@ -234,6 +234,62 @@ export const useDocumentStore = defineStore("document", () => {
     }
   }
 
+  // 删除问题及其对应的回答
+  async function deleteQuestionAndAnswer(questionId: string): Promise<void> {
+    if (!selectedDocumentId.value) {
+      throw new Error("No document selected");
+    }
+    const docId = selectedDocumentId.value;
+
+    // 获取当前文档
+    const doc = selectedDocument.value;
+    if (!doc) {
+      throw new Error("Document not found");
+    }
+
+    // 查找对应的回答
+    const answer = doc.getAnswerByQuestionId(questionId);
+
+    // 先删除回答（如果存在）
+    if (answer) {
+      await answerService.deleteAnswer(docId, answer.id);
+    }
+
+    // 再删除问题
+    await documentService.deleteQuestion(docId, questionId);
+
+    // 刷新当前文档数据
+    const updatedDoc = await documentService.getDocument(docId);
+    if (updatedDoc) {
+      const index = documents.value.findIndex((d) => d.id === docId);
+      if (index !== -1) {
+        documents.value.splice(index, 1, updatedDoc);
+      }
+    }
+
+    // 如果删除的是当前选中的问题，清空选中状态
+    if (activeQuestionId.value === questionId) {
+      activeQuestionId.value = null;
+    }
+  }
+
+  // 更新问题文本
+  async function updateQuestionText(questionId: string, newText: string): Promise<void> {
+    if (!selectedDocumentId.value) {
+      throw new Error("No document selected");
+    }
+    const docId = selectedDocumentId.value;
+    await documentService.updateQuestionText(docId, questionId, newText);
+    // 刷新当前文档数据
+    const updatedDoc = await documentService.getDocument(docId);
+    if (updatedDoc) {
+      const index = documents.value.findIndex((d) => d.id === docId);
+      if (index !== -1) {
+        documents.value.splice(index, 1, updatedDoc);
+      }
+    }
+  }
+
   // 排序相关函数
   function setDocumentSortField(field: SortField) {
     documentSortField.value = field;
@@ -317,6 +373,8 @@ export const useDocumentStore = defineStore("document", () => {
     deleteDocument,
     addQuestionAndAnswer,
     updateAnswerContent,
+    deleteQuestionAndAnswer,
+    updateQuestionText,
     setDocumentSortField,
     setDocumentSortOrder,
     toggleDocumentSortOrder,

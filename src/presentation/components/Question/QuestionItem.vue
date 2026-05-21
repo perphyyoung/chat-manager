@@ -14,15 +14,26 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   click: [questionId: string]
+  contextMenu: [event: MouseEvent, questionId: string]
 }>()
 
 function handleClick() {
   emit('click', props.question.id)
 }
+
+function handleContextMenu(event: MouseEvent) {
+  event.preventDefault()
+  emit('contextMenu', event, props.question.id)
+}
 </script>
 
 <template>
-  <div class="question-item" :class="{ 'question-item--active': isActive }" @click="handleClick">
+  <div
+    class="question-item"
+    :class="{ 'question-item--active': isActive }"
+    @click="handleClick"
+    @contextmenu="handleContextMenu"
+  >
     <div class="question-item__number">{{ question.order }}</div>
     <div class="question-item__text">{{ question.text }}</div>
   </div>

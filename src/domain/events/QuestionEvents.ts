@@ -39,3 +39,24 @@ export class QuestionsReorderedEvent extends DomainEvent {
     super();
   }
 }
+
+export class QuestionDeletedEvent extends DomainEvent {
+  readonly type = "QuestionDeleted";
+  constructor(
+    public readonly documentId: string,
+    public readonly questionId: string,
+  ) {
+    super();
+  }
+}
+
+export class QuestionUpdatedEvent extends DomainEvent {
+  readonly type = "QuestionUpdated";
+  constructor(
+    public readonly documentId: string,
+    public readonly questionId: string,
+    public readonly changes: { text?: string },
+  ) {
+    super();
+  }
+}

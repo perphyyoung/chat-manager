@@ -11,6 +11,8 @@ import {
 import {
   QuestionAddedEvent,
   QuestionActivatedEvent,
+  QuestionDeletedEvent,
+  QuestionUpdatedEvent,
 } from "../../domain/events/QuestionEvents";
 import { NotFoundError } from "../../domain/errors";
 
@@ -112,5 +114,38 @@ export class DocumentApplicationService {
 
   async getDocument(documentId: string): Promise<Document | null> {
     return this.documentRepo.findById(documentId);
+  }
+
+  async deleteQuestion(documentId: string, questionId: string): Promise<void> {
+    const document = await this.documentRepo.findById(documentId);
+    if (!document) {
+      throw new NotFoundError("Document", documentId);
+    }
+
+    document.removeQuestion(questionId);
+    await this.documentRepo.save(document);
+    this.eventBus.emit(new QuestionDeletedEvent(documentId, questionId));
+  }
+
+  async updateQuestionText(
+    documentId: string,
+    questionId: string,
+    newText: string,
+  ): Promise<void> {
+    const document = await this.documentRepo.findById(documentId);
+    if (!document) {
+      throw new NotFoundError("Document", documentId);
+    }
+
+    const question = document.getQuestionById(questionId);
+    if (!question) {
+      throw new NotFoundError("Question", questionId);
+    }
+
+    question.updateText(newText);
+    await this.documentRepo.save(document);
+    this.eventBus.emit(
+      new QuestionUpdatedEvent(documentId, questionId, { text: newText }),
+    );
   }
 }
