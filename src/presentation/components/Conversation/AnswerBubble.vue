@@ -285,12 +285,12 @@ function formatCode() {
         <div class="fullscreen-edit-container" @click.stop>
           <div class="fullscreen-edit-header">
             <span class="edit-title">编辑回答</span>
+            <div class="fullscreen-edit-actions">
+              <button class="btn-cancel" @click="cancelEdit">取消</button>
+              <button class="btn-save" @click="saveEdit">保存</button>
+            </div>
           </div>
           <div ref="editorContainer" class="fullscreen-edit-editor" />
-          <div class="fullscreen-edit-actions">
-            <button class="btn-cancel" @click="cancelEdit">取消</button>
-            <button class="btn-save" @click="saveEdit">保存</button>
-          </div>
         </div>
       </div>
     </Teleport>
@@ -468,7 +468,7 @@ function formatCode() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 12px 24px;
   border-bottom: 1px solid var(--color-border);
   background-color: var(--color-surface);
 }
@@ -635,18 +635,15 @@ function formatCode() {
 .fullscreen-edit-actions {
   display: flex;
   gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--color-border);
-  background-color: var(--color-surface);
-  justify-content: flex-end;
+  align-items: center;
 }
 
 .btn-save,
 .btn-cancel {
-  padding: 10px 24px;
+  padding: 8px 20px;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
