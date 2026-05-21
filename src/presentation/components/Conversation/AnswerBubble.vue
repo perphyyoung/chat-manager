@@ -9,7 +9,7 @@ import { markdown } from '@codemirror/lang-markdown'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { defaultKeymap } from '@codemirror/commands'
 import { languages } from '@codemirror/language-data'
-import { search, searchKeymap, highlightSelectionMatches } from '@codemirror/search'
+import { search, searchKeymap, highlightSelectionMatches, getSearchQuery } from '@codemirror/search'
 
 // 加载常用语言支持
 import 'prismjs/components/prism-javascript'
@@ -57,6 +57,10 @@ const contextMenu = ref({
   y: 0,
 })
 
+// 搜索状态
+const searchIndex = ref(0)
+const searchCount = ref(0)
+
 // 创建带语法高亮的 marked 实例
 const marked = new Marked(
   markedHighlight({
@@ -95,6 +99,60 @@ watch(isEditing, (newVal) => {
   }
 })
 
+// 更新搜索索引显示
+// 使用 CodeMirror 的 search query 来获取准确的匹配位置
+function updateSearchDisplay(view: EditorView) {
+  const searchPanel = view.dom.querySelector('.cm-search')
+  if (!searchPanel) return
+
+  const query = getSearchQuery(view.state)
+
+  if (query.search) {
+    const cursor = query.getCursor(view.state)
+    const matches: { from: number; to: number }[] = []
+
+    // 收集所有匹配位置
+    let result = cursor.next()
+    while (!result.done) {
+      matches.push({ from: result.value.from, to: result.value.to })
+      result = cursor.next()
+    }
+
+    searchCount.value = matches.length
+
+    if (searchCount.value > 0) {
+      // 获取当前选中的位置
+      const selection = view.state.selection.main
+      const cursorFrom = selection.from
+      const cursorTo = selection.to
+
+      // 查找当前选区对应的匹配索引
+      // 使用 from 位置来匹配，因为选区应该正好覆盖匹配文本
+      const currentIndex = matches.findIndex(
+        (match) => match.from === cursorFrom && match.to === cursorTo,
+      )
+
+      // 如果没精确匹配，尝试只匹配 from 位置（考虑边界情况）
+      if (currentIndex === -1) {
+        const approximateIndex = matches.findIndex(
+          (match) => cursorFrom >= match.from && cursorFrom <= match.to,
+        )
+        searchIndex.value = approximateIndex !== -1 ? approximateIndex + 1 : 1
+      } else {
+        searchIndex.value = currentIndex + 1
+      }
+    } else {
+      searchIndex.value = 0
+    }
+
+    searchPanel.setAttribute('data-search-index', `${searchIndex.value}/${searchCount.value}`)
+  } else {
+    searchIndex.value = 0
+    searchCount.value = 0
+    searchPanel.removeAttribute('data-search-index')
+  }
+}
+
 // 初始化 CodeMirror（使用官方搜索）
 function initCodeMirror() {
   if (!editorContainer.value) return
@@ -112,6 +170,8 @@ function initCodeMirror() {
           if (update.docChanged) {
             editContent.value = update.state.doc.toString()
           }
+          // 更新搜索索引显示
+          updateSearchDisplay(update.view)
         }),
         // 确保编辑器可聚焦
         EditorView.contentAttributes.of({ tabindex: '0' }),
@@ -437,7 +497,7 @@ function formatCode() {
   overflow: auto;
 }
 
-/* 搜索面板样式 - 悬浮在右上角 */
+/* 搜索面板样式 - 极简工业风悬浮胶囊 */
 .fullscreen-edit-editor :deep(.cm-panels) {
   position: absolute;
   top: 16px;
@@ -445,77 +505,131 @@ function formatCode() {
   left: auto;
   z-index: 100;
   width: auto;
-  min-width: 320px;
 }
 
 .fullscreen-edit-editor :deep(.cm-panels.cm-panels-top) {
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background: transparent;
+  border: none;
 }
 
+/* 搜索面板 - 胶囊容器 */
 .fullscreen-edit-editor :deep(.cm-search) {
   background-color: var(--color-surface);
-  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 6px 10px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  border-radius: 12px;
+  gap: 6px;
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
-/* 搜索框样式 */
-.fullscreen-edit-editor :deep(.cm-search input:first-of-type) {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+/* 搜索框样式 - 无边框内嵌 */
+.fullscreen-edit-editor :deep(.cm-search input) {
+  background-color: transparent;
+  border: none;
+  border-radius: 16px;
   padding: 6px 10px;
   color: var(--color-text);
   font-size: 14px;
-  width: 150px;
+  width: 100px;
   outline: none;
-  transition:
-    border-color 0.2s,
-    width 0.2s;
+  transition: width 0.2s ease;
 }
 
-.fullscreen-edit-editor :deep(.cm-search input:first-of-type):focus {
-  border-color: var(--color-primary);
-  width: 180px;
+.fullscreen-edit-editor :deep(.cm-search input):focus {
+  width: 130px;
 }
 
-/* 隐藏替换框 */
-.fullscreen-edit-editor :deep(.cm-search input:last-of-type) {
-  display: none;
-}
-
-/* 隐藏 replace、replace all 按钮 */
-.fullscreen-edit-editor
-  :deep(.cm-search button:not(:nth-child(2)):not(:nth-child(3)):not(:last-child)) {
-  display: none;
-}
-
-/* next、previous、close 按钮样式 */
+/* 按钮基础样式 - 圆形图标按钮 */
 .fullscreen-edit-editor :deep(.cm-search button) {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 5px 12px;
-  color: var(--color-text);
+  background-color: transparent;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--color-text-secondary);
   cursor: pointer;
-  font-size: 13px;
-  transition:
-    background-color 0.2s,
-    border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  font-size: 0; /* 隐藏原文字 */
 }
 
 .fullscreen-edit-editor :deep(.cm-search button:hover) {
   background-color: var(--color-hover);
-  border-color: var(--color-primary);
+  color: var(--color-text);
 }
 
-/* 隐藏所有选项标签（match case、regexp、whole word等） */
+/* next 按钮 - ▼ 下箭头 (根据官方源码，按钮使用 name="next") */
+.fullscreen-edit-editor :deep(.cm-search button[name='next']) {
+  font-size: 0;
+}
+
+.fullscreen-edit-editor :deep(.cm-search button[name='next'])::before {
+  content: '▼';
+  font-size: 10px;
+}
+
+/* previous 按钮 - ▲ 上箭头 (根据官方源码，按钮使用 name="prev") */
+.fullscreen-edit-editor :deep(.cm-search button[name='prev']) {
+  font-size: 0;
+}
+
+.fullscreen-edit-editor :deep(.cm-search button[name='prev'])::before {
+  content: '▲';
+  font-size: 10px;
+}
+
+/* 隐藏替换输入框 */
+.fullscreen-edit-editor :deep(.cm-search input[placeholder='Replace']) {
+  display: none !important;
+}
+
+/* 隐藏 Replace 按钮 */
+.fullscreen-edit-editor :deep(.cm-search button[name='replace']) {
+  display: none !important;
+}
+
+/* 隐藏 Replace All 按钮 */
+.fullscreen-edit-editor :deep(.cm-search button[name='replaceAll']) {
+  display: none !important;
+}
+
+/* 隐藏 select 按钮 (显示所有匹配) */
+.fullscreen-edit-editor :deep(.cm-search button[name='select']) {
+  display: none !important;
+}
+
+/* 隐藏所有选项标签和复选框 */
 .fullscreen-edit-editor :deep(.cm-search label) {
-  display: none;
+  display: none !important;
+}
+
+/* 隐藏 br 换行 */
+.fullscreen-edit-editor :deep(.cm-search br) {
+  display: none !important;
+}
+
+/* 搜索索引显示 - 胶囊标签 */
+.fullscreen-edit-editor :deep(.cm-search)::after {
+  content: attr(data-search-index);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-left: 4px;
+  margin-right: 28px;
+  min-width: 40px;
 }
 
 .fullscreen-edit-actions {
