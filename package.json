@@ -78,13 +78,15 @@
     "files": [
       "out/**/*"
     ],
+    "icon": "public/favicon.ico",
     "win": {
       "target": [
         {
           "target": "nsis",
           "arch": ["x64"]
         }
-      ]
+      ],
+      "icon": "public/favicon.ico"
     },
     "publish": null
   }
