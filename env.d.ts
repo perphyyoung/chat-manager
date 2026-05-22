@@ -45,6 +45,13 @@ interface ElectronAPI {
     save: (answerJson: string) => Promise<void>;
     delete: (id: string) => Promise<void>;
   };
+  question: {
+    softDelete: (documentId: string, questionId: string) => Promise<void>;
+    restore: (documentId: string, questionId: string) => Promise<void>;
+    getDeleted: (documentId: string) => Promise<Array<{ id: string; text: string; deletedAt: string }>>;
+    permanentlyDelete: (documentId: string, questionId: string) => Promise<void>;
+    clearDeleted: (documentId: string) => Promise<void>;
+  };
 }
 
 declare global {

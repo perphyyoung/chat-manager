@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useDocumentStore, type QuestionSortField } from '../../stores/document'
 import QuestionItem from './QuestionItem.vue'
+import RecycleBinModal from '../common/RecycleBinModal.vue'
 
 const documentStore = useDocumentStore()
 
@@ -10,6 +11,7 @@ const newQuestionText = ref('')
 const newAnswerContent = ref('')
 const isCreating = ref(false)
 const showSortMenu = ref(false)
+const showRecycleBin = ref(false)
 
 // 右键菜单状态
 const contextMenu = ref({
@@ -78,10 +80,10 @@ function handleContextMenu(event: MouseEvent, questionId: string) {
   }
 }
 
-// 删除问题 - 直接删除（问题回收站暂不实现）
+// 删除问题 - 软删除到回收站
 async function handleDeleteClick() {
   if (!contextMenu.value.questionId) return
-  await documentStore.deleteQuestionAndAnswer(contextMenu.value.questionId)
+  await documentStore.softDeleteQuestion(contextMenu.value.questionId)
   contextMenu.value.show = false
   contextMenu.value.questionId = ''
   contextMenu.value.questionText = ''
@@ -215,6 +217,45 @@ onUnmounted(() => {
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
     </button>
+
+    <!-- 回收站按钮 -->
+    <button
+      v-if="documentStore.selectedDocument"
+      class="fab fab--recycle"
+      title="回收站"
+      @click="
+        showRecycleBin = true;
+        documentStore.loadDeletedQuestions()
+      "
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path
+          d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+        ></path>
+      </svg>
+      <span v-if="documentStore.deletedQuestionCount > 0" class="recycle-badge">{{
+        documentStore.deletedQuestionCount
+      }}</span>
+    </button>
+
+    <!-- 回收站弹窗 -->
+    <RecycleBinModal
+      :show="showRecycleBin"
+      title="问题回收站"
+      :items="
+        documentStore.deletedQuestions.map((q) => ({
+          id: q.id,
+          name: q.text,
+          deletedAt: q.deletedAt,
+          type: 'question',
+        }))
+      "
+      @close="showRecycleBin = false"
+      @restore="(id) => documentStore.restoreQuestion(id)"
+      @delete="(id) => documentStore.permanentlyDeleteQuestion(id)"
+      @clear="documentStore.clearDeletedQuestions()"
+    />
 
     <!-- 添加问答对对话框 -->
     <div v-if="showAddDialog" class="dialog-overlay" @click.self="handleCancel">
@@ -471,6 +512,37 @@ onUnmounted(() => {
 .fab svg {
   width: 24px;
   height: 24px;
+}
+
+/* 回收站按钮 */
+.fab--recycle {
+  right: auto;
+  left: 20px;
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.fab--recycle:hover {
+  background-color: var(--color-hover);
+  color: var(--color-text);
+}
+
+.recycle-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 对话框样式 */

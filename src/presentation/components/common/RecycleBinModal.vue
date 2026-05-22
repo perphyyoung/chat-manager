@@ -27,6 +27,19 @@ const isRestoring = ref<string | null>(null)
 const isDeleting = ref<string | null>(null)
 const isClearing = ref(false)
 
+// 确认对话框状态
+const confirmDialog = ref<{
+  show: boolean
+  title: string
+  message: string
+  onConfirm: (() => void) | null
+}>({
+  show: false,
+  title: '',
+  message: '',
+  onConfirm: null,
+})
+
 const sortedItems = computed(() => {
   return [...props.items].sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime())
 })
@@ -44,25 +57,43 @@ async function handleRestore(itemId: string) {
   }
 }
 
-async function handleDelete(itemId: string) {
-  isDeleting.value = itemId
-  try {
-    emit('delete', itemId)
-  } finally {
-    isDeleting.value = null
+function handleDelete(itemId: string, itemName: string) {
+  confirmDialog.value = {
+    show: true,
+    title: '确认删除',
+    message: `确定要永久删除 "${itemName}" 吗？此操作不可恢复。`,
+    onConfirm: async () => {
+      isDeleting.value = itemId
+      try {
+        emit('delete', itemId)
+      } finally {
+        isDeleting.value = null
+      }
+      closeConfirmDialog()
+    },
   }
 }
 
-async function handleClear() {
-  if (!confirm('确定要清空回收站吗？所有项目将被永久删除，此操作不可恢复。')) {
-    return
+function handleClear() {
+  confirmDialog.value = {
+    show: true,
+    title: '确认清空',
+    message: '确定要清空回收站吗？所有项目将被永久删除，此操作不可恢复。',
+    onConfirm: async () => {
+      isClearing.value = true
+      try {
+        emit('clear')
+      } finally {
+        isClearing.value = false
+      }
+      closeConfirmDialog()
+    },
   }
-  isClearing.value = true
-  try {
-    emit('clear')
-  } finally {
-    isClearing.value = false
-  }
+}
+
+function closeConfirmDialog() {
+  confirmDialog.value.show = false
+  confirmDialog.value.onConfirm = null
 }
 
 function formatDate(date: Date): string {
@@ -88,17 +119,15 @@ function formatDate(date: Date): string {
           <div v-if="items.length === 0" class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              ></path>
             </svg>
             <p>回收站是空的</p>
           </div>
 
           <div v-else class="items-list">
-            <div
-              v-for="item in sortedItems"
-              :key="item.id"
-              class="recycle-item"
-            >
+            <div v-for="item in sortedItems" :key="item.id" class="recycle-item">
               <div class="item-info">
                 <span class="item-name">{{ item.name }}</span>
                 <span class="item-date">删除于 {{ formatDate(item.deletedAt) }}</span>
@@ -114,7 +143,7 @@ function formatDate(date: Date): string {
                 <button
                   class="btn-delete"
                   :disabled="isDeleting === item.id"
-                  @click="handleDelete(item.id)"
+                  @click="handleDelete(item.id, item.name)"
                 >
                   {{ isDeleting === item.id ? '删除中...' : '删除' }}
                 </button>
@@ -124,13 +153,26 @@ function formatDate(date: Date): string {
         </div>
 
         <div v-if="items.length > 0" class="modal-footer">
-          <button
-            class="btn-clear"
-            :disabled="isClearing"
-            @click="handleClear"
-          >
+          <button class="btn-clear" :disabled="isClearing" @click="handleClear">
             {{ isClearing ? '清空中...' : '清空回收站' }}
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 确认对话框 -->
+    <div
+      v-if="confirmDialog.show"
+      class="modal-overlay"
+      style="z-index: 10001"
+      @click.self="closeConfirmDialog"
+    >
+      <div class="confirm-dialog">
+        <h4>{{ confirmDialog.title }}</h4>
+        <p>{{ confirmDialog.message }}</p>
+        <div class="confirm-actions">
+          <button class="btn-secondary" @click="closeConfirmDialog">取消</button>
+          <button class="btn-danger" @click="confirmDialog.onConfirm?.()">确定</button>
         </div>
       </div>
     </div>
@@ -329,5 +371,65 @@ function formatDate(date: Date): string {
 .btn-clear:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* 确认对话框 */
+.confirm-dialog {
+  background-color: var(--color-surface);
+  border-radius: 12px;
+  padding: 20px;
+  width: 360px;
+  max-width: 90vw;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.confirm-dialog h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.confirm-dialog p {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-secondary {
+  padding: 8px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-hover);
+}
+
+.btn-danger {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
 }
 </style>

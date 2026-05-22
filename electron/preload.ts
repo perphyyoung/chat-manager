@@ -23,4 +23,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
     save: (answerJson: string) => ipcRenderer.invoke("answer:save", answerJson),
     delete: (id: string) => ipcRenderer.invoke("answer:delete", id),
   },
+  question: {
+    softDelete: (documentId: string, questionId: string) => ipcRenderer.invoke("question:softDelete", documentId, questionId),
+    restore: (documentId: string, questionId: string) => ipcRenderer.invoke("question:restore", documentId, questionId),
+    getDeleted: (documentId: string) => ipcRenderer.invoke("question:getDeleted", documentId),
+    permanentlyDelete: (documentId: string, questionId: string) => ipcRenderer.invoke("question:permanentlyDelete", documentId, questionId),
+    clearDeleted: (documentId: string) => ipcRenderer.invoke("question:clearDeleted", documentId),
+  },
 });

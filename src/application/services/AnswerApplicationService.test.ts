@@ -23,6 +23,11 @@ describe('AnswerApplicationService', () => {
       restore: vi.fn<() => Promise<void>>(),
       delete: vi.fn<() => Promise<void>>(),
       exists: vi.fn<() => Promise<boolean>>(),
+      softDeleteQuestion: vi.fn<() => Promise<void>>(),
+      restoreQuestion: vi.fn<() => Promise<void>>(),
+      getDeletedQuestions: vi.fn<() => Promise<Array<{ id: string; text: string; deletedAt: Date }>>>(),
+      permanentlyDeleteQuestion: vi.fn<() => Promise<void>>(),
+      clearDeletedQuestions: vi.fn<() => Promise<void>>(),
     }
 
     mockAnswerRepo = {

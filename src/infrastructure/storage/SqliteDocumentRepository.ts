@@ -87,4 +87,30 @@ export class SqliteDocumentRepository implements DocumentRepository {
   async exists(id: string): Promise<boolean> {
     return window.electronAPI.db.exists(id);
   }
+
+  // 问题软删除相关方法
+  async softDeleteQuestion(documentId: string, questionId: string): Promise<void> {
+    await window.electronAPI.question?.softDelete(documentId, questionId);
+  }
+
+  async restoreQuestion(documentId: string, questionId: string): Promise<void> {
+    await window.electronAPI.question?.restore(documentId, questionId);
+  }
+
+  async getDeletedQuestions(documentId: string): Promise<Array<{ id: string; text: string; deletedAt: Date }>> {
+    const questions = await window.electronAPI.question?.getDeleted(documentId) || [];
+    return questions.map((q: { id: string; text: string; deletedAt: string }) => ({
+      id: q.id,
+      text: q.text,
+      deletedAt: new Date(q.deletedAt),
+    }));
+  }
+
+  async permanentlyDeleteQuestion(documentId: string, questionId: string): Promise<void> {
+    await window.electronAPI.question?.permanentlyDelete(documentId, questionId);
+  }
+
+  async clearDeletedQuestions(documentId: string): Promise<void> {
+    await window.electronAPI.question?.clearDeleted(documentId);
+  }
 }

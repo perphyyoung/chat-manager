@@ -75,6 +75,9 @@ export const useDocumentStore = defineStore("document", () => {
   const selectedDocumentId = ref<string | null>(null);
   const activeQuestionId = ref<string | null>(null);
 
+  // 问题回收站状态
+  const deletedQuestions = ref<Array<{ id: string; text: string; deletedAt: Date }>>([]);
+
   // 从本地存储加载排序偏好
   const savedPreferences = loadSortPreferences();
 
@@ -382,6 +385,92 @@ export const useDocumentStore = defineStore("document", () => {
     await documentRepo.delete(documentId);
   }
 
+  // 问题回收站相关方法
+  async function softDeleteQuestion(questionId: string): Promise<void> {
+    if (!selectedDocumentId.value) {
+      throw new Error("No document selected");
+    }
+    const docId = selectedDocumentId.value;
+
+    // 获取当前文档
+    const doc = selectedDocument.value;
+    if (!doc) {
+      throw new Error("Document not found");
+    }
+
+    // 软删除问题
+    await documentRepo.softDeleteQuestion(docId, questionId);
+
+    // 刷新当前文档数据
+    const updatedDoc = await documentService.getDocument(docId);
+    if (updatedDoc) {
+      const index = documents.value.findIndex((d) => d.id === docId);
+      if (index !== -1) {
+        documents.value.splice(index, 1, updatedDoc);
+      }
+    }
+
+    // 如果删除的是当前选中的问题，清空选中状态
+    if (activeQuestionId.value === questionId) {
+      activeQuestionId.value = null;
+    }
+  }
+
+  async function loadDeletedQuestions(): Promise<void> {
+    if (!selectedDocumentId.value) {
+      deletedQuestions.value = [];
+      return;
+    }
+    deletedQuestions.value = await documentRepo.getDeletedQuestions(selectedDocumentId.value);
+  }
+
+  async function restoreQuestion(questionId: string): Promise<void> {
+    if (!selectedDocumentId.value) {
+      throw new Error("No document selected");
+    }
+    const docId = selectedDocumentId.value;
+
+    await documentRepo.restoreQuestion(docId, questionId);
+
+    // 刷新当前文档数据
+    const updatedDoc = await documentService.getDocument(docId);
+    if (updatedDoc) {
+      const index = documents.value.findIndex((d) => d.id === docId);
+      if (index !== -1) {
+        documents.value.splice(index, 1, updatedDoc);
+      }
+    }
+
+    // 刷新回收站列表
+    await loadDeletedQuestions();
+  }
+
+  async function permanentlyDeleteQuestion(questionId: string): Promise<void> {
+    if (!selectedDocumentId.value) {
+      throw new Error("No document selected");
+    }
+    const docId = selectedDocumentId.value;
+
+    await documentRepo.permanentlyDeleteQuestion(docId, questionId);
+
+    // 刷新回收站列表
+    await loadDeletedQuestions();
+  }
+
+  async function clearDeletedQuestions(): Promise<void> {
+    if (!selectedDocumentId.value) {
+      return;
+    }
+    const docId = selectedDocumentId.value;
+
+    await documentRepo.clearDeletedQuestions(docId);
+
+    // 刷新回收站列表
+    deletedQuestions.value = [];
+  }
+
+  const deletedQuestionCount = computed(() => deletedQuestions.value.length);
+
   return {
     documents,
     sortedDocuments,
@@ -414,6 +503,14 @@ export const useDocumentStore = defineStore("document", () => {
     loadDeletedDocuments,
     restoreDocument,
     permanentlyDeleteDocument,
+    // 问题回收站
+    deletedQuestions,
+    deletedQuestionCount,
+    softDeleteQuestion,
+    loadDeletedQuestions,
+    restoreQuestion,
+    permanentlyDeleteQuestion,
+    clearDeletedQuestions,
   };
 });
 

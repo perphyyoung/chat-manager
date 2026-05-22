@@ -218,6 +218,56 @@ ipcMain.handle("answer:delete", (_, id: string) => {
   database.prepare("DELETE FROM answers WHERE id = ?").run(id);
 });
 
+// Question IPC handlers (soft delete)
+ipcMain.handle("question:softDelete", (_, documentId: string, questionId: string) => {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  database
+    .prepare("UPDATE questions SET is_deleted = 1, deleted_at = ? WHERE id = ? AND document_id = ?")
+    .run(now, questionId, documentId);
+});
+
+ipcMain.handle("question:restore", (_, documentId: string, questionId: string) => {
+  const database = getDatabase();
+  database
+    .prepare("UPDATE questions SET is_deleted = 0, deleted_at = NULL WHERE id = ? AND document_id = ?")
+    .run(questionId, documentId);
+});
+
+ipcMain.handle("question:getDeleted", (_, documentId: string) => {
+  const database = getDatabase();
+  const questions = database
+    .prepare("SELECT id, text, deleted_at FROM questions WHERE document_id = ? AND is_deleted = 1 ORDER BY deleted_at DESC")
+    .all(documentId) as Array<{ id: string; text: string; deleted_at: string }>;
+  return questions.map((q) => ({
+    id: q.id,
+    text: q.text,
+    deletedAt: q.deleted_at,
+  }));
+});
+
+ipcMain.handle("question:permanentlyDelete", (_, documentId: string, questionId: string) => {
+  const database = getDatabase();
+  // 先删除关联的回答（级联删除）
+  database.prepare("DELETE FROM answers WHERE question_id = ?").run(questionId);
+  // 再删除问题
+  database.prepare("DELETE FROM questions WHERE id = ? AND document_id = ?").run(questionId, documentId);
+});
+
+ipcMain.handle("question:clearDeleted", (_, documentId: string) => {
+  const database = getDatabase();
+  // 获取所有已删除的问题ID
+  const deletedQuestions = database
+    .prepare("SELECT id FROM questions WHERE document_id = ? AND is_deleted = 1")
+    .all(documentId) as Array<{ id: string }>;
+  // 删除关联的回答
+  for (const q of deletedQuestions) {
+    database.prepare("DELETE FROM answers WHERE question_id = ?").run(q.id);
+  }
+  // 删除问题
+  database.prepare("DELETE FROM questions WHERE document_id = ? AND is_deleted = 1").run(documentId);
+});
+
 function openSettings() {
   const window = BrowserWindow.getFocusedWindow();
   if (window) {

@@ -86,7 +86,7 @@ TBD - created by archiving change ddd-architecture-refactor. Update Purpose afte
 #### Scenario: 回复问题
 
 - **WHEN** 调用 ConversationApplicationService.answerQuestion(documentId, questionId, answer)
-- **THEN** 创建答案消息关联到问题，添加到对话，保存
+- **THEN** 创建回答消息关联到问题，添加到对话，保存
 
 #### Scenario: 编辑消息
 
