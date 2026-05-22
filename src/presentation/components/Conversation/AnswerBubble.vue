@@ -380,10 +380,7 @@ function formatCode() {
 .answer-bubble__content :deep(a) {
   color: var(--color-primary);
   text-decoration: none;
-}
-
-.answer-bubble__content :deep(a:hover) {
-  text-decoration: underline;
+  pointer-events: none;
 }
 
 .answer-bubble__content :deep(blockquote) {
