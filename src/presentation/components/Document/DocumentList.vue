@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 import { useDocumentStore, type SortField } from '../../stores/document'
+import { Document } from '../../../domain/entities'
 import DocumentItem from './DocumentItem.vue'
 import DocumentContextMenu from './DocumentContextMenu.vue'
+import RecycleBinButton from '../common/RecycleBinButton.vue'
+import RecycleBinModal from '../common/RecycleBinModal.vue'
 
 const documentStore = useDocumentStore()
 
@@ -31,10 +34,8 @@ const editDocumentTitle = ref('')
 const isEditing = ref(false)
 const editingDocumentId = ref<string | null>(null)
 
-// 删除确认对话框状态
-const showDeleteConfirm = ref(false)
-const isDeleting = ref(false)
-const deletingDocumentId = ref<string | null>(null)
+// 回收站弹窗状态
+const showRecycleBin = ref(false)
 
 const sortFieldLabels: Record<SortField, string> = {
   createdAt: '创建时间',
@@ -121,30 +122,42 @@ function handleCancelEdit() {
   showEditDialog.value = false
 }
 
-// 删除文档
-function handleDeleteDocument() {
+// 删除文档 - 移入回收站
+async function handleDeleteDocument() {
   if (!contextMenu.value.documentId) return
-  deletingDocumentId.value = contextMenu.value.documentId
-  showDeleteConfirm.value = true
+  await documentStore.softDeleteDocument(contextMenu.value.documentId)
   closeContextMenu()
 }
 
-async function confirmDeleteDocument() {
-  if (!deletingDocumentId.value) return
+// 回收站相关方法
+const deletedDocuments = ref<Document[]>([])
 
-  isDeleting.value = true
-  try {
-    await documentStore.deleteDocument(deletingDocumentId.value)
-    showDeleteConfirm.value = false
-    deletingDocumentId.value = null
-  } finally {
-    isDeleting.value = false
-  }
+async function openRecycleBin() {
+  deletedDocuments.value = await documentStore.loadDeletedDocuments()
+  showRecycleBin.value = true
 }
 
-function cancelDeleteDocument() {
-  showDeleteConfirm.value = false
-  deletingDocumentId.value = null
+function closeRecycleBin() {
+  showRecycleBin.value = false
+}
+
+async function handleRestore(documentId: string) {
+  await documentStore.restoreDocument(documentId)
+  // 刷新列表
+  deletedDocuments.value = await documentStore.loadDeletedDocuments()
+  await documentStore.loadDocuments()
+}
+
+async function handlePermanentDelete(documentId: string) {
+  await documentStore.permanentlyDeleteDocument(documentId)
+  deletedDocuments.value = await documentStore.loadDeletedDocuments()
+}
+
+async function handleClearRecycleBin() {
+  for (const doc of deletedDocuments.value) {
+    await documentStore.permanentlyDeleteDocument(doc.id)
+  }
+  deletedDocuments.value = []
 }
 </script>
 
@@ -279,19 +292,23 @@ function cancelDeleteDocument() {
       </div>
     </div>
 
-    <!-- 删除确认对话框 -->
-    <div v-if="showDeleteConfirm" class="dialog-overlay" @click.self="cancelDeleteDocument">
-      <div class="dialog dialog--confirm">
-        <h3>确认删除</h3>
-        <p class="confirm-message">确定要删除这个文档吗？此操作不可恢复。</p>
-        <div class="dialog-actions">
-          <button class="btn-secondary" @click="cancelDeleteDocument">取消</button>
-          <button class="btn-danger" :disabled="isDeleting" @click="confirmDeleteDocument">
-            {{ isDeleting ? '删除中...' : '删除' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- 回收站按钮 -->
+    <RecycleBinButton
+      :count="deletedDocuments.length"
+      title="文档回收站"
+      @click="openRecycleBin"
+    />
+
+    <!-- 回收站弹窗 -->
+    <RecycleBinModal
+      :show="showRecycleBin"
+      title="文档回收站"
+      :items="deletedDocuments.map(doc => ({ id: doc.id, name: doc.title, deletedAt: doc.updatedAt, type: 'document' as const }))"
+      @close="closeRecycleBin"
+      @restore="handleRestore"
+      @delete="handlePermanentDelete"
+      @clear="handleClearRecycleBin"
+    />
   </div>
 </template>
 

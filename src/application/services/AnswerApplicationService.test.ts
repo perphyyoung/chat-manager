@@ -16,8 +16,11 @@ describe('AnswerApplicationService', () => {
   beforeEach(() => {
     mockDocumentRepo = {
       findAll: vi.fn<() => Promise<Document[]>>(),
+      findAllDeleted: vi.fn<() => Promise<Document[]>>(),
       findById: vi.fn<() => Promise<Document | null>>(),
       save: vi.fn<() => Promise<void>>(),
+      softDelete: vi.fn<() => Promise<void>>(),
+      restore: vi.fn<() => Promise<void>>(),
       delete: vi.fn<() => Promise<void>>(),
       exists: vi.fn<() => Promise<boolean>>(),
     }

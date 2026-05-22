@@ -8,6 +8,8 @@ interface DocRow {
   title: string;
   created_at: string;
   updated_at: string;
+  is_deleted?: number;
+  deleted_at?: string;
 }
 
 interface QuestionRow {
@@ -17,6 +19,8 @@ interface QuestionRow {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  is_deleted?: number;
+  deleted_at?: string;
 }
 
 interface AnswerRow {
@@ -46,9 +50,12 @@ ipcMain.handle("log-to-file", (_, level: string, message: string) => {
 });
 
 // Document IPC handlers
-ipcMain.handle("db:findAll", () => {
+ipcMain.handle("db:findAll", (_, options?: { isDeleted?: boolean }) => {
   const database = getDatabase();
-  const docs = database.prepare("SELECT * FROM documents ORDER BY updated_at DESC").all() as DocRow[];
+  const isDeleted = options?.isDeleted ? 1 : 0;
+  const docs = database
+    .prepare("SELECT * FROM documents WHERE is_deleted = ? ORDER BY updated_at DESC")
+    .all(isDeleted) as DocRow[];
 
   return docs.map((doc) => {
     const questions = database
@@ -62,12 +69,15 @@ ipcMain.handle("db:findAll", () => {
       title: doc.title,
       createdAt: doc.created_at,
       updatedAt: doc.updated_at,
+      deletedAt: doc.deleted_at,
       questions: questions.map((q) => ({
         id: q.id,
         text: q.text,
         order: q.sort_order,
         createdAt: q.created_at,
         updatedAt: q.updated_at,
+        isDeleted: q.is_deleted,
+        deletedAt: q.deleted_at,
       })),
       answers: answers.map((a) => ({
         id: a.id,
@@ -99,12 +109,15 @@ ipcMain.handle("db:findById", (_, id: string) => {
     title: doc.title,
     createdAt: doc.created_at,
     updatedAt: doc.updated_at,
+    deletedAt: doc.deleted_at,
     questions: questions.map((q) => ({
       id: q.id,
       text: q.text,
       order: q.sort_order,
       createdAt: q.created_at,
       updatedAt: q.updated_at,
+      isDeleted: q.is_deleted,
+      deletedAt: q.deleted_at,
     })),
     answers: answers.map((a) => ({
       id: a.id,
@@ -124,15 +137,15 @@ ipcMain.handle("db:save", (_, documentJson: string) => {
   const transaction = database.transaction(() => {
     database
       .prepare(
-        "INSERT INTO documents (id, title, created_at, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at",
+        "INSERT INTO documents (id, title, created_at, updated_at, is_deleted, deleted_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at",
       )
-      .run(doc.id, doc.title, doc.createdAt ?? now, doc.updatedAt ?? now);
+      .run(doc.id, doc.title, doc.createdAt ?? now, doc.updatedAt ?? now, 0, null);
 
     database.prepare("DELETE FROM questions WHERE document_id = ?").run(doc.id);
     for (const q of doc.questions ?? []) {
       database
-        .prepare("INSERT INTO questions (id, document_id, text, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)")
-        .run(q.id, doc.id, q.text, q.order, q.createdAt ?? now, q.updatedAt ?? now);
+        .prepare("INSERT INTO questions (id, document_id, text, sort_order, created_at, updated_at, is_deleted, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+        .run(q.id, doc.id, q.text, q.order, q.createdAt ?? now, q.updatedAt ?? now, q.isDeleted ? 1 : 0, q.deletedAt ?? null);
     }
 
     database.prepare("DELETE FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)").run(doc.id);
@@ -148,6 +161,21 @@ ipcMain.handle("db:save", (_, documentJson: string) => {
   transaction();
 });
 
+ipcMain.handle("db:softDelete", (_, id: string) => {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  database
+    .prepare("UPDATE documents SET is_deleted = 1, deleted_at = ? WHERE id = ?")
+    .run(now, id);
+});
+
+ipcMain.handle("db:restore", (_, id: string) => {
+  const database = getDatabase();
+  database
+    .prepare("UPDATE documents SET is_deleted = 0, deleted_at = NULL WHERE id = ?")
+    .run(id);
+});
+
 ipcMain.handle("db:delete", (_, id: string) => {
   const database = getDatabase();
   database.prepare("DELETE FROM documents WHERE id = ?").run(id);
@@ -155,7 +183,7 @@ ipcMain.handle("db:delete", (_, id: string) => {
 
 ipcMain.handle("db:exists", (_, id: string) => {
   const database = getDatabase();
-  const row = database.prepare("SELECT 1 FROM documents WHERE id = ?").get(id) as ExistsRow | undefined;
+  const row = database.prepare("SELECT 1 FROM documents WHERE id = ? AND is_deleted = 0").get(id) as ExistsRow | undefined;
   return !!row;
 });
 

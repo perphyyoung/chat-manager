@@ -6,6 +6,8 @@ interface QuestionDTO {
   order: number;
   createdAt: string;
   updatedAt: string;
+  isDeleted?: number;
+  deletedAt?: string;
 }
 
 interface AnswerDTO {
@@ -21,6 +23,7 @@ interface DocumentDTO {
   title: string;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
   questions: QuestionDTO[];
   answers: AnswerDTO[];
 }
@@ -29,9 +32,11 @@ interface ElectronAPI {
   onOpenSettings: (callback: () => void) => void;
   logToFile: (level: string, message: string) => void;
   db: {
-    findAll: () => Promise<DocumentDTO[]>;
+    findAll: (options?: { isDeleted?: boolean }) => Promise<DocumentDTO[]>;
     findById: (id: string) => Promise<DocumentDTO | null>;
     save: (documentJson: string) => Promise<void>;
+    softDelete: (id: string) => Promise<void>;
+    restore: (id: string) => Promise<void>;
     delete: (id: string) => Promise<void>;
     exists: (id: string) => Promise<boolean>;
   };

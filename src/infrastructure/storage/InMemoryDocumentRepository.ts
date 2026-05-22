@@ -1,19 +1,58 @@
 import type { DocumentRepository } from "../../domain/repositories";
 import type { Document } from "../../domain/entities";
 
+interface StoredDocument {
+  document: Document;
+  isDeleted: boolean;
+  deletedAt?: Date;
+}
+
 export class InMemoryDocumentRepository implements DocumentRepository {
-  private documents: Map<string, Document> = new Map();
+  private documents: Map<string, StoredDocument> = new Map();
 
   async findAll(): Promise<Document[]> {
-    return Array.from(this.documents.values());
+    return Array.from(this.documents.values())
+      .filter((item) => !item.isDeleted)
+      .map((item) => item.document);
+  }
+
+  async findAllDeleted(): Promise<Document[]> {
+    return Array.from(this.documents.values())
+      .filter((item) => item.isDeleted)
+      .map((item) => item.document);
   }
 
   async findById(id: string): Promise<Document | null> {
-    return this.documents.get(id) ?? null;
+    const item = this.documents.get(id);
+    if (!item || item.isDeleted) {
+      return null;
+    }
+    return item.document;
   }
 
   async save(document: Document): Promise<void> {
-    this.documents.set(document.id, document);
+    const existing = this.documents.get(document.id);
+    this.documents.set(document.id, {
+      document,
+      isDeleted: existing?.isDeleted ?? false,
+      deletedAt: existing?.deletedAt,
+    });
+  }
+
+  async softDelete(id: string): Promise<void> {
+    const item = this.documents.get(id);
+    if (item) {
+      item.isDeleted = true;
+      item.deletedAt = new Date();
+    }
+  }
+
+  async restore(id: string): Promise<void> {
+    const item = this.documents.get(id);
+    if (item) {
+      item.isDeleted = false;
+      item.deletedAt = undefined;
+    }
   }
 
   async delete(id: string): Promise<void> {
@@ -21,7 +60,8 @@ export class InMemoryDocumentRepository implements DocumentRepository {
   }
 
   async exists(id: string): Promise<boolean> {
-    return this.documents.has(id);
+    const item = this.documents.get(id);
+    return item !== undefined && !item.isDeleted;
   }
 
   clear(): void {

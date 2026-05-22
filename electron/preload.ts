@@ -10,9 +10,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("log-to-file", level, message);
   },
   db: {
-    findAll: () => ipcRenderer.invoke("db:findAll"),
+    findAll: (options?: { isDeleted?: boolean }) => ipcRenderer.invoke("db:findAll", options),
     findById: (id: string) => ipcRenderer.invoke("db:findById", id),
     save: (documentJson: string) => ipcRenderer.invoke("db:save", documentJson),
+    softDelete: (id: string) => ipcRenderer.invoke("db:softDelete", id),
+    restore: (id: string) => ipcRenderer.invoke("db:restore", id),
     delete: (id: string) => ipcRenderer.invoke("db:delete", id),
     exists: (id: string) => ipcRenderer.invoke("db:exists", id),
   },

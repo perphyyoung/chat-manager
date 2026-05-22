@@ -20,10 +20,6 @@ const contextMenu = ref({
   questionText: '',
 })
 
-// 删除确认对话框状态
-const showDeleteConfirm = ref(false)
-const isDeleting = ref(false)
-
 // 编辑对话框状态
 const showEditDialog = ref(false)
 const editQuestionText = ref('')
@@ -82,28 +78,11 @@ function handleContextMenu(event: MouseEvent, questionId: string) {
   }
 }
 
-// 删除功能
-function handleDeleteClick() {
-  contextMenu.value.show = false
-  showDeleteConfirm.value = true
-}
-
-async function confirmDelete() {
+// 删除问题 - 直接删除（问题回收站暂不实现）
+async function handleDeleteClick() {
   if (!contextMenu.value.questionId) return
-
-  isDeleting.value = true
-  try {
-    await documentStore.deleteQuestionAndAnswer(contextMenu.value.questionId)
-    showDeleteConfirm.value = false
-    contextMenu.value.questionId = ''
-    contextMenu.value.questionText = ''
-  } finally {
-    isDeleting.value = false
-  }
-}
-
-function cancelDelete() {
-  showDeleteConfirm.value = false
+  await documentStore.deleteQuestionAndAnswer(contextMenu.value.questionId)
+  contextMenu.value.show = false
   contextMenu.value.questionId = ''
   contextMenu.value.questionText = ''
 }
@@ -284,24 +263,6 @@ onUnmounted(() => {
         <button class="menu-item menu-item--danger" @click="handleDeleteClick">删除问题</button>
       </div>
     </Teleport>
-
-    <!-- 删除确认对话框 -->
-    <div v-if="showDeleteConfirm" class="dialog-overlay" @click.self="cancelDelete">
-      <div class="dialog dialog--confirm">
-        <h3>确认删除</h3>
-        <p class="confirm-message">
-          确定要删除问题 "<strong>{{ contextMenu.questionText }}</strong
-          >" 吗？<br />
-          对应的回答也将被一并删除。
-        </p>
-        <div class="dialog-actions">
-          <button class="btn-secondary" @click="cancelDelete">取消</button>
-          <button class="btn-danger" :disabled="isDeleting" @click="confirmDelete">
-            {{ isDeleting ? '删除中...' : '删除' }}
-          </button>
-        </div>
-      </div>
-    </div>
 
     <!-- 编辑问题对话框 -->
     <div v-if="showEditDialog" class="dialog-overlay" @click.self="cancelEdit">

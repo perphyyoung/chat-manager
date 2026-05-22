@@ -353,6 +353,35 @@ export const useDocumentStore = defineStore("document", () => {
     });
   }
 
+  // 回收站相关方法（使用数据库软删除）
+  async function softDeleteDocument(documentId: string) {
+    await documentRepo.softDelete(documentId);
+
+    // 从文档列表中移除
+    const index = documents.value.findIndex((d) => d.id === documentId);
+    if (index !== -1) {
+      documents.value.splice(index, 1);
+    }
+
+    // 如果删除的是当前选中的文档，清空选中状态
+    if (selectedDocumentId.value === documentId) {
+      selectedDocumentId.value = null;
+      activeQuestionId.value = null;
+    }
+  }
+
+  async function loadDeletedDocuments(): Promise<Document[]> {
+    return documentRepo.findAllDeleted();
+  }
+
+  async function restoreDocument(documentId: string) {
+    await documentRepo.restore(documentId);
+  }
+
+  async function permanentlyDeleteDocument(documentId: string) {
+    await documentRepo.delete(documentId);
+  }
+
   return {
     documents,
     sortedDocuments,
@@ -381,6 +410,10 @@ export const useDocumentStore = defineStore("document", () => {
     setQuestionSortField,
     setQuestionSortOrder,
     toggleQuestionSortOrder,
+    softDeleteDocument,
+    loadDeletedDocuments,
+    restoreDocument,
+    permanentlyDeleteDocument,
   };
 });
 

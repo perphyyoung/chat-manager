@@ -7,6 +7,8 @@ interface QuestionDTO {
   order: number;
   createdAt: string;
   updatedAt: string;
+  isDeleted?: number;
+  deletedAt?: string;
 }
 
 interface AnswerDTO {
@@ -22,14 +24,18 @@ interface DocumentDTO {
   title: string;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
   questions: QuestionDTO[];
   answers: AnswerDTO[];
 }
 
 function toDocument(stored: DocumentDTO): Document {
-  const questions = (stored.questions ?? []).map(
-    (q) => new Question(q.id, q.text, q.order, new Date(q.createdAt)),
-  );
+  // 只过滤掉已删除的问题
+  const questions = (stored.questions ?? [])
+    .filter((q) => !q.isDeleted)
+    .map(
+      (q) => new Question(q.id, q.text, q.order, new Date(q.createdAt)),
+    );
   const answers = (stored.answers ?? []).map(
     (a) => new Answer(a.id, a.questionId, a.content, new Date(a.createdAt)),
   );
@@ -45,7 +51,12 @@ function toDocument(stored: DocumentDTO): Document {
 
 export class SqliteDocumentRepository implements DocumentRepository {
   async findAll(): Promise<Document[]> {
-    const stored = await window.electronAPI.db.findAll();
+    const stored = await window.electronAPI.db.findAll({ isDeleted: false });
+    return stored.map((d: DocumentDTO) => toDocument(d));
+  }
+
+  async findAllDeleted(): Promise<Document[]> {
+    const stored = await window.electronAPI.db.findAll({ isDeleted: true });
     return stored.map((d: DocumentDTO) => toDocument(d));
   }
 
@@ -59,6 +70,14 @@ export class SqliteDocumentRepository implements DocumentRepository {
 
   async save(document: Document): Promise<void> {
     await window.electronAPI.db.save(JSON.stringify(document.toJSON()));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await window.electronAPI.db.softDelete(id);
+  }
+
+  async restore(id: string): Promise<void> {
+    await window.electronAPI.db.restore(id);
   }
 
   async delete(id: string): Promise<void> {
