@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import ConfirmDialog from './ConfirmDialog.vue'
 
 interface RecycleBinItem {
   id: string
@@ -32,12 +33,14 @@ const confirmDialog = ref<{
   show: boolean
   title: string
   message: string
-  onConfirm: (() => void) | null
+  pendingItemId: string | null
+  pendingAction: 'delete' | 'clear' | null
 }>({
   show: false,
   title: '',
   message: '',
-  onConfirm: null,
+  pendingItemId: null,
+  pendingAction: null,
 })
 
 const sortedItems = computed(() => {
@@ -62,15 +65,8 @@ function handleDelete(itemId: string, itemName: string) {
     show: true,
     title: '确认删除',
     message: `确定要永久删除 "${itemName}" 吗？此操作不可恢复。`,
-    onConfirm: async () => {
-      isDeleting.value = itemId
-      try {
-        emit('delete', itemId)
-      } finally {
-        isDeleting.value = null
-      }
-      closeConfirmDialog()
-    },
+    pendingItemId: itemId,
+    pendingAction: 'delete',
   }
 }
 
@@ -79,21 +75,37 @@ function handleClear() {
     show: true,
     title: '确认清空',
     message: '确定要清空回收站吗？所有项目将被永久删除，此操作不可恢复。',
-    onConfirm: async () => {
-      isClearing.value = true
-      try {
-        emit('clear')
-      } finally {
-        isClearing.value = false
-      }
-      closeConfirmDialog()
-    },
+    pendingItemId: null,
+    pendingAction: 'clear',
   }
 }
 
 function closeConfirmDialog() {
   confirmDialog.value.show = false
-  confirmDialog.value.onConfirm = null
+  confirmDialog.value.pendingItemId = null
+  confirmDialog.value.pendingAction = null
+}
+
+async function onConfirmDelete() {
+  const itemId = confirmDialog.value.pendingItemId
+  if (!itemId) return
+  isDeleting.value = itemId
+  try {
+    emit('delete', itemId)
+  } finally {
+    isDeleting.value = null
+  }
+  closeConfirmDialog()
+}
+
+async function onConfirmClear() {
+  isClearing.value = true
+  try {
+    emit('clear')
+  } finally {
+    isClearing.value = false
+  }
+  closeConfirmDialog()
 }
 
 function formatDate(date: Date): string {
@@ -161,21 +173,13 @@ function formatDate(date: Date): string {
     </div>
 
     <!-- 确认对话框 -->
-    <div
-      v-if="confirmDialog.show"
-      class="modal-overlay"
-      style="z-index: 10001"
-      @click.self="closeConfirmDialog"
-    >
-      <div class="confirm-dialog">
-        <h4>{{ confirmDialog.title }}</h4>
-        <p>{{ confirmDialog.message }}</p>
-        <div class="confirm-actions">
-          <button class="btn-secondary" @click="closeConfirmDialog">取消</button>
-          <button class="btn-danger" @click="confirmDialog.onConfirm?.()">确定</button>
-        </div>
-      </div>
-    </div>
+    <ConfirmDialog
+      :show="confirmDialog.show"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      @confirm="confirmDialog.pendingAction === 'delete' ? onConfirmDelete() : onConfirmClear()"
+      @cancel="closeConfirmDialog"
+    />
   </Teleport>
 </template>
 
@@ -371,65 +375,5 @@ function formatDate(date: Date): string {
 .btn-clear:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-/* 确认对话框 */
-.confirm-dialog {
-  background-color: var(--color-surface);
-  border-radius: 12px;
-  padding: 20px;
-  width: 360px;
-  max-width: 90vw;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.confirm-dialog h4 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.confirm-dialog p {
-  margin: 0 0 20px 0;
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-
-.confirm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.btn-secondary {
-  padding: 8px 16px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background-color: transparent;
-  color: var(--color-text);
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-secondary:hover {
-  background-color: var(--color-hover);
-}
-
-.btn-danger {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  background-color: #ef4444;
-  color: white;
-  font-size: 14px;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.btn-danger:hover {
-  opacity: 0.9;
 }
 </style>
