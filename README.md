@@ -88,3 +88,7 @@ pnpm format
 ## 自定义配置
 
 See [Vite Configuration Reference](https://vite.dev/config/).
+
+## License
+
+GPL-3.0
