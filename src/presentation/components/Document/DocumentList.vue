@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useDocumentStore, type SortField } from '../../stores/document'
 import DocumentItem from './DocumentItem.vue'
 import DocumentContextMenu from './DocumentContextMenu.vue'
@@ -10,6 +10,7 @@ const showAddDialog = ref(false)
 const newDocumentTitle = ref('')
 const isCreating = ref(false)
 const showSortMenu = ref(false)
+const titleInputRef = ref<HTMLInputElement | null>(null)
 
 // 右键菜单状态
 const contextMenu = ref<{
@@ -29,6 +30,11 @@ const showEditDialog = ref(false)
 const editDocumentTitle = ref('')
 const isEditing = ref(false)
 const editingDocumentId = ref<string | null>(null)
+
+// 删除确认对话框状态
+const showDeleteConfirm = ref(false)
+const isDeleting = ref(false)
+const deletingDocumentId = ref<string | null>(null)
 
 const sortFieldLabels: Record<SortField, string> = {
   createdAt: '创建时间',
@@ -53,6 +59,15 @@ function handleCancel() {
   newDocumentTitle.value = ''
   showAddDialog.value = false
 }
+
+// 对话框打开时自动聚焦到输入框
+watch(showAddDialog, (newValue) => {
+  if (newValue) {
+    nextTick(() => {
+      titleInputRef.value?.focus()
+    })
+  }
+})
 
 function handleSortFieldChange(field: SortField) {
   documentStore.setDocumentSortField(field)
@@ -107,12 +122,29 @@ function handleCancelEdit() {
 }
 
 // 删除文档
-async function handleDeleteDocument() {
+function handleDeleteDocument() {
   if (!contextMenu.value.documentId) return
-  if (confirm('确定要删除这个文档吗？此操作不可恢复。')) {
-    await documentStore.deleteDocument(contextMenu.value.documentId)
-  }
+  deletingDocumentId.value = contextMenu.value.documentId
+  showDeleteConfirm.value = true
   closeContextMenu()
+}
+
+async function confirmDeleteDocument() {
+  if (!deletingDocumentId.value) return
+
+  isDeleting.value = true
+  try {
+    await documentStore.deleteDocument(deletingDocumentId.value)
+    showDeleteConfirm.value = false
+    deletingDocumentId.value = null
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+function cancelDeleteDocument() {
+  showDeleteConfirm.value = false
+  deletingDocumentId.value = null
 }
 </script>
 
@@ -203,6 +235,7 @@ async function handleDeleteDocument() {
       <div class="dialog">
         <h3>添加文档</h3>
         <input
+          ref="titleInputRef"
           v-model="newDocumentTitle"
           type="text"
           placeholder="请输入文档标题"
@@ -241,6 +274,20 @@ async function handleDeleteDocument() {
             @click="handleUpdateDocument"
           >
             {{ isEditing ? '保存中...' : '保存' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 删除确认对话框 -->
+    <div v-if="showDeleteConfirm" class="dialog-overlay" @click.self="cancelDeleteDocument">
+      <div class="dialog dialog--confirm">
+        <h3>确认删除</h3>
+        <p class="confirm-message">确定要删除这个文档吗？此操作不可恢复。</p>
+        <div class="dialog-actions">
+          <button class="btn-secondary" @click="cancelDeleteDocument">取消</button>
+          <button class="btn-danger" :disabled="isDeleting" @click="confirmDeleteDocument">
+            {{ isDeleting ? '删除中...' : '删除' }}
           </button>
         </div>
       </div>
@@ -498,5 +545,38 @@ async function handleDeleteDocument() {
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* 删除按钮 */
+.btn-danger {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 确认对话框 */
+.dialog--confirm {
+  max-width: 360px;
+}
+
+.confirm-message {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.6;
 }
 </style>
