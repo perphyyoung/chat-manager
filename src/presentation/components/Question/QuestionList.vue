@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useDocumentStore, type QuestionSortField } from '../../stores/document'
 import QuestionItem from './QuestionItem.vue'
 
@@ -139,6 +139,22 @@ function cancelEdit() {
   contextMenu.value.questionId = ''
   contextMenu.value.questionText = ''
 }
+
+// 点击外部关闭右键菜单
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  if (!target.closest('.context-menu')) {
+    contextMenu.value.show = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <template>
