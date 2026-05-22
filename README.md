@@ -85,6 +85,36 @@ pnpm lint
 pnpm format
 ```
 
+## 数据目录
+
+应用数据存储在不同位置，取决于运行环境：
+
+### 开发环境
+
+数据存储在项目根目录下：
+
+```
+项目根目录/
+└── py-data/
+    └── chat-manager.db    # SQLite 数据库
+```
+
+### 生产环境
+
+数据存储在用户数据目录：
+
+| 操作系统 | 数据路径 |
+|----------|----------|
+| Windows | `%APPDATA%/Chat Manager/py-data/` |
+| macOS | `~/Library/Application Support/Chat Manager/py-data/` |
+| Linux | `~/.config/Chat Manager/py-data/` |
+
+### 数据备份与迁移
+
+- **重装应用**：生产环境数据不会丢失（存储在用户目录）
+- **清理开发数据**：直接删除 `py-data` 文件夹
+- **备份数据**：复制对应环境的 `py-data` 文件夹
+
 ## 自定义配置
 
 See [Vite Configuration Reference](https://vite.dev/config/).

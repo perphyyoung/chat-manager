@@ -1,14 +1,43 @@
 import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
+import { app } from "electron";
 
 const DB_DIR = "py-data";
 const DB_FILE = "chat-manager.db";
 
 let db: Database.Database | null = null;
+let dbDir: string | null = null;
+
+/**
+ * 获取数据库目录路径
+ * 开发环境：使用项目根目录下的 py-data（避免污染生产数据）
+ * 生产环境：使用 Electron 的 userData 目录（%APPDATA%/Chat Manager/py-data）
+ */
+function getDbDir(): string {
+  if (dbDir) {
+    return dbDir;
+  }
+
+  // 通过 process.execPath 判断是否为开发环境
+  // 开发环境：execPath 指向 node_modules/electron/dist/electron.exe
+  // 生产环境：execPath 指向安装目录的 Chat Manager.exe
+  const isDev = process.execPath.includes("node_modules") || process.execPath.includes("electron");
+
+  if (isDev) {
+    // 开发环境：使用项目根目录
+    dbDir = path.join(process.cwd(), DB_DIR);
+  } else {
+    // 生产环境：使用 userData 目录
+    const userData = app.getPath("userData");
+    dbDir = path.join(userData, DB_DIR);
+  }
+
+  return dbDir;
+}
 
 export function getDbPath(): string {
-  return path.join(process.cwd(), DB_DIR, DB_FILE);
+  return path.join(getDbDir(), DB_FILE);
 }
 
 export function getDatabase(): Database.Database {
@@ -16,7 +45,7 @@ export function getDatabase(): Database.Database {
     return db;
   }
 
-  const dbDir = path.join(process.cwd(), DB_DIR);
+  const dbDir = getDbDir();
   if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
   }
