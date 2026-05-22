@@ -171,9 +171,10 @@ ipcMain.handle("db:softDelete", (_, id: string) => {
 
 ipcMain.handle("db:restore", (_, id: string) => {
   const database = getDatabase();
+  const now = new Date().toISOString();
   database
-    .prepare("UPDATE documents SET is_deleted = 0, deleted_at = NULL WHERE id = ?")
-    .run(id);
+    .prepare("UPDATE documents SET is_deleted = 0, deleted_at = NULL, updated_at = ? WHERE id = ?")
+    .run(now, id);
 });
 
 ipcMain.handle("db:delete", (_, id: string) => {
@@ -229,9 +230,10 @@ ipcMain.handle("question:softDelete", (_, documentId: string, questionId: string
 
 ipcMain.handle("question:restore", (_, documentId: string, questionId: string) => {
   const database = getDatabase();
+  const now = new Date().toISOString();
   database
-    .prepare("UPDATE questions SET is_deleted = 0, deleted_at = NULL WHERE id = ? AND document_id = ?")
-    .run(questionId, documentId);
+    .prepare("UPDATE questions SET is_deleted = 0, deleted_at = NULL, updated_at = ? WHERE id = ? AND document_id = ?")
+    .run(now, questionId, documentId);
 });
 
 ipcMain.handle("question:getDeleted", (_, documentId: string) => {
