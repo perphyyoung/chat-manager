@@ -1,15 +1,18 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { Document } from "@/domain/entities";
+import { Document, Tag } from "@/domain/entities";
 import { DocumentApplicationService } from "@/application/services/DocumentApplicationService";
 import { AnswerApplicationService } from "@/application/services/AnswerApplicationService";
+import { TagApplicationService } from "@/application/services/TagApplicationService";
 import { SqliteDocumentRepository } from "@/infrastructure/storage/SqliteDocumentRepository";
 import { SqliteAnswerRepository } from "@/infrastructure/storage/SqliteAnswerRepository";
+import { SqliteTagRepository } from "@/infrastructure/storage/SqliteTagRepository";
 import { globalEventBus } from "@/domain/events";
 import { mockDocuments } from "@/infrastructure/data/mockData";
 
 const documentRepo = new SqliteDocumentRepository();
 const answerRepo = new SqliteAnswerRepository();
+const tagRepo = new SqliteTagRepository();
 const documentService = new DocumentApplicationService(
   documentRepo,
   globalEventBus,
@@ -17,6 +20,11 @@ const documentService = new DocumentApplicationService(
 const answerService = new AnswerApplicationService(
   documentRepo,
   answerRepo,
+  globalEventBus,
+);
+const tagService = new TagApplicationService(
+  tagRepo,
+  documentRepo,
   globalEventBus,
 );
 
@@ -40,7 +48,12 @@ function loadSortPreferences(): SortPreferences {
       const parsed = JSON.parse(stored) as SortPreferences;
       // 验证值是否有效
       const validFields: SortField[] = ["createdAt", "updatedAt", "title"];
-      const validQuestionFields: QuestionSortField[] = ["createdAt", "updatedAt", "title", "sortOrder"];
+      const validQuestionFields: QuestionSortField[] = [
+        "createdAt",
+        "updatedAt",
+        "title",
+        "sortOrder",
+      ];
       const validOrders: SortOrder[] = ["asc", "desc"];
       if (
         validFields.includes(parsed.documentSortField) &&
@@ -75,8 +88,14 @@ export const useDocumentStore = defineStore("document", () => {
   const selectedDocumentId = ref<string | null>(null);
   const activeQuestionId = ref<string | null>(null);
 
+  // 标签相关状态
+  const allTags = ref<Tag[]>([]);
+  const selectedTagId = ref<string | null>(null);
+
   // 问题回收站状态
-  const deletedQuestions = ref<Array<{ id: string; text: string; deletedAt: Date }>>([]);
+  const deletedQuestions = ref<
+    Array<{ id: string; text: string; deletedAt: Date }>
+  >([]);
 
   // 从本地存储加载排序偏好
   const savedPreferences = loadSortPreferences();
@@ -86,7 +105,9 @@ export const useDocumentStore = defineStore("document", () => {
   const documentSortOrder = ref<SortOrder>(savedPreferences.documentSortOrder);
 
   // 问题排序状态
-  const questionSortField = ref<QuestionSortField>(savedPreferences.questionSortField);
+  const questionSortField = ref<QuestionSortField>(
+    savedPreferences.questionSortField,
+  );
   const questionSortOrder = ref<SortOrder>(savedPreferences.questionSortOrder);
 
   const selectedDocument = computed(() => {
@@ -97,11 +118,26 @@ export const useDocumentStore = defineStore("document", () => {
 
   const selectedDocumentQuestions = computed(() => {
     const questions = selectedDocument.value?.questions || [];
-    return sortQuestions(questions, questionSortField.value, questionSortOrder.value);
+    return sortQuestions(
+      questions,
+      questionSortField.value,
+      questionSortOrder.value,
+    );
   });
 
   const sortedDocuments = computed(() => {
-    return sortDocuments(documents.value, documentSortField.value, documentSortOrder.value);
+    let filteredDocs = documents.value;
+    // 如果有选中的标签，筛选文档
+    if (selectedTagId.value) {
+      filteredDocs = documents.value.filter((doc) =>
+        doc.tags.some((tag) => tag.id === selectedTagId.value),
+      );
+    }
+    return sortDocuments(
+      filteredDocs,
+      documentSortField.value,
+      documentSortOrder.value,
+    );
   });
 
   function selectDocument(id: string) {
@@ -221,7 +257,10 @@ export const useDocumentStore = defineStore("document", () => {
     setActiveQuestion(newQuestion.id);
   }
 
-  async function updateAnswerContent(answerId: string, content: string): Promise<void> {
+  async function updateAnswerContent(
+    answerId: string,
+    content: string,
+  ): Promise<void> {
     if (!selectedDocumentId.value) {
       throw new Error("No document selected");
     }
@@ -277,7 +316,10 @@ export const useDocumentStore = defineStore("document", () => {
   }
 
   // 更新问题文本
-  async function updateQuestionText(questionId: string, newText: string): Promise<void> {
+  async function updateQuestionText(
+    questionId: string,
+    newText: string,
+  ): Promise<void> {
     if (!selectedDocumentId.value) {
       throw new Error("No document selected");
     }
@@ -421,7 +463,9 @@ export const useDocumentStore = defineStore("document", () => {
       deletedQuestions.value = [];
       return;
     }
-    deletedQuestions.value = await documentRepo.getDeletedQuestions(selectedDocumentId.value);
+    deletedQuestions.value = await documentRepo.getDeletedQuestions(
+      selectedDocumentId.value,
+    );
   }
 
   async function restoreQuestion(questionId: string): Promise<void> {
@@ -471,6 +515,103 @@ export const useDocumentStore = defineStore("document", () => {
 
   const deletedQuestionCount = computed(() => deletedQuestions.value.length);
 
+  // 标签相关方法
+  async function loadTags(): Promise<void> {
+    const tags = await tagService.getAllTags();
+    allTags.value = tags;
+  }
+
+  async function createTag(name: string): Promise<Tag | null> {
+    try {
+      const tag = await tagService.createTag(name);
+      await loadTags();
+      return tag;
+    } catch (error) {
+      console.error("Failed to create tag:", error);
+      return null;
+    }
+  }
+
+  async function deleteTag(tagId: string): Promise<void> {
+    await tagService.deleteTag(tagId);
+    await loadTags();
+    // 重新加载文档以更新标签关联
+    await loadDocuments();
+  }
+
+  function setTagFilter(tagId: string | null): void {
+    selectedTagId.value = tagId;
+  }
+
+  async function addTagToDocument(
+    documentId: string,
+    tagId: string,
+  ): Promise<void> {
+    console.log(
+      "[STORE] addTagToDocument called, docId:",
+      documentId,
+      "tagId:",
+      tagId,
+    );
+    await tagService.addTagToDocument(documentId, tagId);
+    console.log("[STORE] tagService.addTagToDocument completed");
+    // 刷新文档数据
+    const updatedDoc = await documentService.getDocument(documentId);
+    console.log(
+      "[STORE] Refreshed document, tags:",
+      updatedDoc?.tags.length,
+      updatedDoc?.tags.map((t) => t.name),
+    );
+    if (updatedDoc) {
+      const index = documents.value.findIndex((d) => d.id === documentId);
+      if (index !== -1) {
+        documents.value.splice(index, 1, updatedDoc);
+        console.log("[STORE] Updated document in store, index:", index);
+      } else {
+        console.log("[STORE] Document not found in store");
+      }
+    }
+  }
+
+  async function removeTagFromDocument(
+    documentId: string,
+    tagId: string,
+  ): Promise<void> {
+    await tagService.removeTagFromDocument(documentId, tagId);
+    // 刷新文档数据
+    const updatedDoc = await documentService.getDocument(documentId);
+    if (updatedDoc) {
+      const index = documents.value.findIndex((d) => d.id === documentId);
+      if (index !== -1) {
+        documents.value.splice(index, 1, updatedDoc);
+      }
+    }
+  }
+
+  // 获取标签关联的文档数量
+  function getTagDocumentCount(tagId: string): number {
+    return documents.value.filter((doc) =>
+      doc.tags.some((tag) => tag.id === tagId),
+    ).length;
+  }
+
+  async function updateTagName(tagId: string, newName: string): Promise<void> {
+    console.log(
+      "[STORE] updateTagName called, tagId:",
+      tagId,
+      "newName:",
+      newName,
+    );
+    await tagService.updateTagName(tagId, newName);
+    console.log("[STORE] tagService.updateTagName completed");
+    // 刷新标签列表
+    await loadTags();
+    console.log("[STORE] loadTags completed");
+    // 刷新所有文档数据（因为标签名可能在多个文档中）
+    await loadDocuments();
+    console.log("[STORE] loadDocuments completed");
+  }
+
   return {
     documents,
     sortedDocuments,
@@ -482,6 +623,17 @@ export const useDocumentStore = defineStore("document", () => {
     documentSortOrder,
     questionSortField,
     questionSortOrder,
+    // 标签相关
+    allTags,
+    selectedTagId,
+    loadTags,
+    createTag,
+    deleteTag,
+    updateTagName,
+    setTagFilter,
+    addTagToDocument,
+    removeTagFromDocument,
+    getTagDocumentCount,
     selectDocument,
     setActiveQuestion,
     initDocuments,

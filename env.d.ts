@@ -18,6 +18,12 @@ interface AnswerDTO {
   updatedAt: string;
 }
 
+interface TagDTO {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
 interface DocumentDTO {
   id: string;
   title: string;
@@ -26,6 +32,7 @@ interface DocumentDTO {
   deletedAt?: string;
   questions: QuestionDTO[];
   answers: AnswerDTO[];
+  tags?: TagDTO[];
 }
 
 interface ElectronAPI {
@@ -48,9 +55,26 @@ interface ElectronAPI {
   question: {
     softDelete: (documentId: string, questionId: string) => Promise<void>;
     restore: (documentId: string, questionId: string) => Promise<void>;
-    getDeleted: (documentId: string) => Promise<Array<{ id: string; text: string; deletedAt: string }>>;
-    permanentlyDelete: (documentId: string, questionId: string) => Promise<void>;
+    getDeleted: (
+      documentId: string,
+    ) => Promise<Array<{ id: string; text: string; deletedAt: string }>>;
+    permanentlyDelete: (
+      documentId: string,
+      questionId: string,
+    ) => Promise<void>;
     clearDeleted: (documentId: string) => Promise<void>;
+  };
+  tag: {
+    findAll: () => Promise<TagDTO[]>;
+    findById: (id: string) => Promise<TagDTO | null>;
+    findByName: (name: string) => Promise<TagDTO | null>;
+    save: (tagJson: string) => Promise<void>;
+    delete: (id: string) => Promise<void>;
+    exists: (name: string) => Promise<boolean>;
+    addToDocument: (documentId: string, tagId: string) => Promise<void>;
+    removeFromDocument: (documentId: string, tagId: string) => Promise<void>;
+    getDocumentTags: (documentId: string) => Promise<TagDTO[]>;
+    findDocumentsByTagId: (tagId: string) => Promise<DocumentDTO[]>;
   };
 }
 

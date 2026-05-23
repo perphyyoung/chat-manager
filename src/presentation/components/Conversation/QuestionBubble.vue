@@ -1,9 +1,9 @@
 <script setup lang="ts">
 interface Props {
-  text: string
+  text: string;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 </script>
 
 <template>
@@ -25,9 +25,9 @@ defineProps<Props>()
 
 .question-bubble__content {
   padding: 12px 16px;
-  background-color: var(--color-primary);  /* 主题色（蓝色/紫色等） */
-  color: white;                             /* 固定白色文字 */
-  border-radius: 12px 12px 12px 4px;        /* 左上、左下、右下圆角，右上小圆角 */
+  background-color: var(--color-primary); /* 主题色（蓝色/紫色等） */
+  color: white; /* 固定白色文字 */
+  border-radius: 12px 12px 12px 4px; /* 左上、左下、右下圆角，右上小圆角 */
   font-size: 14px;
   line-height: 1.5;
   word-wrap: break-word;

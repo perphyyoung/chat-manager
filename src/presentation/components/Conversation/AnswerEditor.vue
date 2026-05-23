@@ -1,43 +1,47 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch } from "vue";
 
 // 使用接口而不是直接导入 Answer 类，避免类型不匹配
 interface AnswerViewModel {
-  id: string
-  questionId: string
-  content: string
-  createdAt: Date
-  updatedAt: Date
-  editContent: (newContent: string) => void
+  id: string;
+  questionId: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  editContent: (newContent: string) => void;
 }
 
 interface Props {
-  answer: AnswerViewModel
+  answer: AnswerViewModel;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const isEditing = ref(false)
-const editContent = ref('')
+const isEditing = ref(false);
+const editContent = ref("");
 
-watch(() => props.answer, (newAnswer) => {
-  editContent.value = newAnswer.content
-}, { immediate: true })
+watch(
+  () => props.answer,
+  (newAnswer) => {
+    editContent.value = newAnswer.content;
+  },
+  { immediate: true },
+);
 
 function startEdit() {
-  editContent.value = props.answer.content
-  isEditing.value = true
+  editContent.value = props.answer.content;
+  isEditing.value = true;
 }
 
 function cancelEdit() {
-  isEditing.value = false
-  editContent.value = props.answer.content
+  isEditing.value = false;
+  editContent.value = props.answer.content;
 }
 
 function saveEdit() {
   // TODO: 调用应用服务保存编辑
-  props.answer.editContent(editContent.value)
-  isEditing.value = false
+  props.answer.editContent(editContent.value);
+  isEditing.value = false;
 }
 </script>
 

@@ -58,20 +58,11 @@ test('删除文档后可以重新创建同名文档', async () => {
   const contextMenu = window.locator('.context-menu')
   await expect(contextMenu).toBeVisible()
 
-  // 点击删除按钮
+  // 点击删除按钮（直接删除，无确认对话框）
   const deleteButton = contextMenu.locator('.menu-item--danger')
   await deleteButton.click()
 
-  // 等待自定义确认对话框出现
-  const confirmDialog = window.locator('.dialog--confirm')
-  await expect(confirmDialog).toBeVisible()
-  console.log('删除确认对话框出现')
-
-  // 点击确认删除按钮
-  const confirmDeleteButton = confirmDialog.locator('.btn-danger')
-  await confirmDeleteButton.click()
-
-  // 等待文档消失
+  // 等待文档从列表消失
   await expect(documentItem).toBeHidden()
   console.log('文档删除成功')
 

@@ -69,22 +69,33 @@ export class InMemoryDocumentRepository implements DocumentRepository {
   }
 
   // 问题软删除相关方法（内存存储仅作占位实现）
-  async softDeleteQuestion(_documentId: string, _questionId: string): Promise<void> {
+  async softDeleteQuestion(
+    _documentId: string,
+    _questionId: string,
+  ): Promise<void> {
     // 内存存储不实现问题级软删除，直接返回
     return;
   }
 
-  async restoreQuestion(_documentId: string, _questionId: string): Promise<void> {
+  async restoreQuestion(
+    _documentId: string,
+    _questionId: string,
+  ): Promise<void> {
     // 内存存储不实现问题级恢复，直接返回
     return;
   }
 
-  async getDeletedQuestions(_documentId: string): Promise<Array<{ id: string; text: string; deletedAt: Date }>> {
+  async getDeletedQuestions(
+    _documentId: string,
+  ): Promise<Array<{ id: string; text: string; deletedAt: Date }>> {
     // 内存存储返回空数组
     return [];
   }
 
-  async permanentlyDeleteQuestion(_documentId: string, _questionId: string): Promise<void> {
+  async permanentlyDeleteQuestion(
+    _documentId: string,
+    _questionId: string,
+  ): Promise<void> {
     // 内存存储不实现问题级永久删除，直接返回
     return;
   }
@@ -92,5 +103,24 @@ export class InMemoryDocumentRepository implements DocumentRepository {
   async clearDeletedQuestions(_documentId: string): Promise<void> {
     // 内存存储不实现清空回收站，直接返回
     return;
+  }
+
+  // 标签相关方法（内存存储仅作占位实现）
+  async findByTagId(_tagId: string): Promise<Document[]> {
+    return [];
+  }
+
+  async addTag(_documentId: string, _tagId: string): Promise<void> {
+    return;
+  }
+
+  async removeTag(_documentId: string, _tagId: string): Promise<void> {
+    return;
+  }
+
+  async getTags(
+    _documentId: string,
+  ): Promise<Array<{ id: string; name: string }>> {
+    return [];
   }
 }

@@ -32,6 +32,7 @@ export const mockDocuments = [
       ),
     ],
     now,
+    now,
   ),
   new Document(
     "2",
@@ -55,6 +56,7 @@ export const mockDocuments = [
       ),
     ],
     now,
+    now,
   ),
   new Document(
     "3",
@@ -77,6 +79,7 @@ export const mockDocuments = [
         now,
       ),
     ],
+    now,
     now,
   ),
 ];

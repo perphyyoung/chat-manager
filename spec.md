@@ -39,6 +39,23 @@ CREATE TABLE answers (
   updated_at TEXT NOT NULL,
   FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
 );
+
+-- 标签表
+CREATE TABLE tags (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL
+);
+
+-- 文档标签关联表（多对多）
+CREATE TABLE document_tags (
+  document_id TEXT NOT NULL,
+  tag_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (document_id, tag_id),
+  FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+  FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+);
 ```
 
 ### 2.2 关系说明
@@ -57,6 +74,13 @@ CREATE INDEX idx_questions_sort_order ON questions(document_id, sort_order);
 
 -- 回答表索引
 CREATE INDEX idx_answers_question_id ON answers(question_id);
+
+-- 标签表索引
+CREATE INDEX idx_tags_name ON tags(name);
+
+-- 文档标签关联表索引
+CREATE INDEX idx_document_tags_document_id ON document_tags(document_id);
+CREATE INDEX idx_document_tags_tag_id ON document_tags(tag_id);
 ```
 
 ---
@@ -134,6 +158,27 @@ interface DocumentSummary {
   questionCount: number;
   answeredCount: number;
 }
+
+// 标签（实体）
+class Tag {
+  constructor(
+    public readonly id: string,
+    private _name: string,
+    private readonly _createdAt: Date = new Date(),
+  )
+  
+  get name(): string
+  get createdAt(): Date
+  
+  rename(newName: string): void
+}
+
+// 标签 DTO
+interface TagDTO {
+  id: string;
+  name: string;
+  createdAt: string;
+}
 ```
 
 ---
@@ -161,6 +206,23 @@ interface AnswerRepository {
   findByDocumentId(documentId: string): Promise<Answer[]>;
   save(answer: Answer): Promise<void>;
   delete(id: string): Promise<void>;
+}
+
+interface TagRepository {
+  findAll(): Promise<Tag[]>;
+  findById(id: string): Promise<Tag | null>;
+  findByName(name: string): Promise<Tag | null>;
+  save(tag: Tag): Promise<void>;
+  delete(id: string): Promise<void>;
+  exists(name: string): Promise<boolean>;
+}
+
+interface DocumentTagRepository {
+  findByDocumentId(documentId: string): Promise<Tag[]>;
+  findByTagId(tagId: string): Promise<string[]>;  // 返回文档ID列表
+  addTagToDocument(documentId: string, tagId: string): Promise<void>;
+  removeTagFromDocument(documentId: string, tagId: string): Promise<void>;
+  removeAllTagsFromDocument(documentId: string): Promise<void>;
 }
 ```
 
@@ -206,6 +268,22 @@ class AnswerApplicationService {
   async updateAnswerContent(id: string, newContent: string): Promise<void>
   async deleteAnswer(id: string): Promise<void>
 }
+
+class TagApplicationService {
+  constructor(
+    private tagRepo: TagRepository,
+    private documentTagRepo: DocumentTagRepository,
+    private eventBus: EventBus,
+  )
+  
+  async createTag(name: string): Promise<Tag>
+  async deleteTag(id: string): Promise<void>
+  async renameTag(id: string, newName: string): Promise<void>
+  async getAllTags(): Promise<Tag[]>
+  async addTagToDocument(documentId: string, tagId: string): Promise<void>
+  async removeTagFromDocument(documentId: string, tagId: string): Promise<void>
+  async getDocumentsByTagId(tagId: string): Promise<string[]>
+}
 ```
 
 ---
@@ -246,6 +324,36 @@ ipcMain.handle('answer:findByQuestionId', (_, questionId: string) => {...})
 ipcMain.handle('answer:findByDocumentId', (_, documentId: string) => {...})
 ipcMain.handle('answer:save', (_, answerJson: string) => {...})
 ipcMain.handle('answer:delete', (_, id: string) => {...})
+```
+
+### 6.4 标签相关
+
+```typescript
+// 标签管理
+ipcMain.handle('tag:findAll', () => {...})
+ipcMain.handle('tag:findById', (_, id: string) => {...})
+ipcMain.handle('tag:save', (_, tagJson: string) => {...})
+ipcMain.handle('tag:delete', (_, id: string) => {...})
+ipcMain.handle('tag:updateName', (_, id: string, newName: string) => {...})
+
+// 文档标签关联
+ipcMain.handle('tag:findByDocumentId', (_, documentId: string) => {...})
+ipcMain.handle('tag:findDocumentsByTagId', (_, tagId: string) => {...})
+ipcMain.handle('tag:addToDocument', (_, documentId: string, tagId: string) => {...})
+ipcMain.handle('tag:removeFromDocument', (_, documentId: string, tagId: string) => {...})
+
+// 预加载脚本暴露
+electronAPI.tag = {
+  findAll: () => ipcRenderer.invoke('tag:findAll'),
+  findById: (id: string) => ipcRenderer.invoke('tag:findById', id),
+  save: (json: string) => ipcRenderer.invoke('tag:save', json),
+  delete: (id: string) => ipcRenderer.invoke('tag:delete', id),
+  updateName: (id: string, newName: string) => ipcRenderer.invoke('tag:updateName', id, newName),
+  findByDocumentId: (documentId: string) => ipcRenderer.invoke('tag:findByDocumentId', documentId),
+  findDocumentsByTagId: (tagId: string) => ipcRenderer.invoke('tag:findDocumentsByTagId', tagId),
+  addToDocument: (documentId: string, tagId: string) => ipcRenderer.invoke('tag:addToDocument', documentId, tagId),
+  removeFromDocument: (documentId: string, tagId: string) => ipcRenderer.invoke('tag:removeFromDocument', documentId, tagId),
+}
 ```
 
 ---
@@ -305,6 +413,13 @@ class QuestionsReorderedEvent { constructor(public readonly documentId: string) 
 class AnswerCreatedEvent { constructor(public readonly questionId: string, public readonly answerId: string) }
 class AnswerEditedEvent { constructor(public readonly answerId: string) }
 class AnswerDeletedEvent { constructor(public readonly answerId: string) }
+
+// 标签事件
+class TagCreatedEvent { constructor(public readonly tagId: string) }
+class TagDeletedEvent { constructor(public readonly tagId: string) }
+class TagRenamedEvent { constructor(public readonly tagId: string, public readonly oldName: string, public readonly newName: string) }
+class TagAddedToDocumentEvent { constructor(public readonly documentId: string, public readonly tagId: string) }
+class TagRemovedFromDocumentEvent { constructor(public readonly documentId: string, public readonly tagId: string) }
 ```
 
 ---
@@ -364,6 +479,13 @@ AnswerEditor.vue          // 回答编辑器
 // 右侧
 QuestionNavList.vue       // 问题导航列表
 QuestionNavItem.vue       // 单个导航项
+
+// 标签相关
+TagFilter.vue             // 左侧标签筛选面板
+TagSelector.vue           // 标签选择下拉面板
+TagBadge.vue              // 标签徽章组件
+TagContextMenu.vue        // 标签右键菜单
+ConfirmDialog.vue         // 确认对话框
 ```
 
 ### 9.1 聊天式布局规范

@@ -1,24 +1,32 @@
 <script setup lang="ts">
+import TagBadge from "../common/TagBadge.vue";
+
+interface TagProp {
+  id: string;
+  name: string;
+}
+
 interface DocumentProp {
-  id: string
-  title: string
-  questions: readonly { id: string; text: string; order: number }[]
+  id: string;
+  title: string;
+  questions: readonly { id: string; text: string; order: number }[];
+  tags?: readonly TagProp[];
 }
 
 interface Props {
-  document: DocumentProp
-  isActive: boolean
+  document: DocumentProp;
+  isActive: boolean;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  contextmenu: [event: MouseEvent, documentId: string]
-}>()
+  contextmenu: [event: MouseEvent, documentId: string];
+}>();
 
 function handleContextMenu(event: MouseEvent) {
-  event.preventDefault()
-  emit('contextmenu', event, props.document.id)
+  event.preventDefault();
+  emit("contextmenu", event, props.document.id);
 }
 </script>
 
@@ -31,7 +39,22 @@ function handleContextMenu(event: MouseEvent) {
     <div class="document-item__icon">📄</div>
     <div class="document-item__content">
       <div class="document-item__title">{{ document.title }}</div>
-      <div class="document-item__meta">{{ document.questions.length }} 个问题</div>
+      <div class="document-item__meta">
+        <span>{{ document.questions.length }} 个问题</span>
+        <span v-if="document.tags?.length" class="document-item__tags">
+          <TagBadge
+            v-for="tag in document.tags.slice(0, 2)"
+            :key="tag.id"
+            :name="tag.name"
+          />
+          <span
+            v-if="(document.tags.length || 0) > 2"
+            class="document-item__more-tags"
+          >
+            +{{ document.tags.length - 2 }}
+          </span>
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -78,5 +101,20 @@ function handleContextMenu(event: MouseEvent) {
   font-size: 12px;
   color: var(--color-text-secondary);
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.document-item__tags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.document-item__more-tags {
+  font-size: 11px;
+  color: var(--color-text-secondary);
 }
 </style>

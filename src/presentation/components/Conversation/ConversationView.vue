@@ -1,44 +1,45 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, computed } from 'vue'
-import { useDocumentStore } from '../../stores/document'
-import QuestionBubble from './QuestionBubble.vue'
-import AnswerBubble from './AnswerBubble.vue'
+import { ref, watch, nextTick, computed } from "vue";
+import { useDocumentStore } from "../../stores/document";
+import QuestionBubble from "./QuestionBubble.vue";
+import AnswerBubble from "./AnswerBubble.vue";
+import TagSelector from "../Document/TagSelector.vue";
 
-const documentStore = useDocumentStore()
-const messagesContainer = ref<HTMLElement | null>(null)
+const documentStore = useDocumentStore();
+const messagesContainer = ref<HTMLElement | null>(null);
 
 // 将问答对转换为可渲染的列表
 const qaPairs = computed(() => {
-  const doc = documentStore.selectedDocument
-  if (!doc) return []
+  const doc = documentStore.selectedDocument;
+  if (!doc) return [];
 
   return doc.questions.map((question) => {
-    const answer = doc.answers.find((a) => a.questionId === question.id)
+    const answer = doc.answers.find((a) => a.questionId === question.id);
     return {
       question,
       answer,
-    }
-  })
-})
+    };
+  });
+});
 
 function scrollToBottom() {
   nextTick(() => {
     if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     }
-  })
+  });
 }
 
 function scrollToQuestion(questionId: string) {
   nextTick(() => {
-    if (!messagesContainer.value) return
+    if (!messagesContainer.value) return;
     const targetElement = messagesContainer.value.querySelector(
       `[data-question-id="${questionId}"]`,
-    )
+    );
     if (targetElement) {
-      targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  })
+  });
 }
 
 // 监听回答变化，只在新增回答时滚动到底部
@@ -47,25 +48,34 @@ watch(
   (newLength, oldLength) => {
     // 只有在新增回答时才滚动到底部
     if (newLength && oldLength && newLength > oldLength) {
-      scrollToBottom()
+      scrollToBottom();
     }
   },
-)
+);
 
 // 监听 activeQuestionId 变化，滚动到对应问题
 watch(
   () => documentStore.activeQuestionId,
   (questionId) => {
     if (questionId) {
-      scrollToQuestion(questionId)
+      scrollToQuestion(questionId);
     }
   },
-)
+);
 </script>
 
 <template>
   <div class="conversation-view">
-    <div v-if="documentStore.selectedDocument" class="conversation-view__content">
+    <div
+      v-if="documentStore.selectedDocument"
+      class="conversation-view__content"
+    >
+      <div class="conversation-view__header">
+        <h2 class="conversation-view__title">
+          {{ documentStore.selectedDocument.title }}
+        </h2>
+        <TagSelector />
+      </div>
       <div ref="messagesContainer" class="conversation-view__messages">
         <div
           v-for="{ question, answer } in qaPairs"
@@ -107,6 +117,19 @@ watch(
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.conversation-view__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.conversation-view__title {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 .conversation-view__messages {

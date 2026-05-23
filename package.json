@@ -12,8 +12,8 @@
     "type-check": "vue-tsc --build",
     "check": "run-s type-check lint",
     "lint": "run-s lint:*",
-    "lint:oxlint": "oxlint . --fix",
-    "lint:eslint": "eslint . --fix --cache",
+    "lint:oxlint": "oxlint .",
+    "lint:eslint": "eslint . --cache",
     "format": "oxfmt src/"
   },
   "dependencies": {

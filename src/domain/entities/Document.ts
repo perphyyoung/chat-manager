@@ -1,5 +1,6 @@
 import { Question } from "./Question";
 import { Answer } from "./Answer";
+import { Tag } from "./Tag";
 import { ValidationError, NotFoundError } from "../errors";
 
 export interface DocumentSummary {
@@ -17,6 +18,7 @@ export class Document {
     private _answers: Answer[] = [],
     private readonly _createdAt: Date = new Date(),
     private _updatedAt: Date = _createdAt,
+    private _tags: Tag[] = [],
   ) {
     this.validateTitle(_title);
   }
@@ -37,8 +39,7 @@ export class Document {
     return this._questions.length;
   }
 
-  get answerCount
-(): number {
+  get answerCount(): number {
     return this._answers.length;
   }
 
@@ -48,6 +49,39 @@ export class Document {
 
   get updatedAt(): Date {
     return this._updatedAt;
+  }
+
+  get tags(): readonly Tag[] {
+    return this._tags;
+  }
+
+  addTag(tag: Tag): void {
+    if (this.hasTag(tag.id)) {
+      return;
+    }
+    this._tags.push(tag);
+    this._updatedAt = new Date();
+  }
+
+  removeTag(tagId: string): void {
+    const index = this._tags.findIndex((t) => t.id === tagId);
+    if (index === -1) {
+      throw new NotFoundError("Tag", tagId);
+    }
+    this._tags.splice(index, 1);
+    this._updatedAt = new Date();
+  }
+
+  hasTag(tagId: string): boolean {
+    return this._tags.some((t) => t.id === tagId);
+  }
+
+  updateTagName(tagId: string, newName: string): void {
+    const tag = this._tags.find((t) => t.id === tagId);
+    if (tag) {
+      tag.updateName(newName);
+      this._updatedAt = new Date();
+    }
   }
 
   updateTitle(newTitle: string): void {
@@ -122,7 +156,9 @@ export class Document {
     return this._answers.find((a) => a.questionId === questionId);
   }
 
-  getQuestionAnswerPair(questionId: string): { question: Question; answer?: Answer } | undefined {
+  getQuestionAnswerPair(
+    questionId: string,
+  ): { question: Question; answer?: Answer } | undefined {
     const question = this.getQuestionById(questionId);
     if (!question) return undefined;
     const answer = this.getAnswerByQuestionId(questionId);
@@ -144,6 +180,7 @@ export class Document {
       title: this._title,
       questions: this._questions.map((q) => q.toJSON()),
       answers: this._answers.map((a) => a.toJSON()),
+      tags: this._tags.map((t) => t.toJSON()),
       createdAt: this._createdAt.toISOString(),
       updatedAt: this._updatedAt.toISOString(),
     };

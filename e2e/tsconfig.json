@@ -1,4 +1,10 @@
 {
   "extends": "@tsconfig/node24/tsconfig.json",
-  "include": ["./**/*"]
+  "include": ["./**/*", "../env.d.ts"],
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM"],
+    "noEmit": true,
+    "module": "ES2022",
+    "moduleResolution": "bundler"
+  }
 }

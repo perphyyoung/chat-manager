@@ -1,78 +1,79 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import { useDocumentStore, type SortField } from '../../stores/document'
-import { Document } from '../../../domain/entities'
-import DocumentItem from './DocumentItem.vue'
-import DocumentContextMenu from './DocumentContextMenu.vue'
-import RecycleBinButton from '../common/RecycleBinButton.vue'
-import RecycleBinModal from '../common/RecycleBinModal.vue'
+import { ref, watch, nextTick, onMounted } from "vue";
+import { useDocumentStore, type SortField } from "../../stores/document";
+import { Document } from "../../../domain/entities";
+import DocumentItem from "./DocumentItem.vue";
+import DocumentContextMenu from "./DocumentContextMenu.vue";
+import TagFilter from "./TagFilter.vue";
+import RecycleBinButton from "../common/RecycleBinButton.vue";
+import RecycleBinModal from "../common/RecycleBinModal.vue";
 
-const documentStore = useDocumentStore()
+const documentStore = useDocumentStore();
 
-const showAddDialog = ref(false)
-const newDocumentTitle = ref('')
-const isCreating = ref(false)
-const showSortMenu = ref(false)
-const titleInputRef = ref<HTMLInputElement | null>(null)
+const showAddDialog = ref(false);
+const newDocumentTitle = ref("");
+const isCreating = ref(false);
+const showSortMenu = ref(false);
+const titleInputRef = ref<HTMLInputElement | null>(null);
 
 // 右键菜单状态
 const contextMenu = ref<{
-  show: boolean
-  x: number
-  y: number
-  documentId: string | null
+  show: boolean;
+  x: number;
+  y: number;
+  documentId: string | null;
 }>({
   show: false,
   x: 0,
   y: 0,
   documentId: null,
-})
+});
 
 // 编辑对话框状态
-const showEditDialog = ref(false)
-const editDocumentTitle = ref('')
-const isEditing = ref(false)
-const editingDocumentId = ref<string | null>(null)
+const showEditDialog = ref(false);
+const editDocumentTitle = ref("");
+const isEditing = ref(false);
+const editingDocumentId = ref<string | null>(null);
 
 // 回收站弹窗状态
-const showRecycleBin = ref(false)
+const showRecycleBin = ref(false);
 
 const sortFieldLabels: Record<SortField, string> = {
-  createdAt: '创建时间',
-  updatedAt: '更新时间',
-  title: '标题',
-}
+  createdAt: "创建时间",
+  updatedAt: "更新时间",
+  title: "标题",
+};
 
 async function handleCreateDocument() {
-  if (!newDocumentTitle.value.trim()) return
+  if (!newDocumentTitle.value.trim()) return;
 
-  isCreating.value = true
+  isCreating.value = true;
   try {
-    await documentStore.createDocument(newDocumentTitle.value.trim())
-    newDocumentTitle.value = ''
-    showAddDialog.value = false
+    await documentStore.createDocument(newDocumentTitle.value.trim());
+    newDocumentTitle.value = "";
+    showAddDialog.value = false;
   } finally {
-    isCreating.value = false
+    isCreating.value = false;
   }
 }
 
 function handleCancel() {
-  newDocumentTitle.value = ''
-  showAddDialog.value = false
+  newDocumentTitle.value = "";
+  showAddDialog.value = false;
 }
 
 // 对话框打开时自动聚焦到输入框
 watch(showAddDialog, (newValue) => {
   if (newValue) {
     nextTick(() => {
-      titleInputRef.value?.focus()
-    })
+      titleInputRef.value?.focus();
+    });
   }
-})
+});
 
 function handleSortFieldChange(field: SortField) {
-  documentStore.setDocumentSortField(field)
-  showSortMenu.value = false
+  documentStore.setDocumentSortField(field);
+  showSortMenu.value = false;
 }
 
 // 右键菜单处理
@@ -82,87 +83,97 @@ function handleContextMenu(event: MouseEvent, documentId: string) {
     x: event.clientX,
     y: event.clientY,
     documentId,
-  }
+  };
 }
 
 function closeContextMenu() {
-  contextMenu.value.show = false
-  contextMenu.value.documentId = null
+  contextMenu.value.show = false;
+  contextMenu.value.documentId = null;
 }
 
 // 编辑文档
 function handleEditDocument() {
-  if (!contextMenu.value.documentId) return
-  const doc = documentStore.documents.find((d) => d.id === contextMenu.value.documentId)
+  if (!contextMenu.value.documentId) return;
+  const doc = documentStore.documents.find(
+    (d) => d.id === contextMenu.value.documentId,
+  );
   if (doc) {
-    editingDocumentId.value = doc.id
-    editDocumentTitle.value = doc.title
-    showEditDialog.value = true
+    editingDocumentId.value = doc.id;
+    editDocumentTitle.value = doc.title;
+    showEditDialog.value = true;
   }
-  closeContextMenu()
+  closeContextMenu();
 }
 
 async function handleUpdateDocument() {
-  if (!editDocumentTitle.value.trim() || !editingDocumentId.value) return
+  if (!editDocumentTitle.value.trim() || !editingDocumentId.value) return;
 
-  isEditing.value = true
+  isEditing.value = true;
   try {
-    await documentStore.updateDocumentTitle(editingDocumentId.value, editDocumentTitle.value.trim())
-    showEditDialog.value = false
-    editDocumentTitle.value = ''
-    editingDocumentId.value = null
+    await documentStore.updateDocumentTitle(
+      editingDocumentId.value,
+      editDocumentTitle.value.trim(),
+    );
+    showEditDialog.value = false;
+    editDocumentTitle.value = "";
+    editingDocumentId.value = null;
   } finally {
-    isEditing.value = false
+    isEditing.value = false;
   }
 }
 
 function handleCancelEdit() {
-  editDocumentTitle.value = ''
-  editingDocumentId.value = null
-  showEditDialog.value = false
+  editDocumentTitle.value = "";
+  editingDocumentId.value = null;
+  showEditDialog.value = false;
 }
 
 // 删除文档 - 移入回收站
 async function handleDeleteDocument() {
-  if (!contextMenu.value.documentId) return
-  await documentStore.softDeleteDocument(contextMenu.value.documentId)
-  closeContextMenu()
+  if (!contextMenu.value.documentId) return;
+  await documentStore.softDeleteDocument(contextMenu.value.documentId);
+  closeContextMenu();
 }
 
 // 回收站相关方法
-const deletedDocuments = ref<Document[]>([])
+const deletedDocuments = ref<Document[]>([]);
 
 async function openRecycleBin() {
-  deletedDocuments.value = await documentStore.loadDeletedDocuments()
-  showRecycleBin.value = true
+  deletedDocuments.value = await documentStore.loadDeletedDocuments();
+  showRecycleBin.value = true;
 }
 
 function closeRecycleBin() {
-  showRecycleBin.value = false
+  showRecycleBin.value = false;
 }
 
 async function handleRestore(documentId: string) {
-  await documentStore.restoreDocument(documentId)
+  await documentStore.restoreDocument(documentId);
   // 刷新列表
-  deletedDocuments.value = await documentStore.loadDeletedDocuments()
-  await documentStore.loadDocuments()
+  deletedDocuments.value = await documentStore.loadDeletedDocuments();
+  await documentStore.loadDocuments();
 }
 
 async function handlePermanentDelete(documentId: string) {
-  await documentStore.permanentlyDeleteDocument(documentId)
-  deletedDocuments.value = await documentStore.loadDeletedDocuments()
+  await documentStore.permanentlyDeleteDocument(documentId);
+  deletedDocuments.value = await documentStore.loadDeletedDocuments();
 }
 
 async function handleClearRecycleBin() {
   for (const doc of deletedDocuments.value) {
-    await documentStore.permanentlyDeleteDocument(doc.id)
+    await documentStore.permanentlyDeleteDocument(doc.id);
   }
-  deletedDocuments.value = []
+  deletedDocuments.value = [];
 }
+
+onMounted(() => {
+  documentStore.loadTags();
+});
 </script>
 
 <template>
   <div class="document-list">
+    <TagFilter />
     <div class="document-list__header">
       <h2>文档列表</h2>
       <div class="sort-controls">
@@ -181,7 +192,13 @@ async function handleClearRecycleBin() {
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <polyline points="5 12 12 5 19 12"></polyline>
           </svg>
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            v-else
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <polyline points="5 12 12 19 19 12"></polyline>
           </svg>
@@ -237,7 +254,12 @@ async function handleClearRecycleBin() {
 
     <!-- 浮动添加按钮 -->
     <button class="fab" title="添加文档" @click="showAddDialog = true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
@@ -262,14 +284,18 @@ async function handleClearRecycleBin() {
             :disabled="!newDocumentTitle.trim() || isCreating"
             @click="handleCreateDocument"
           >
-            {{ isCreating ? '创建中...' : '创建' }}
+            {{ isCreating ? "创建中..." : "创建" }}
           </button>
         </div>
       </div>
     </div>
 
     <!-- 编辑文档对话框 -->
-    <div v-if="showEditDialog" class="dialog-overlay" @click.self="handleCancelEdit">
+    <div
+      v-if="showEditDialog"
+      class="dialog-overlay"
+      @click.self="handleCancelEdit"
+    >
       <div class="dialog">
         <h3>编辑文档标题</h3>
         <input
@@ -286,7 +312,7 @@ async function handleClearRecycleBin() {
             :disabled="!editDocumentTitle.trim() || isEditing"
             @click="handleUpdateDocument"
           >
-            {{ isEditing ? '保存中...' : '保存' }}
+            {{ isEditing ? "保存中..." : "保存" }}
           </button>
         </div>
       </div>
@@ -303,7 +329,14 @@ async function handleClearRecycleBin() {
     <RecycleBinModal
       :show="showRecycleBin"
       title="文档回收站"
-      :items="deletedDocuments.map(doc => ({ id: doc.id, name: doc.title, deletedAt: doc.updatedAt, type: 'document' as const }))"
+      :items="
+        deletedDocuments.map((doc) => ({
+          id: doc.id,
+          name: doc.title,
+          deletedAt: doc.updatedAt,
+          type: 'document' as const,
+        }))
+      "
       @close="closeRecycleBin"
       @restore="handleRestore"
       @delete="handlePermanentDelete"

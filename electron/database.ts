@@ -22,7 +22,9 @@ function getDbDir(): string {
   // 通过 process.execPath 判断是否为开发环境
   // 开发环境：execPath 指向 node_modules/electron/dist/electron.exe
   // 生产环境：execPath 指向安装目录的 Chat Manager.exe
-  const isDev = process.execPath.includes("node_modules") || process.execPath.includes("electron");
+  const isDev =
+    process.execPath.includes("node_modules") ||
+    process.execPath.includes("electron");
 
   if (isDev) {
     // 开发环境：使用项目根目录
@@ -119,6 +121,28 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_questions_is_deleted ON questions(is_deleted);
     `,
   },
+  {
+    version: 3,
+    name: "添加标签支持 - tags 表和 document_tags 关联表",
+    sql: `
+      CREATE TABLE IF NOT EXISTS tags (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS document_tags (
+        document_id TEXT NOT NULL,
+        tag_id TEXT NOT NULL,
+        PRIMARY KEY (document_id, tag_id),
+        FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_document_tags_document_id ON document_tags(document_id);
+      CREATE INDEX IF NOT EXISTS idx_document_tags_tag_id ON document_tags(tag_id);
+    `,
+  },
 ];
 
 // 初始化版本控制表
@@ -141,9 +165,14 @@ function getCurrentVersion(database: Database.Database): number {
 }
 
 // 记录迁移执行
-function recordMigration(database: Database.Database, migration: Migration): void {
+function recordMigration(
+  database: Database.Database,
+  migration: Migration,
+): void {
   database
-    .prepare("INSERT INTO db_version (version, name, applied_at) VALUES (?, ?, ?)")
+    .prepare(
+      "INSERT INTO db_version (version, name, applied_at) VALUES (?, ?, ?)",
+    )
     .run(migration.version, migration.name, new Date().toISOString());
 }
 
@@ -159,7 +188,10 @@ function runMigrations(database: Database.Database): void {
         // 记录迁移
         recordMigration(database, migration);
       } catch (error) {
-        console.error(`[DB Migration] 版本 ${migration.version}: ${migration.name} - 执行失败`, error);
+        console.error(
+          `[DB Migration] 版本 ${migration.version}: ${migration.name} - 执行失败`,
+          error,
+        );
         throw error;
       }
     }
