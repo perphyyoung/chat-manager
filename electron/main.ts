@@ -267,6 +267,7 @@ ipcMain.handle("db:save", (_, documentJson: string) => {
     database.exec("ROLLBACK");
     throw e;
   }
+  rebuildSearchIndex();
 });
 
 ipcMain.handle("db:softDelete", (_, id: string) => {
@@ -275,6 +276,7 @@ ipcMain.handle("db:softDelete", (_, id: string) => {
   database
     .prepare("UPDATE documents SET is_deleted = 1, deleted_at = ? WHERE id = ?")
     .run(now, id);
+  rebuildSearchIndex();
 });
 
 ipcMain.handle("db:restore", (_, id: string) => {
@@ -285,11 +287,13 @@ ipcMain.handle("db:restore", (_, id: string) => {
       "UPDATE documents SET is_deleted = 0, deleted_at = NULL, updated_at = ? WHERE id = ?",
     )
     .run(now, id);
+  rebuildSearchIndex();
 });
 
 ipcMain.handle("db:delete", (_, id: string) => {
   const database = getDatabase();
   database.prepare("DELETE FROM documents WHERE id = ?").run(id);
+  rebuildSearchIndex();
 });
 
 ipcMain.handle("db:exists", (_, id: string) => {
@@ -461,11 +465,13 @@ ipcMain.handle("tag:save", (_, tagJson: string) => {
       "INSERT INTO tags (id, name, created_at) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name",
     )
     .run(tag.id, tag.name, tag.createdAt ?? now);
+  rebuildSearchIndex();
 });
 
 ipcMain.handle("tag:delete", (_, id: string) => {
   const database = getDatabase();
   database.prepare("DELETE FROM tags WHERE id = ?").run(id);
+  rebuildSearchIndex();
 });
 
 ipcMain.handle("tag:exists", (_, name: string) => {
@@ -483,6 +489,7 @@ ipcMain.handle("tag:addToDocument", (_, documentId: string, tagId: string) => {
       "INSERT INTO document_tags (document_id, tag_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
     )
     .run(documentId, tagId);
+  rebuildSearchIndex();
 });
 
 ipcMain.handle(
@@ -492,6 +499,7 @@ ipcMain.handle(
     database
       .prepare("DELETE FROM document_tags WHERE document_id = ? AND tag_id = ?")
       .run(documentId, tagId);
+    rebuildSearchIndex();
   },
 );
 
@@ -590,6 +598,16 @@ function openSettings() {
     window.webContents.send("open-settings");
   } else {
     logger.error("No focused window, cannot open settings");
+  }
+}
+
+function rebuildSearchIndex(): void {
+  try {
+    const database = getDatabase();
+    const searchService = new SearchService(database);
+    searchService.rebuildIndex();
+  } catch (err) {
+    logger.error("Failed to rebuild search index:", err);
   }
 }
 
