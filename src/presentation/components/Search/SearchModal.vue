@@ -223,7 +223,7 @@ onUnmounted(() => {
 .search-modal__container {
   width: 600px;
   max-height: 70vh;
-  background: var(--color-bg, #fff);
+  background: var(--color-surface);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   overflow: hidden;
@@ -233,20 +233,20 @@ onUnmounted(() => {
 .search-modal__empty {
   padding: 32px;
   text-align: center;
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-secondary);
 }
 
 .search-modal__hint {
   padding: 8px 16px;
   font-size: 12px;
-  color: var(--color-text-secondary, #666);
-  border-top: 1px solid var(--color-border, #eee);
+  color: var(--color-text-secondary);
+  border-top: 1px solid var(--color-border);
   display: flex;
   gap: 16px;
 }
 
 .search-modal__hint span {
-  background: var(--color-bg-secondary, #f5f5f5);
+  background: var(--color-hover);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: monospace;

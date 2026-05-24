@@ -55,7 +55,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid var(--color-border, #eee);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .search-input__icon {
@@ -69,29 +69,29 @@ onMounted(() => {
   outline: none;
   font-size: 16px;
   background: transparent;
-  color: var(--color-text, #333);
+  color: var(--color-text);
 }
 
 .search-input__field::placeholder {
-  color: var(--color-text-secondary, #999);
+  color: var(--color-text-secondary);
 }
 
 .search-input__clear {
   width: 24px;
   height: 24px;
   border: none;
-  background: var(--color-bg-secondary, #f0f0f0);
+  background: var(--color-hover);
   border-radius: 50%;
   cursor: pointer;
   font-size: 16px;
   line-height: 1;
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .search-input__clear:hover {
-  background: var(--color-bg-tertiary, #e0e0e0);
+  background: var(--color-border);
 }
 </style>

@@ -9,6 +9,8 @@
   --color-active: #eef2ff;
   --color-text: #111827;
   --color-text-secondary: #6b7280;
+  --color-selected-bg: #e3f2fd;
+  --color-highlight-bg: #fff3cd;
 }
 
 .dark {
@@ -20,6 +22,8 @@
   --color-active: #1e1b4b;
   --color-text: #e5e5e5;
   --color-text-secondary: #9ca3af;
+  --color-selected-bg: #1e1b4b;
+  --color-highlight-bg: #4a4a00;
 }
 
 * {
