@@ -138,8 +138,12 @@ async function handleDeleteDocument() {
 // 回收站相关方法
 const deletedDocuments = ref<Document[]>([]);
 
-async function openRecycleBin() {
+async function loadDeletedDocuments() {
   deletedDocuments.value = await documentStore.loadDeletedDocuments();
+}
+
+async function openRecycleBin() {
+  await loadDeletedDocuments();
   showRecycleBin.value = true;
 }
 
@@ -149,14 +153,13 @@ function closeRecycleBin() {
 
 async function handleRestore(documentId: string) {
   await documentStore.restoreDocument(documentId);
-  // 刷新列表
-  deletedDocuments.value = await documentStore.loadDeletedDocuments();
+  await loadDeletedDocuments();
   await documentStore.loadDocuments();
 }
 
 async function handlePermanentDelete(documentId: string) {
   await documentStore.permanentlyDeleteDocument(documentId);
-  deletedDocuments.value = await documentStore.loadDeletedDocuments();
+  await loadDeletedDocuments();
 }
 
 async function handleClearRecycleBin() {
@@ -168,6 +171,7 @@ async function handleClearRecycleBin() {
 
 onMounted(() => {
   documentStore.loadTags();
+  loadDeletedDocuments();
 });
 </script>
 
