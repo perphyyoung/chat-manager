@@ -56,9 +56,20 @@ function segmentText(text: string): string {
 }
 
 export class SearchService {
+  static dirty = false;
+
+  static markDirty(): void {
+    SearchService.dirty = true;
+  }
+
   constructor(private db: SqliteDB) {}
 
   async query(searchText: string, limit = 10): Promise<SearchResults> {
+    if (SearchService.dirty) {
+      await this.rebuildIndex();
+      SearchService.dirty = false;
+    }
+
     if (!searchText || searchText.trim().length === 0) {
       return {
         documents: [],
