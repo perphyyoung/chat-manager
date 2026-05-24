@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { TagApplicationService } from "./TagApplicationService";
-import { InMemoryDocumentRepository } from "../../infrastructure/storage/InMemoryDocumentRepository";
 import { SimpleEventBus } from "../../domain/events";
 import { NotFoundError, ValidationError } from "../../domain/errors";
 import type { TagRepository } from "../../domain/repositories";
 import { Tag, Document } from "../../domain/entities";
+import { MockDocumentRepository } from "./MockDocumentRepository";
 
 const mockDate = new Date("2025-01-01T00:00:00.000Z");
 
@@ -50,12 +50,12 @@ class MockTagRepository implements TagRepository {
 describe("TagApplicationService", () => {
   let service: TagApplicationService;
   let tagRepo: MockTagRepository;
-  let documentRepo: InMemoryDocumentRepository;
+  let documentRepo: MockDocumentRepository;
   let eventBus: SimpleEventBus;
 
   beforeEach(() => {
     tagRepo = new MockTagRepository();
-    documentRepo = new InMemoryDocumentRepository();
+    documentRepo = new MockDocumentRepository();
     eventBus = new SimpleEventBus();
     service = new TagApplicationService(tagRepo, documentRepo, eventBus);
   });

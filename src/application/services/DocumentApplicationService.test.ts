@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { DocumentApplicationService } from "./DocumentApplicationService";
-import { InMemoryDocumentRepository } from "../../infrastructure/storage/InMemoryDocumentRepository";
 import { SimpleEventBus } from "../../domain/events";
 import { NotFoundError } from "../../domain/errors";
+import { MockDocumentRepository } from "./MockDocumentRepository";
 
 describe("DocumentApplicationService", () => {
   let service: DocumentApplicationService;
@@ -10,7 +10,7 @@ describe("DocumentApplicationService", () => {
 
   beforeEach(() => {
     eventBus = new SimpleEventBus();
-    const repo = new InMemoryDocumentRepository();
+    const repo = new MockDocumentRepository();
     service = new DocumentApplicationService(repo, eventBus);
   });
 
