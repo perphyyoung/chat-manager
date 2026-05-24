@@ -70,7 +70,7 @@ export async function cleanupE2ETags(window: ElectronWindow): Promise<void> {
 
     // 筛选出 e2e 开头的标签
     const e2eTags = (allTags as TagDTO[]).filter((tag) =>
-      tag.name.startsWith("e2e_"),
+      tag.name.startsWith("e2e"),
     );
 
     // 删除这些标签
@@ -93,6 +93,44 @@ export async function cleanupE2ETags(window: ElectronWindow): Promise<void> {
 }
 
 /**
+ * 清理所有 e2e 开头的文档（永久删除）
+ * @param window Electron Window 对象
+ */
+export async function cleanupE2EDocuments(
+  window: ElectronWindow,
+): Promise<void> {
+  try {
+    // 获取所有文档（不传参数返回所有）
+    const allDocs = await window.evaluate(async (_args: unknown) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (await (window as any).electronAPI.db?.findAll()) || [];
+    }, {});
+
+    // 筛选出 e2e 开头的文档
+    const e2eDocs = (allDocs as Array<{ id: string; title: string }>).filter(
+      (doc) => doc.title.startsWith("e2e"),
+    );
+
+    // 永久删除这些文档
+    for (const doc of e2eDocs) {
+      try {
+        await window.evaluate(
+          async ({ id }: { id: string }) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (window as any).electronAPI.db?.delete(id);
+          },
+          { id: doc.id },
+        );
+      } catch (e) {
+        await logToFile(window, "error", `清理文档失败: ${doc.title} - ${e}`);
+      }
+    }
+  } catch (e) {
+    await logToFile(window, "error", `清理文档过程出错: ${e}`);
+  }
+}
+
+/**
  * 创建带 Electron App 和自动清理功能的 test 对象
  * 使用方式: import { test } from './utils'
  */
@@ -111,12 +149,13 @@ export const test = base.extend<TestFixtures>({
       // 提供给测试使用
       await use(electronApp);
 
-      // 测试结束后清理 e2e 标签
+      // 测试结束后清理 e2e 数据
       try {
         const window = await electronApp.firstWindow();
         await window.waitForLoadState("domcontentloaded");
         await window.waitForSelector(".document-list", { timeout: 2000 });
         await cleanupE2ETags(window as ElectronWindow);
+        await cleanupE2EDocuments(window as ElectronWindow);
       } catch (e) {
         console.log("[CLEANUP-ERROR]", e);
       }

@@ -78,12 +78,15 @@ ipcMain.handle("log-to-file", (_, level: string, message: string) => {
 // Document IPC handlers
 ipcMain.handle("db:findAll", (_, options?: { isDeleted?: boolean }) => {
   const database = getDatabase();
-  const isDeleted = options?.isDeleted ? 1 : 0;
   const docs = database
     .prepare(
-      "SELECT * FROM documents WHERE is_deleted = ? ORDER BY updated_at DESC",
+      options?.isDeleted === undefined
+        ? "SELECT * FROM documents ORDER BY updated_at DESC"
+        : "SELECT * FROM documents WHERE is_deleted = ? ORDER BY updated_at DESC",
     )
-    .all(isDeleted) as DocRow[];
+    .all(
+      options?.isDeleted === undefined ? [] : options.isDeleted ? 1 : 0,
+    ) as DocRow[];
 
   return docs.map((doc) => {
     const questions = database
