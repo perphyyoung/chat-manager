@@ -132,6 +132,7 @@ function handleCancelEdit() {
 async function handleDeleteDocument() {
   if (!contextMenu.value.documentId) return;
   await documentStore.softDeleteDocument(contextMenu.value.documentId);
+  await loadDeletedDocuments(); // 立即更新回收站计数
   closeContextMenu();
 }
 
