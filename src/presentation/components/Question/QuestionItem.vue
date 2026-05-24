@@ -31,6 +31,7 @@ function handleContextMenu(event: MouseEvent) {
   <div
     class="question-item"
     :class="{ 'question-item--active': isActive }"
+    :data-question-id="question.id"
     @click="handleClick"
     @contextmenu="handleContextMenu"
   >

@@ -143,6 +143,100 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_document_tags_tag_id ON document_tags(tag_id);
     `,
   },
+  {
+    version: 4,
+    name: "添加全局搜索 FTS5 索引",
+    sql: `
+      CREATE VIRTUAL TABLE IF NOT EXISTS search_fts USING fts5(
+        id,
+        type,
+        content,
+        metadata,
+        tokenize='unicode61'
+      );
+    `,
+  },
+  {
+    version: 5,
+    name: "添加全局搜索触发器",
+    sql: `
+      -- 文档触发器
+      CREATE TRIGGER IF NOT EXISTS documents_fts_insert AFTER INSERT ON documents BEGIN
+        INSERT INTO search_fts(id, type, content, metadata)
+        VALUES (new.id, 'document', new.title, json_object('title', new.title, 'createdAt', new.created_at));
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS documents_fts_update AFTER UPDATE ON documents BEGIN
+        DELETE FROM search_fts WHERE id = old.id AND type = 'document';
+        INSERT INTO search_fts(id, type, content, metadata)
+        VALUES (new.id, 'document', new.title, json_object('title', new.title, 'createdAt', new.created_at));
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS documents_fts_delete AFTER DELETE ON documents BEGIN
+        DELETE FROM search_fts WHERE id = old.id AND type = 'document';
+      END;
+
+      -- 问题触发器
+      CREATE TRIGGER IF NOT EXISTS questions_fts_insert AFTER INSERT ON questions BEGIN
+        INSERT INTO search_fts(id, type, content, metadata)
+        VALUES (
+          new.id, 'question', new.text,
+          json_object('questionId', new.id, 'documentId', new.document_id)
+        );
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS questions_fts_update AFTER UPDATE ON questions BEGIN
+        DELETE FROM search_fts WHERE id = old.id AND type = 'question';
+        INSERT INTO search_fts(id, type, content, metadata)
+        VALUES (
+          new.id, 'question', new.text,
+          json_object('questionId', new.id, 'documentId', new.document_id)
+        );
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS questions_fts_delete AFTER DELETE ON questions BEGIN
+        DELETE FROM search_fts WHERE id = old.id AND type = 'question';
+      END;
+
+      -- 回答触发器
+      CREATE TRIGGER IF NOT EXISTS answers_fts_insert AFTER INSERT ON answers BEGIN
+        INSERT INTO search_fts(id, type, content, metadata)
+        VALUES (
+          new.id, 'answer', new.content,
+          json_object('answerId', new.id, 'questionId', new.question_id)
+        );
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS answers_fts_update AFTER UPDATE ON answers BEGIN
+        DELETE FROM search_fts WHERE id = old.id AND type = 'answer';
+        INSERT INTO search_fts(id, type, content, metadata)
+        VALUES (
+          new.id, 'answer', new.content,
+          json_object('answerId', new.id, 'questionId', new.question_id)
+        );
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS answers_fts_delete AFTER DELETE ON answers BEGIN
+        DELETE FROM search_fts WHERE id = old.id AND type = 'answer';
+      END;
+
+      -- 标签触发器
+      CREATE TRIGGER IF NOT EXISTS tags_fts_insert AFTER INSERT ON tags BEGIN
+        INSERT INTO search_fts(id, type, content, metadata)
+        VALUES (new.id, 'tag', new.name, json_object('tagName', new.name));
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS tags_fts_update AFTER UPDATE ON tags BEGIN
+        DELETE FROM search_fts WHERE id = old.id AND type = 'tag';
+        INSERT INTO search_fts(id, type, content, metadata)
+        VALUES (new.id, 'tag', new.name, json_object('tagName', new.name));
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS tags_fts_delete AFTER DELETE ON tags BEGIN
+        DELETE FROM search_fts WHERE id = old.id AND type = 'tag';
+      END;
+    `,
+  },
 ];
 
 // 初始化版本控制表

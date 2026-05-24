@@ -12,6 +12,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     exclude: [...configDefaults.exclude, "e2e/**", "bak/**"],
+    include: ["src/**/*.test.ts", "electron/**/*.test.ts"],
     root: fileURLToPath(new URL("./", import.meta.url)),
   },
 });

@@ -2,6 +2,7 @@ import { app, BrowserWindow, Menu, ipcMain, globalShortcut } from "electron";
 import path from "node:path";
 import logger from "electron-log";
 import { getDatabase, closeDatabase } from "./database";
+import { SearchService } from "./services/SearchService";
 
 interface DocRow {
   id: string;
@@ -561,6 +562,19 @@ ipcMain.handle("tag:findDocumentsByTagId", (_, tagId: string) => {
   });
 });
 
+// Search IPC handlers
+ipcMain.handle("search:query", async (_, query: string) => {
+  const database = getDatabase();
+  const searchService = new SearchService(database);
+  return await searchService.query(query);
+});
+
+ipcMain.handle("search:rebuild", async () => {
+  const database = getDatabase();
+  const searchService = new SearchService(database);
+  await searchService.rebuildIndex();
+});
+
 function openSettings() {
   const window = BrowserWindow.getFocusedWindow();
   if (window) {
@@ -660,13 +674,36 @@ function createMenu() {
 }
 
 app.whenReady().then(() => {
-  getDatabase();
+  const db = getDatabase();
   createWindow();
   createMenu();
+
+  // 检查是否需要重建索引（首次安装或索引为空时）
+  const countResult = db.prepare("SELECT COUNT(*) as count FROM search_fts").get() as { count: number };
+  if (countResult.count === 0) {
+    logger.info("Search index is empty, rebuilding...");
+    const searchService = new SearchService(db);
+    searchService.rebuildIndex().then(() => {
+      logger.info("Search index rebuilt successfully");
+    }).catch((err) => {
+      logger.error("Failed to rebuild search index:", err);
+    });
+  }
 
   const shortcutRegistered = globalShortcut.register("Ctrl+,", openSettings);
   if (!shortcutRegistered) {
     logger.error("Failed to register global shortcut Ctrl+,");
+  }
+
+  // Ctrl+F 打开搜索面板
+  const searchShortcutRegistered = globalShortcut.register("Ctrl+F", () => {
+    const window = BrowserWindow.getFocusedWindow();
+    if (window) {
+      window.webContents.send("shortcut:open-search");
+    }
+  });
+  if (!searchShortcutRegistered) {
+    logger.error("Failed to register global shortcut Ctrl+F");
   }
 
   app.on("activate", () => {

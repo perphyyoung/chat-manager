@@ -37,6 +37,7 @@ interface DocumentDTO {
 
 interface ElectronAPI {
   onOpenSettings: (callback: () => void) => void;
+  onOpenSearch: (callback: () => void) => void;
   logToFile: (level: string, message: string) => void;
   db: {
     findAll: (options?: { isDeleted?: boolean }) => Promise<DocumentDTO[]>;
@@ -76,6 +77,46 @@ interface ElectronAPI {
     getDocumentTags: (documentId: string) => Promise<TagDTO[]>;
     findDocumentsByTagId: (tagId: string) => Promise<DocumentDTO[]>;
   };
+  search: {
+    query: (query: string) => Promise<SearchResults>;
+    rebuild: () => Promise<void>;
+  };
+}
+
+interface SearchResults {
+  documents: DocumentSearchResult[];
+  questions: QuestionSearchResult[];
+  answers: AnswerSearchResult[];
+  tags: TagSearchResult[];
+}
+
+interface DocumentSearchResult {
+  id: string;
+  title: string;
+  questionCount: number;
+  answerCount: number;
+}
+
+interface QuestionSearchResult {
+  id: string;
+  text: string;
+  documentId: string;
+  documentTitle: string;
+}
+
+interface AnswerSearchResult {
+  id: string;
+  content: string;
+  questionText: string;
+  questionId: string;
+  documentId: string;
+  documentTitle: string;
+}
+
+interface TagSearchResult {
+  id: string;
+  name: string;
+  documentCount: number;
 }
 
 declare global {
@@ -84,4 +125,4 @@ declare global {
   }
 }
 
-export {};
+export type { SearchResults, DocumentSearchResult, QuestionSearchResult, AnswerSearchResult, TagSearchResult };

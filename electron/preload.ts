@@ -6,6 +6,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
       callback();
     });
   },
+  onOpenSearch: (callback: () => void) => {
+    ipcRenderer.on("shortcut:open-search", () => {
+      callback();
+    });
+  },
   logToFile: (level: string, message: string) => {
     ipcRenderer.invoke("log-to-file", level, message);
   },
@@ -52,5 +57,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("tag:getDocumentTags", documentId),
     findDocumentsByTagId: (tagId: string) =>
       ipcRenderer.invoke("tag:findDocumentsByTagId", tagId),
+  },
+  search: {
+    query: (query: string) => ipcRenderer.invoke("search:query", query),
+    rebuild: () => ipcRenderer.invoke("search:rebuild"),
   },
 });

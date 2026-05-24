@@ -523,3 +523,103 @@ ConfirmDialog.vue         // 确认对话框
 3. **排序维护**：questions 的 sort_order 应连续，删除后需要重新排序
 4. **空回答处理**：question 可以暂时没有 answer（未创建或已删除）
 5. **时间戳更新**：任何实体编辑后更新 updated_at，created_at 保持不变
+
+---
+
+## 11. 全局搜索
+
+### 11.1 数据库设计
+
+使用 SQLite FTS5 虚拟表实现全文搜索：
+
+```sql
+-- FTS5 虚拟表
+CREATE VIRTUAL TABLE search_fts USING fts5(
+  id TEXT,
+  type TEXT,
+  content TEXT,
+  metadata TEXT,
+  tokenize='porter unicode61'
+);
+
+-- FTS 触发器（自动索引）
+CREATE TRIGGER documents_fts_insert AFTER INSERT ON documents BEGIN
+  INSERT INTO search_fts(id, type, content, metadata) VALUES (new.id, 'document', new.title, ...);
+END;
+-- 类似的问题、回答、标签触发器
+```
+
+### 11.2 搜索服务
+
+```typescript
+interface SearchResults {
+  documents: DocumentSearchResult[];
+  questions: QuestionSearchResult[];
+  answers: AnswerSearchResult[];
+  tags: TagSearchResult[];
+}
+
+interface DocumentSearchResult {
+  id: string;
+  title: string;
+  questionCount: number;
+  answerCount: number;
+}
+
+interface QuestionSearchResult {
+  id: string;
+  text: string;
+  documentId: string;
+  documentTitle: string;
+}
+
+interface AnswerSearchResult {
+  id: string;
+  content: string;
+  questionText: string;
+  questionId: string;
+  documentId: string;
+  documentTitle: string;
+}
+
+interface TagSearchResult {
+  id: string;
+  name: string;
+  documentCount: number;
+}
+
+class SearchService {
+  async query(searchText: string, limit?: number): Promise<SearchResults>
+  async rebuildIndex(): Promise<void>
+}
+```
+
+### 11.3 IPC 接口
+
+```typescript
+// 主进程
+ipcMain.handle('search:query', (_, query: string) => {...})
+ipcMain.handle('search:rebuild', () => {...})
+
+// 预加载脚本
+electronAPI.search = {
+  query: (query: string) => ipcRenderer.invoke('search:query', query),
+  rebuild: () => ipcRenderer.invoke('search:rebuild'),
+}
+```
+
+### 11.4 搜索组件
+
+```typescript
+// 搜索相关组件
+SearchModal.vue        // 搜索面板容器
+SearchInput.vue        // 搜索输入框
+SearchResults.vue      // 搜索结果列表
+```
+
+### 11.5 快捷键
+
+- `Ctrl+F`：唤起搜索面板
+- `↑` / `↓`：在搜索结果中导航
+- `Enter`：确认选择
+- `Esc`：关闭搜索面板
