@@ -38,6 +38,7 @@ interface DocumentDTO {
 interface ElectronAPI {
   onOpenSettings: (callback: () => void) => void;
   onOpenSearch: (callback: () => void) => void;
+  openSearch: () => void;
   logToFile: (level: string, message: string) => void;
   db: {
     findAll: (options?: { isDeleted?: boolean }) => Promise<DocumentDTO[]>;

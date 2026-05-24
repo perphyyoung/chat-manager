@@ -712,16 +712,7 @@ app.whenReady().then(() => {
     logger.error("Failed to register global shortcut Ctrl+,");
   }
 
-  // Ctrl+F 打开搜索面板
-  const searchShortcutRegistered = globalShortcut.register("Ctrl+F", () => {
-    const window = BrowserWindow.getFocusedWindow();
-    if (window) {
-      window.webContents.send("shortcut:open-search");
-    }
-  });
-  if (!searchShortcutRegistered) {
-    logger.error("Failed to register global shortcut Ctrl+F");
-  }
+  // Ctrl+F 打开搜索面板（已在渲染进程通过 keydown 处理）
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
