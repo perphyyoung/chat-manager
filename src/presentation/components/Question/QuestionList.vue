@@ -84,6 +84,7 @@ function handleContextMenu(event: MouseEvent, questionId: string) {
 async function handleDeleteClick() {
   if (!contextMenu.value.questionId) return
   await documentStore.softDeleteQuestion(contextMenu.value.questionId)
+  await documentStore.loadDeletedQuestions(); // 立即更新回收站计数
   contextMenu.value.show = false
   contextMenu.value.questionId = ''
   contextMenu.value.questionText = ''
@@ -130,7 +131,8 @@ function handleClickOutside(event: MouseEvent) {
 }
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
+  document.addEventListener('click', handleClickOutside);
+  documentStore.loadDeletedQuestions();
 })
 
 onUnmounted(() => {
