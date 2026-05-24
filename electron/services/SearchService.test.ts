@@ -1,14 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync as SqliteDB } from "node:sqlite";
 import { SearchService } from "./SearchService";
 
 describe("SearchService", () => {
   let service: SearchService;
-  let mockDb: Database.Database;
+  let db: SqliteDB;
 
   beforeEach(() => {
-    mockDb = new Database(":memory:");
-    service = new SearchService(mockDb);
+    db = new DatabaseSync(":memory:");
+    service = new SearchService(db);
   });
 
   describe("query", () => {
@@ -71,8 +72,8 @@ describe("SearchService", () => {
 
   describe("query with results", () => {
     beforeEach(() => {
-      mockDb.exec(`
-        CREATE VIRTUAL TABLE search_fts USING fts5(id, type, content, metadata);
+      db.exec(`
+        CREATE VIRTUAL TABLE search_fts USING fts5(id, type, content, metadata, tokenize='unicode61');
         INSERT INTO search_fts VALUES ('doc-1', 'document', 'Test Document', '{"questionCount": 5, "answerCount": 10}');
         INSERT INTO search_fts VALUES ('q-1', 'question', 'What is this?', '{"documentId": "doc-1", "documentTitle": "Test Document"}');
         INSERT INTO search_fts VALUES ('a-1', 'answer', 'This is a test answer', '{"questionText": "What is this?", "questionId": "q-1", "documentId": "doc-1", "documentTitle": "Test Document"}');
@@ -128,8 +129,8 @@ describe("SearchService", () => {
 
   describe("query with missing metadata fields", () => {
     beforeEach(() => {
-      mockDb.exec(`
-        CREATE VIRTUAL TABLE search_fts USING fts5(id, type, content, metadata);
+      db.exec(`
+        CREATE VIRTUAL TABLE search_fts USING fts5(id, type, content, metadata, tokenize='unicode61');
         INSERT INTO search_fts VALUES ('doc-1', 'document', 'Test', '{}');
         INSERT INTO search_fts VALUES ('q-1', 'question', 'Question', '{}');
         INSERT INTO search_fts VALUES ('a-1', 'answer', 'Answer', '{}');
@@ -181,9 +182,9 @@ describe("SearchService", () => {
 
   describe("query respects limit per type", () => {
     beforeEach(() => {
-      mockDb.exec(`CREATE VIRTUAL TABLE search_fts USING fts5(id, type, content, metadata);`);
+      db.exec(`CREATE VIRTUAL TABLE search_fts USING fts5(id, type, content, metadata, tokenize='unicode61');`);
       for (let i = 0; i < 15; i++) {
-        mockDb.prepare(`INSERT INTO search_fts VALUES (?, 'document', ?, ?)`).run(`doc-${i}`, `Document ${i}`, `{"questionCount": ${i}, "answerCount": ${i}}`);
+        db.prepare(`INSERT INTO search_fts VALUES (?, 'document', ?, ?)`).run(`doc-${i}`, `Document ${i}`, `{"questionCount": ${i}, "answerCount": ${i}}`);
       }
     });
 
@@ -202,7 +203,7 @@ describe("SearchService", () => {
 
   describe("rebuildIndex", () => {
     beforeEach(() => {
-      mockDb.exec(`
+      db.exec(`
         CREATE TABLE IF NOT EXISTS documents (
           id TEXT PRIMARY KEY,
           title TEXT NOT NULL,
@@ -227,7 +228,7 @@ describe("SearchService", () => {
           document_id TEXT NOT NULL,
           tag_id TEXT NOT NULL
         );
-        CREATE VIRTUAL TABLE search_fts USING fts5(id, type, content, metadata);
+        CREATE VIRTUAL TABLE search_fts USING fts5(id, type, content, metadata, tokenize='unicode61');
 
         INSERT INTO documents VALUES ('doc-1', 'Test Doc', 0);
         INSERT INTO questions VALUES ('q-1', 'doc-1', 'Test Question?', 0);
@@ -238,19 +239,19 @@ describe("SearchService", () => {
     });
 
     it("should clear existing index before rebuilding", async () => {
-      mockDb.prepare(`INSERT INTO search_fts VALUES ('old-doc', 'document', 'Old', '{}')`).run();
+      db.prepare(`INSERT INTO search_fts VALUES ('old-doc', 'document', 'Old', '{}')`).run();
 
       await service.rebuildIndex();
 
-      const count = mockDb.prepare(`SELECT COUNT(*) as count FROM search_fts WHERE id = 'old-doc'`).get() as { count: number };
-      expect(count.count).toBe(0);
+      const result = db.prepare(`SELECT COUNT(*) as count FROM search_fts WHERE id = 'old-doc'`).get() as { count: number };
+      expect(result.count).toBe(0);
     });
 
     it("should rebuild all entity types", async () => {
       await service.rebuildIndex();
 
-      const count = mockDb.prepare(`SELECT COUNT(*) as count FROM search_fts`).get() as { count: number };
-      expect(count.count).toBeGreaterThan(0);
+      const result = db.prepare(`SELECT COUNT(*) as count FROM search_fts`).get() as { count: number };
+      expect(result.count).toBeGreaterThan(0);
     });
   });
 });

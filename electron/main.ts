@@ -45,24 +45,26 @@ interface TagRow {
 logger.initialize();
 logger.transports.file.resolvePathFn = () => path.join(process.cwd(), "cm.log");
 
-// 请求单实例锁，防止应用多开
-const gotTheLock = app.requestSingleInstanceLock();
+// 请求单实例锁，防止应用多开（仅生产环境）
+if (app.isPackaged) {
+  const gotTheLock = app.requestSingleInstanceLock();
 
-if (!gotTheLock) {
-  // 如果没有获得锁，说明已有实例在运行，退出当前实例
-  app.quit();
-} else {
-  // 获得锁，监听 second-instance 事件
-  // 当第二个实例启动时，聚焦到第一个实例的窗口
-  app.on("second-instance", () => {
-    const mainWindow = BrowserWindow.getAllWindows()[0];
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) {
-        mainWindow.restore();
+  if (!gotTheLock) {
+    // 如果没有获得锁，说明已有实例在运行，退出当前实例
+    app.quit();
+  } else {
+    // 获得锁，监听 second-instance 事件
+    // 当第二个实例启动时，聚焦到第一个实例的窗口
+    app.on("second-instance", () => {
+      const mainWindow = BrowserWindow.getAllWindows()[0];
+      if (mainWindow) {
+        if (mainWindow.isMinimized()) {
+          mainWindow.restore();
+        }
+        mainWindow.focus();
       }
-      mainWindow.focus();
-    }
-  });
+    });
+  }
 }
 
 ipcMain.handle("log-to-file", (_, level: string, message: string) => {
@@ -86,25 +88,25 @@ ipcMain.handle("db:findAll", (_, options?: { isDeleted?: boolean }) => {
         : "SELECT * FROM documents WHERE is_deleted = ? ORDER BY updated_at DESC",
     )
     .all(
-      options?.isDeleted === undefined ? [] : options.isDeleted ? 1 : 0,
-    ) as DocRow[];
+      ...(options?.isDeleted === undefined ? [] : [options.isDeleted ? 1 : 0]),
+    ) as unknown as DocRow[];
 
   return docs.map((doc) => {
     const questions = database
       .prepare(
         "SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order",
       )
-      .all(doc.id) as QuestionRow[];
+      .all(doc.id) as unknown as QuestionRow[];
     const answers = database
       .prepare(
         "SELECT * FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)",
       )
-      .all(doc.id) as AnswerRow[];
+      .all(doc.id) as unknown as AnswerRow[];
     const tags = database
       .prepare(
         "SELECT t.* FROM tags t JOIN document_tags dt ON t.id = dt.tag_id WHERE dt.document_id = ?",
       )
-      .all(doc.id) as TagRow[];
+      .all(doc.id) as unknown as TagRow[];
     return {
       id: doc.id,
       title: doc.title,
@@ -149,17 +151,17 @@ ipcMain.handle("db:findById", (_, id: string) => {
     .prepare(
       "SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order",
     )
-    .all(doc.id) as QuestionRow[];
+    .all(doc.id) as unknown as QuestionRow[];
   const answers = database
     .prepare(
       "SELECT * FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)",
     )
-    .all(doc.id) as AnswerRow[];
+    .all(doc.id) as unknown as AnswerRow[];
   const tags = database
     .prepare(
       "SELECT t.* FROM tags t JOIN document_tags dt ON t.id = dt.tag_id WHERE dt.document_id = ?",
     )
-    .all(doc.id) as TagRow[];
+    .all(doc.id) as unknown as TagRow[];
 
   return {
     id: doc.id,
@@ -196,7 +198,8 @@ ipcMain.handle("db:save", (_, documentJson: string) => {
   const doc = JSON.parse(documentJson);
   const now = new Date().toISOString();
 
-  const transaction = database.transaction(() => {
+  database.exec("BEGIN TRANSACTION");
+  try {
     database
       .prepare(
         "INSERT INTO documents (id, title, created_at, updated_at, is_deleted, deleted_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at",
@@ -258,9 +261,12 @@ ipcMain.handle("db:save", (_, documentJson: string) => {
         )
         .run(doc.id, t.id);
     }
-  });
 
-  transaction();
+    database.exec("COMMIT");
+  } catch (e) {
+    database.exec("ROLLBACK");
+    throw e;
+  }
 });
 
 ipcMain.handle("db:softDelete", (_, id: string) => {
@@ -412,7 +418,7 @@ ipcMain.handle("tag:findAll", () => {
   const database = getDatabase();
   const tags = database
     .prepare("SELECT * FROM tags ORDER BY created_at DESC")
-    .all() as TagRow[];
+    .all() as unknown as TagRow[];
   return tags.map((t) => ({
     id: t.id,
     name: t.name,
@@ -495,7 +501,7 @@ ipcMain.handle("tag:getDocumentTags", (_, documentId: string) => {
     .prepare(
       "SELECT t.* FROM tags t JOIN document_tags dt ON t.id = dt.tag_id WHERE dt.document_id = ?",
     )
-    .all(documentId) as TagRow[];
+    .all(documentId) as unknown as TagRow[];
   return tags.map((t) => ({
     id: t.id,
     name: t.name,
@@ -514,23 +520,23 @@ ipcMain.handle("tag:findDocumentsByTagId", (_, tagId: string) => {
       ORDER BY d.updated_at DESC
     `,
     )
-    .all(tagId) as DocRow[];
+    .all(tagId) as unknown as DocRow[];
   return docs.map((doc) => {
     const questions = database
       .prepare(
         "SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order",
       )
-      .all(doc.id) as QuestionRow[];
+      .all(doc.id) as unknown as QuestionRow[];
     const answers = database
       .prepare(
         "SELECT * FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)",
       )
-      .all(doc.id) as AnswerRow[];
+      .all(doc.id) as unknown as AnswerRow[];
     const tags = database
       .prepare(
         "SELECT t.* FROM tags t JOIN document_tags dt ON t.id = dt.tag_id WHERE dt.document_id = ?",
       )
-      .all(doc.id) as TagRow[];
+      .all(doc.id) as unknown as TagRow[];
     return {
       id: doc.id,
       title: doc.title,
@@ -563,6 +569,9 @@ ipcMain.handle("tag:findDocumentsByTagId", (_, tagId: string) => {
 });
 
 // Search IPC handlers
+ipcMain.on("shortcut:open-search", (event) => {
+  event.sender.send("shortcut:open-search");
+});
 ipcMain.handle("search:query", async (_, query: string) => {
   const database = getDatabase();
   const searchService = new SearchService(database);

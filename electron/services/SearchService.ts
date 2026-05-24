@@ -1,4 +1,4 @@
-import type Database from "better-sqlite3";
+import type { DatabaseSync as SqliteDB } from "node:sqlite";
 
 export interface SearchResults {
   documents: DocumentResult[];
@@ -44,7 +44,7 @@ interface FtsRow {
 }
 
 export class SearchService {
-  constructor(private db: Database.Database) {}
+  constructor(private db: SqliteDB) {}
 
   async query(searchText: string, limit = 10): Promise<SearchResults> {
     if (!searchText || searchText.trim().length === 0) {
@@ -59,15 +59,13 @@ export class SearchService {
     const escapedQuery = this.escapeQuery(searchText);
     const ftsQuery = `"${escapedQuery}"*`;
 
-    const stmt = this.db.prepare(`
+    const rows = this.db.prepare(`
       SELECT id, type, content, metadata
       FROM search_fts
       WHERE search_fts MATCH ?
       ORDER BY rank
       LIMIT ?
-    `);
-
-    const rows = stmt.all(ftsQuery, limit * 4) as FtsRow[];
+    `).all(ftsQuery, limit * 4) as unknown as FtsRow[];
 
     return this.groupByType(rows, limit);
   }
@@ -136,7 +134,9 @@ export class SearchService {
   }
 
   async rebuildIndex(): Promise<void> {
-    const rebuildStmt = this.db.prepare(`
+    this.db.exec("DELETE FROM search_fts");
+
+    this.db.exec(`
       INSERT INTO search_fts(id, type, content, metadata)
       SELECT
         d.id,
@@ -147,7 +147,7 @@ export class SearchService {
       WHERE d.is_deleted = 0
     `);
 
-    const rebuildQuestionsStmt = this.db.prepare(`
+    this.db.exec(`
       INSERT INTO search_fts(id, type, content, metadata)
       SELECT
         q.id,
@@ -159,7 +159,7 @@ export class SearchService {
       WHERE q.is_deleted = 0 AND d.is_deleted = 0
     `);
 
-    const rebuildAnswersStmt = this.db.prepare(`
+    this.db.exec(`
       INSERT INTO search_fts(id, type, content, metadata)
       SELECT
         a.id,
@@ -172,7 +172,7 @@ export class SearchService {
       WHERE q.is_deleted = 0 AND d.is_deleted = 0
     `);
 
-    const rebuildTagsStmt = this.db.prepare(`
+    this.db.exec(`
       INSERT INTO search_fts(id, type, content, metadata)
       SELECT
         t.id,
@@ -181,14 +181,5 @@ export class SearchService {
         json_object('tagName', t.name, 'documentCount', (SELECT COUNT(*) FROM document_tags WHERE tag_id = t.id))
       FROM tags t
     `);
-
-    this.db.exec("DELETE FROM search_fts");
-
-    this.db.transaction(() => {
-      rebuildStmt.run();
-      rebuildQuestionsStmt.run();
-      rebuildAnswersStmt.run();
-      rebuildTagsStmt.run();
-    })();
   }
 }

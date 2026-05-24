@@ -16,6 +16,8 @@ description: "用于 e2e 测试. Invoke when writing e2e test file."
 
 E2E 测试中的日志统一输出到项目根目录 `cm.log`，便于调试。
 
+- 清空 cm.log, 而不是删除
+
 ### E2E 测试文件中的日志
 
 必须使用 `e2e/utils.ts` 中的辅助函数：

@@ -1,4 +1,5 @@
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync as SqliteDB } from "node:sqlite";
 import path from "node:path";
 import fs from "node:fs";
 import { app } from "electron";
@@ -6,7 +7,7 @@ import { app } from "electron";
 const DB_DIR = "py-data";
 const DB_FILE = "chat-manager.db";
 
-let db: Database.Database | null = null;
+let db: SqliteDB | null = null;
 let dbDir: string | null = null;
 
 /**
@@ -42,7 +43,7 @@ export function getDbPath(): string {
   return path.join(getDbDir(), DB_FILE);
 }
 
-export function getDatabase(): Database.Database {
+export function getDatabase(): SqliteDB {
   if (db) {
     return db;
   }
@@ -52,25 +53,22 @@ export function getDatabase(): Database.Database {
     fs.mkdirSync(dbDir, { recursive: true });
   }
 
-  db = new Database(getDbPath());
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
+  db = new DatabaseSync(getDbPath());
+  db.exec("PRAGMA journal_mode = WAL");
+  db.exec("PRAGMA foreign_keys = ON");
 
-  // 初始化版本控制并执行迁移
   initVersionControl(db);
   runMigrations(db);
 
   return db;
 }
 
-// 数据库版本控制
 interface Migration {
   version: number;
   name: string;
   sql: string;
 }
 
-// 迁移历史记录
 const migrations: Migration[] = [
   {
     version: 1,
@@ -160,7 +158,6 @@ const migrations: Migration[] = [
     version: 5,
     name: "添加全局搜索触发器",
     sql: `
-      -- 文档触发器
       CREATE TRIGGER IF NOT EXISTS documents_fts_insert AFTER INSERT ON documents BEGIN
         INSERT INTO search_fts(id, type, content, metadata)
         VALUES (new.id, 'document', new.title, json_object('title', new.title, 'createdAt', new.created_at));
@@ -176,7 +173,6 @@ const migrations: Migration[] = [
         DELETE FROM search_fts WHERE id = old.id AND type = 'document';
       END;
 
-      -- 问题触发器
       CREATE TRIGGER IF NOT EXISTS questions_fts_insert AFTER INSERT ON questions BEGIN
         INSERT INTO search_fts(id, type, content, metadata)
         VALUES (
@@ -198,7 +194,6 @@ const migrations: Migration[] = [
         DELETE FROM search_fts WHERE id = old.id AND type = 'question';
       END;
 
-      -- 回答触发器
       CREATE TRIGGER IF NOT EXISTS answers_fts_insert AFTER INSERT ON answers BEGIN
         INSERT INTO search_fts(id, type, content, metadata)
         VALUES (
@@ -220,7 +215,6 @@ const migrations: Migration[] = [
         DELETE FROM search_fts WHERE id = old.id AND type = 'answer';
       END;
 
-      -- 标签触发器
       CREATE TRIGGER IF NOT EXISTS tags_fts_insert AFTER INSERT ON tags BEGIN
         INSERT INTO search_fts(id, type, content, metadata)
         VALUES (new.id, 'tag', new.name, json_object('tagName', new.name));
@@ -239,9 +233,8 @@ const migrations: Migration[] = [
   },
 ];
 
-// 初始化版本控制表
-function initVersionControl(database: Database.Database): void {
-  database.exec(`
+function initVersionControl(db: SqliteDB): void {
+  db.exec(`
     CREATE TABLE IF NOT EXISTS db_version (
       version INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
@@ -250,37 +243,27 @@ function initVersionControl(database: Database.Database): void {
   `);
 }
 
-// 获取当前数据库版本
-function getCurrentVersion(database: Database.Database): number {
-  const row = database
-    .prepare("SELECT MAX(version) as version FROM db_version")
-    .get() as { version: number | null } | undefined;
-  return row?.version ?? 0;
+function getCurrentVersion(db: SqliteDB): number {
+  const result = db.prepare("SELECT MAX(version) as version FROM db_version").get() as { version: number | null } | undefined;
+  return result?.version ?? 0;
 }
 
-// 记录迁移执行
-function recordMigration(
-  database: Database.Database,
-  migration: Migration,
-): void {
-  database
-    .prepare(
-      "INSERT INTO db_version (version, name, applied_at) VALUES (?, ?, ?)",
-    )
-    .run(migration.version, migration.name, new Date().toISOString());
+function recordMigration(db: SqliteDB, migration: Migration): void {
+  db.prepare("INSERT INTO db_version (version, name, applied_at) VALUES (?, ?, ?)").run(
+    migration.version,
+    migration.name,
+    new Date().toISOString(),
+  );
 }
 
-// 执行迁移
-function runMigrations(database: Database.Database): void {
-  const currentVersion = getCurrentVersion(database);
+function runMigrations(db: SqliteDB): void {
+  const currentVersion = getCurrentVersion(db);
 
   for (const migration of migrations) {
     if (migration.version > currentVersion) {
       try {
-        // 执行迁移 SQL
-        database.exec(migration.sql);
-        // 记录迁移
-        recordMigration(database, migration);
+        db.exec(migration.sql);
+        recordMigration(db, migration);
       } catch (error) {
         console.error(
           `[DB Migration] 版本 ${migration.version}: ${migration.name} - 执行失败`,

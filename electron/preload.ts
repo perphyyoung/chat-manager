@@ -11,6 +11,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
       callback();
     });
   },
+  openSearch: () => {
+    ipcRenderer.send("shortcut:open-search");
+  },
   logToFile: (level: string, message: string) => {
     ipcRenderer.invoke("log-to-file", level, message);
   },
