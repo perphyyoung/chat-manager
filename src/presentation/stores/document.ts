@@ -144,6 +144,7 @@ export const useDocumentStore = defineStore("document", () => {
     selectedDocumentId.value = id;
     activeQuestionId.value = null;
     documentService.selectDocument(id).catch(() => {});
+    loadDeletedQuestions().catch(() => {});
   }
 
   function setActiveQuestion(id: string | null) {
