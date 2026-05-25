@@ -6,6 +6,7 @@ import ConfirmDialog from "../common/ConfirmDialog.vue";
 const documentStore = useDocumentStore();
 const showNewTagInput = ref(false);
 const newTagName = ref("");
+const isCollapsed = ref(false);
 
 // 右键菜单状态
 const contextMenu = ref({
@@ -161,9 +162,16 @@ onUnmounted(() => {
 <template>
   <div class="tag-filter">
     <div class="tag-filter__header">
-      <span class="tag-filter__title">标签筛选</span>
       <button
-        v-if="!showNewTagInput && !showEditInput"
+        class="tag-filter__toggle"
+        @click="isCollapsed = !isCollapsed"
+        :title="isCollapsed ? '展开' : '收起'"
+      >
+        <span class="tag-filter__toggle-icon" :class="{ 'tag-filter__toggle-icon--collapsed': isCollapsed }">▶</span>
+        <span class="tag-filter__title">标签筛选</span>
+      </button>
+      <button
+        v-if="!showNewTagInput && !showEditInput && !isCollapsed"
         class="tag-filter__add-btn"
         @click="showNewTagInput = true"
         title="新建标签"
@@ -210,7 +218,11 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="tag-filter__list">
+    <div v-if="isCollapsed" class="tag-filter__collapsed-info">
+      <span>共 {{ documentStore.allTags.length }} 个标签</span>
+    </div>
+
+    <div v-else class="tag-filter__list">
       <button
         v-for="tag in documentStore.allTags"
         :key="tag.id"
@@ -272,10 +284,43 @@ onUnmounted(() => {
   margin-bottom: 8px;
 }
 
+.tag-filter__toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.tag-filter__toggle:hover {
+  color: var(--color-text);
+}
+
+.tag-filter__toggle-icon {
+  font-size: 8px;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.tag-filter__toggle-icon--collapsed {
+  transform: rotate(0deg);
+}
+
+.tag-filter__toggle-icon:not(.tag-filter__toggle-icon--collapsed) {
+  transform: rotate(90deg);
+}
+
 .tag-filter__title {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -359,6 +404,12 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.tag-filter__collapsed-info {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  padding: 4px 0;
 }
 
 .tag-filter__item {
