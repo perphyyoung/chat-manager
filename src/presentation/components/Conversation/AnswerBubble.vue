@@ -3,7 +3,7 @@ import { ref, computed, watch, nextTick } from "vue";
 import { Marked } from "marked";
 import { markedHighlight } from "marked-highlight";
 import Prism from "prismjs";
-import { EditorView, keymap } from "@codemirror/view";
+import { EditorView, keymap, lineNumbers } from "@codemirror/view";
 import { EditorState } from "@codemirror/state";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
@@ -57,12 +57,14 @@ const isEditing = ref(false);
 const editContent = ref("");
 const editorContainer = ref<HTMLElement | null>(null);
 const editorView = ref<EditorView | null>(null);
+const showLineNumbers = ref(false);
 
 // 右键菜单状态
 const contextMenu = ref({
   show: false,
   x: 0,
   y: 0,
+  isEditing: false, // 记录是否为编辑模式
 });
 
 // 搜索状态
@@ -87,8 +89,7 @@ marked.setOptions({
 });
 
 const renderedContent = computed(() => {
-  const result = marked.parse(props.content) as string;
-  return result;
+  return marked.parse(props.content) as string;
 });
 
 function startEdit() {
@@ -172,6 +173,7 @@ function initCodeMirror() {
     state: EditorState.create({
       doc: editContent.value,
       extensions: [
+        showLineNumbers.value ? lineNumbers() : [], // 显示行号（默认关闭）
         markdown({ codeLanguages: languages }),
         oneDark,
         search({ top: true }), // 官方搜索面板，显示在顶部
@@ -222,6 +224,7 @@ function handleContextMenu(e: MouseEvent) {
     show: true,
     x: e.clientX,
     y: e.clientY,
+    isEditing: isEditing.value, // 记录当前是否为编辑模式
   };
 }
 
@@ -259,6 +262,19 @@ function formatCode() {
   }
   closeContextMenu();
 }
+
+// 切换行号显示
+function toggleLineNumbers() {
+  showLineNumbers.value = !showLineNumbers.value;
+  // 重新初始化编辑器以应用更改
+  if (editorView.value) {
+    const currentContent = editorView.value.state.doc.toString();
+    destroyCodeMirror();
+    editContent.value = currentContent;
+    initCodeMirror();
+  }
+  closeContextMenu();
+}
 </script>
 
 <template>
@@ -280,14 +296,14 @@ function formatCode() {
         @click="closeContextMenu"
         @contextmenu.prevent
       >
-        <div
-          class="context-menu"
-          :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
-          @click.stop
-        >
-          <div class="context-menu-item" @click="formatCode">
+        <div class="context-menu" :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }" @click.stop>
+          <div v-if="!contextMenu.isEditing" class="context-menu-item" @click="formatCode">
             <span class="context-menu-icon">✨</span>
             <span class="context-menu-text">格式化</span>
+          </div>
+          <div v-if="contextMenu.isEditing" class="context-menu-item" @click="toggleLineNumbers">
+            <span class="context-menu-icon">{{ showLineNumbers ? "☑" : "☐" }}</span>
+            <span class="context-menu-text">显示行号</span>
           </div>
         </div>
       </div>
@@ -296,7 +312,7 @@ function formatCode() {
     <!-- 全屏编辑模式 -->
     <Teleport to="body">
       <div v-if="isEditing" class="fullscreen-edit-overlay" @click="cancelEdit">
-        <div class="fullscreen-edit-container" @click.stop>
+        <div class="fullscreen-edit-container" @click.stop @contextmenu="handleContextMenu">
           <div class="fullscreen-edit-header">
             <span class="edit-title">编辑回答</span>
             <div class="fullscreen-edit-actions">
@@ -417,7 +433,7 @@ function formatCode() {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 9999;
+  z-index: 10001;
 }
 
 .context-menu {
@@ -506,6 +522,23 @@ function formatCode() {
 
 .fullscreen-edit-editor :deep(.cm-scroller) {
   overflow: auto;
+}
+
+/* 行号样式 */
+.fullscreen-edit-editor :deep(.cm-lineNumbers) {
+  min-width: 40px;
+  padding-right: 8px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  user-select: none;
+}
+
+.fullscreen-edit-editor :deep(.cm-lineNumbers .cm-lineNumber) {
+  padding-left: 4px;
+}
+
+.fullscreen-edit-editor :deep(.cm-activeLineGutter) {
+  background-color: transparent;
 }
 
 /* 搜索面板样式 - 极简工业风悬浮胶囊 */
