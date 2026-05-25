@@ -167,7 +167,7 @@ function updateSearchDisplay(view: EditorView) {
 }
 
 // 初始化 CodeMirror（使用官方搜索）
-function initCodeMirror() {
+function initCodeMirror(restoreScrollTop?: number) {
   if (!editorContainer.value) return;
 
   editorView.value = new EditorView({
@@ -194,6 +194,11 @@ function initCodeMirror() {
     }),
     parent: editorContainer.value,
   });
+
+  // 恢复滚动位置
+  if (restoreScrollTop !== undefined && editorView.value) {
+    editorView.value.scrollDOM.scrollTop = restoreScrollTop;
+  }
 
   // 确保编辑器获得焦点
   editorView.value.focus();
@@ -271,9 +276,10 @@ function toggleLineNumbers() {
   // 重新初始化编辑器以应用更改
   if (editorView.value) {
     const currentContent = editorView.value.state.doc.toString();
+    const scrollTop = editorView.value.scrollDOM.scrollTop;
     destroyCodeMirror();
     editContent.value = currentContent;
-    initCodeMirror();
+    initCodeMirror(scrollTop);
   }
   closeContextMenu();
 }
@@ -284,9 +290,10 @@ function toggleWordWrap() {
   // 重新初始化编辑器以应用更改
   if (editorView.value) {
     const currentContent = editorView.value.state.doc.toString();
+    const scrollTop = editorView.value.scrollDOM.scrollTop;
     destroyCodeMirror();
     editContent.value = currentContent;
-    initCodeMirror();
+    initCodeMirror(scrollTop);
   }
   closeContextMenu();
 }
