@@ -287,6 +287,10 @@ function toggleLineNumbers() {
 // 切换长文本换行
 function toggleWordWrap() {
   wordWrap.value = !wordWrap.value;
+  // 长文本换行时自动开启行号
+  if (wordWrap.value) {
+    showLineNumbers.value = true;
+  }
   // 重新初始化编辑器以应用更改
   if (editorView.value) {
     const currentContent = editorView.value.state.doc.toString();
