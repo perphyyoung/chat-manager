@@ -95,6 +95,32 @@ function expandRight() {
   rightWidth.value = 280;
   rightCollapsed.value = false;
 }
+
+function collapseLeft() {
+  leftWidth.value = 0;
+  leftCollapsed.value = true;
+}
+
+function collapseRight() {
+  rightWidth.value = 0;
+  rightCollapsed.value = true;
+}
+
+function onLeftDoubleClick() {
+  if (leftCollapsed.value) {
+    expandLeft();
+  } else {
+    collapseLeft();
+  }
+}
+
+function onRightDoubleClick() {
+  if (rightCollapsed.value) {
+    expandRight();
+  } else {
+    collapseRight();
+  }
+}
 </script>
 
 <template>
@@ -111,6 +137,7 @@ function expandRight() {
       class="resize-handle"
       :class="{ 'is-dragging': isDraggingLeft, 'is-collapsed': leftCollapsed }"
       @pointerdown="onLeftResizeStart"
+      @dblclick="onLeftDoubleClick"
     >
       <div v-if="leftCollapsed" class="collapse-button left" @click.stop="expandLeft">
         <span class="collapse-icon">▶</span>
@@ -126,6 +153,7 @@ function expandRight() {
       class="resize-handle"
       :class="{ 'is-dragging': isDraggingRight, 'is-collapsed': rightCollapsed }"
       @pointerdown="onRightResizeStart"
+      @dblclick="onRightDoubleClick"
     >
       <div v-if="rightCollapsed" class="collapse-button right" @click.stop="expandRight">
         <span class="collapse-icon">◀</span>
