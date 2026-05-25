@@ -101,6 +101,7 @@ interface DocumentSearchResult {
 interface QuestionSearchResult {
   id: string;
   text: string;
+  snippet?: string;
   documentId: string;
   documentTitle: string;
 }
@@ -108,6 +109,7 @@ interface QuestionSearchResult {
 interface AnswerSearchResult {
   id: string;
   content: string;
+  snippet?: string;
   questionText: string;
   questionId: string;
   documentId: string;

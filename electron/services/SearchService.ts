@@ -17,6 +17,7 @@ export interface DocumentResult {
 export interface QuestionResult {
   id: string;
   text: string;
+  snippet?: string;
   documentId: string;
   documentTitle: string;
 }
@@ -24,6 +25,7 @@ export interface QuestionResult {
 export interface AnswerResult {
   id: string;
   content: string;
+  snippet?: string;
   questionText: string;
   questionId: string;
   documentId: string;
@@ -97,21 +99,22 @@ export class SearchService {
       .join(" ");
 
     const rows = this.db.prepare(`
-      SELECT id, type, content, metadata
+      SELECT id, type, content, metadata,
+             snippet(search_fts, 2, '<mark>', '</mark>', '...', 32) as snippet
       FROM search_fts
       WHERE search_fts MATCH ?
       ORDER BY rank
       LIMIT ?
-    `).all(ftsQuery, limit * 4) as unknown as FtsRow[];
+    `).all(ftsQuery, limit * 4) as unknown as (FtsRow & { snippet?: string })[];
 
-    return this.groupByType(rows, limit);
+    return this.groupByType(rows, limit, escapedQuery);
   }
 
   private escapeQuery(query: string): string {
     return query.replace(/["*]/g, "").trim();
   }
 
-  private groupByType(rows: FtsRow[], limit: number): SearchResults {
+  private groupByType(rows: (FtsRow & { snippet?: string })[], limit: number, escapedQuery?: string): SearchResults {
     const results: SearchResults = {
       documents: [],
       questions: [],
@@ -138,6 +141,7 @@ export class SearchService {
             results.questions.push({
               id: row.id,
               text: row.content,
+              snippet: row.snippet || row.content,
               documentId: metadata.documentId || "",
               documentTitle: metadata.documentTitle || "",
             });
@@ -148,6 +152,7 @@ export class SearchService {
             results.answers.push({
               id: row.id,
               content: row.content,
+              snippet: row.snippet || (escapedQuery ? this.extractSnippet(row.content, escapedQuery) : row.content.slice(0, 80)),
               questionText: metadata.questionText || "",
               questionId: metadata.questionId || "",
               documentId: metadata.documentId || "",
@@ -168,6 +173,31 @@ export class SearchService {
     }
 
     return results;
+  }
+
+  private extractSnippet(text: string, keywords: string): string {
+    const keywordList = keywords.split(/\s+/).filter(Boolean);
+    if (keywordList.length === 0) {
+      return text.slice(0, 80) + (text.length > 80 ? "..." : "");
+    }
+
+    const firstKeyword = keywordList[0].toLowerCase();
+    const lowerText = text.toLowerCase();
+    const index = lowerText.indexOf(firstKeyword);
+
+    if (index === -1) {
+      return text.slice(0, 80) + (text.length > 80 ? "..." : "");
+    }
+
+    const contextRadius = 50;
+    const start = Math.max(0, index - contextRadius);
+    const end = Math.min(text.length, index + firstKeyword.length + contextRadius);
+
+    let snippet = text.slice(start, end);
+    if (start > 0) snippet = "..." + snippet;
+    if (end < text.length) snippet += "...";
+
+    return snippet;
   }
 
   async rebuildIndex(): Promise<void> {

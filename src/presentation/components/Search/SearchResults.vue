@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SearchResults, DocumentSearchResult, QuestionSearchResult, AnswerSearchResult, TagSearchResult } from "../../../../env.d.ts";
+import { escapeHtml, escapeRegex } from "../../utils/html";
 interface SearchResult {
   id: string;
   type: "document" | "question" | "answer" | "tag";
@@ -23,8 +24,9 @@ const emit = defineEmits<{
 }>();
 
 function highlight(text: string, query: string): string {
-  if (!query.trim()) return text;
-  const regex = new RegExp(`(${query})`, "gi");
+  if (!query.trim()) return escapeHtml(text);
+  const escapedQuery = escapeHtml(query);
+  const regex = new RegExp(`(${escapeRegex(escapedQuery)})`, "gi");
   return text.replace(regex, "<mark>$1</mark>");
 }
 
@@ -79,8 +81,13 @@ function getDisplayContent(item: DocumentSearchResult | QuestionSearchResult | A
       return (item as DocumentSearchResult).title;
     case "question":
       return (item as QuestionSearchResult).text;
-    case "answer":
-      return (item as AnswerSearchResult).content.slice(0, 80) + ((item as AnswerSearchResult).content.length > 80 ? "..." : "");
+    case "answer": {
+      const answer = item as AnswerSearchResult;
+      if (answer.snippet) {
+        return answer.snippet;
+      }
+      return answer.content.slice(0, 80) + (answer.content.length > 80 ? "..." : "");
+    }
     case "tag":
       return (item as TagSearchResult).name;
     default:
@@ -227,6 +234,7 @@ function handleClick(item: SearchResult) {
   font-size: 14px;
   color: var(--color-text);
   margin-bottom: 4px;
+  word-break: break-word;
 }
 
 .search-results__item-content :deep(mark) {
