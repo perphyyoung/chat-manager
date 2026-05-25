@@ -19,7 +19,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "select", item: SearchResult): void;
+  (e: "select", data: { item: SearchResult; searchText: string }): void;
   (e: "hover", index: number): void;
 }>();
 
@@ -152,7 +152,7 @@ function getGlobalIndex(type: string, localIndex: number): number {
 }
 
 function handleClick(item: SearchResult) {
-  emit("select", item);
+  emit("select", { item, searchText: props.query });
 }
 </script>
 

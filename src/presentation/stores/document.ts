@@ -97,6 +97,10 @@ export const useDocumentStore = defineStore("document", () => {
     Array<{ id: string; text: string; deletedAt: Date }>
   >([]);
 
+  // 搜索高亮状态
+  const highlightText = ref<string | null>(null);
+  let highlightTimer: ReturnType<typeof setTimeout> | null = null;
+
   // 从本地存储加载排序偏好
   const savedPreferences = loadSortPreferences();
 
@@ -153,6 +157,24 @@ export const useDocumentStore = defineStore("document", () => {
       documentService
         .selectQuestion(selectedDocumentId.value, id)
         .catch(() => {});
+    }
+  }
+
+  function setHighlightText(text: string, duration = 3000) {
+    highlightText.value = text;
+    if (highlightTimer) {
+      clearTimeout(highlightTimer);
+    }
+    highlightTimer = setTimeout(() => {
+      highlightText.value = null;
+    }, duration);
+  }
+
+  function clearHighlightText() {
+    highlightText.value = null;
+    if (highlightTimer) {
+      clearTimeout(highlightTimer);
+      highlightTimer = null;
     }
   }
 
@@ -618,6 +640,7 @@ export const useDocumentStore = defineStore("document", () => {
     sortedDocuments,
     selectedDocumentId,
     activeQuestionId,
+    highlightText,
     selectedDocument,
     selectedDocumentQuestions,
     documentSortField,
@@ -637,6 +660,8 @@ export const useDocumentStore = defineStore("document", () => {
     getTagDocumentCount,
     selectDocument,
     setActiveQuestion,
+    setHighlightText,
+    clearHighlightText,
     initDocuments,
     loadDocuments,
     createDocument,

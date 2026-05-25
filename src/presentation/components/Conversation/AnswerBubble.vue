@@ -15,6 +15,10 @@ import {
   highlightSelectionMatches,
   getSearchQuery,
 } from "@codemirror/search";
+import { useDocumentStore } from "../../stores/document";
+import { escapeHtml, escapeRegex } from "../../utils/html";
+
+const documentStore = useDocumentStore();
 
 // 加载常用语言支持
 import "prismjs/components/prism-javascript";
@@ -89,8 +93,19 @@ marked.setOptions({
   gfm: true, // 支持 GitHub Flavored Markdown
 });
 
+function highlightSearchText(html: string, keyword: string): string {
+  if (!keyword.trim()) return html;
+  const escapedKeyword = escapeHtml(keyword);
+  const regex = new RegExp(`(${escapeRegex(escapedKeyword)})`, "gi");
+  return html.replace(regex, '<span class="search-highlight">$1</span>');
+}
+
 const renderedContent = computed(() => {
-  return marked.parse(props.content) as string;
+  const html = marked.parse(props.content) as string;
+  if (documentStore.highlightText) {
+    return highlightSearchText(html, documentStore.highlightText);
+  }
+  return html;
 });
 
 function startEdit() {
@@ -454,6 +469,28 @@ function toggleWordWrap() {
   border: none;
   border-top: 1px solid var(--color-border);
   margin: 12px 0;
+}
+
+/* 搜索高亮样式 */
+.answer-bubble__content :deep(.search-highlight) {
+  background-color: var(--color-highlight-bg, #ffeb3b);
+  color: #000;
+  padding: 1px 2px;
+  border-radius: 2px;
+  animation: highlight-pulse 0.3s ease-out;
+}
+
+@keyframes highlight-pulse {
+  0% {
+    background-color: var(--color-highlight-bg, #ffeb3b);
+  }
+  50% {
+    background-color: var(--color-highlight-bg, #ffeb3b);
+    box-shadow: 0 0 8px var(--color-highlight-bg, #ffeb3b);
+  }
+  100% {
+    background-color: var(--color-highlight-bg, #ffeb3b);
+  }
 }
 
 /* 右键菜单 */

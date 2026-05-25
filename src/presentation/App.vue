@@ -20,12 +20,17 @@ function openSettings() {
   isSettingsOpen.value = true;
 }
 
-async function handleSearchSelect(item: {
-  id: string;
-  type: string;
-  documentId?: string;
-  questionId?: string;
+async function handleSearchSelect(data: {
+  item: {
+    id: string;
+    type: string;
+    documentId?: string;
+    questionId?: string;
+  };
+  searchText: string;
 }) {
+  const { item, searchText } = data;
+
   switch (item.type) {
     case "document":
       await documentStore.selectDocument(item.id);
@@ -36,6 +41,7 @@ async function handleSearchSelect(item: {
         await nextTick();
         documentStore.setActiveQuestion(item.id);
         scrollToQuestion(item.id);
+        documentStore.setHighlightText(searchText);
       }
       break;
     case "answer":
@@ -44,6 +50,7 @@ async function handleSearchSelect(item: {
         await nextTick();
         documentStore.setActiveQuestion(item.questionId);
         scrollToQuestion(item.questionId);
+        documentStore.setHighlightText(searchText);
       }
       break;
     case "tag":

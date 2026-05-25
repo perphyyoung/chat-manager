@@ -145,18 +145,18 @@ function handleKeydown(e: KeyboardEvent) {
 function selectCurrent() {
   const item = flatResults.value[selectedIndex.value];
   if (item) {
-    emit("select", item);
+    emit("select", { item, searchText: query.value });
     close();
   }
 }
 
-function handleSelect(item: SearchResult) {
-  emit("select", item);
+function handleSelect(data: { item: SearchResult; searchText: string }) {
+  emit("select", data);
   close();
 }
 
 const emit = defineEmits<{
-  (e: "select", item: SearchResult): void;
+  (e: "select", data: { item: SearchResult; searchText: string }): void;
 }>();
 
 onMounted(() => {
