@@ -58,6 +58,7 @@ const editContent = ref("");
 const editorContainer = ref<HTMLElement | null>(null);
 const editorView = ref<EditorView | null>(null);
 const showLineNumbers = ref(false);
+const wordWrap = ref(false);
 
 // 右键菜单状态
 const contextMenu = ref({
@@ -174,6 +175,7 @@ function initCodeMirror() {
       doc: editContent.value,
       extensions: [
         showLineNumbers.value ? lineNumbers() : [], // 显示行号（默认关闭）
+        wordWrap.value ? EditorView.lineWrapping : [], // 长文本换行
         markdown({ codeLanguages: languages }),
         oneDark,
         search({ top: true }), // 官方搜索面板，显示在顶部
@@ -275,6 +277,19 @@ function toggleLineNumbers() {
   }
   closeContextMenu();
 }
+
+// 切换长文本换行
+function toggleWordWrap() {
+  wordWrap.value = !wordWrap.value;
+  // 重新初始化编辑器以应用更改
+  if (editorView.value) {
+    const currentContent = editorView.value.state.doc.toString();
+    destroyCodeMirror();
+    editContent.value = currentContent;
+    initCodeMirror();
+  }
+  closeContextMenu();
+}
 </script>
 
 <template>
@@ -304,6 +319,10 @@ function toggleLineNumbers() {
           <div v-if="contextMenu.isEditing" class="context-menu-item" @click="toggleLineNumbers">
             <span class="context-menu-icon">{{ showLineNumbers ? "☑" : "☐" }}</span>
             <span class="context-menu-text">显示行号</span>
+          </div>
+          <div v-if="contextMenu.isEditing" class="context-menu-item" @click="toggleWordWrap">
+            <span class="context-menu-icon">{{ wordWrap ? "☑" : "☐" }}</span>
+            <span class="context-menu-text">长文本换行</span>
           </div>
         </div>
       </div>
