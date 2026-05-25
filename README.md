@@ -2,6 +2,15 @@
 
 基于 Vue 3 + Vite + Electron 的桌面对话式文档管理应用。
 
+## 功能特性
+
+- **文档管理**：创建、编辑、删除文档，支持按标签筛选
+- **问答对**：以聊天气泡形式展示问题和回答
+- **标签系统**：为文档添加标签，支持多标签分类
+- **全文搜索**：支持中文分词的全文本搜索（Ctrl+F）
+- **回收站**：文档和问题软删除机制
+- **主题切换**：支持深色/浅色主题
+
 ## 技术栈
 
 - **前端框架**: Vue 3 + TypeScript
@@ -10,6 +19,8 @@
 - **打包工具**: electron-builder
 - **状态管理**: Pinia
 - **路由**: Vue Router
+- **数据库**: Node.js 内置 SQLite (node:sqlite)
+- **编辑器**: CodeMirror 6
 
 ## 开发
 
@@ -26,21 +37,11 @@
 pnpm install
 ```
 
-### 2. 重建原生模块
-
-由于使用 better-sqlite3 需要针对 Electron 版本编译：
-
-```sh
-npx @electron/rebuild -m . -o better-sqlite3
-```
-
-### 3. 启动开发服务器
+### 2. 启动开发服务器
 
 ```sh
 pnpm dev
 ```
-
-**注意**: Electron 版本锁定在 41.2.0 以确保与 better-sqlite3 兼容。请勿手动升级 Electron 版本。
 
 ### 构建生产版本
 
