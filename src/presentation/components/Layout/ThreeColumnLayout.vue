@@ -10,6 +10,7 @@ const leftWidth = ref(280);
 const rightWidth = ref(280);
 const leftCollapsed = ref(false);
 const rightCollapsed = ref(false);
+const isFullscreen = ref(false);
 
 const isDraggingLeft = ref(false);
 const isDraggingRight = ref(false);
@@ -121,6 +122,19 @@ function onRightDoubleClick() {
     collapseRight();
   }
 }
+
+function toggleFullscreen() {
+  if (isFullscreen.value) {
+    expandLeft();
+    expandRight();
+    isFullscreen.value = false;
+  } else {
+    collapseLeft();
+    collapseRight();
+    isFullscreen.value = true;
+  }
+}
+
 </script>
 
 <template>
@@ -146,7 +160,10 @@ function onRightDoubleClick() {
     </div>
 
     <main class="center-panel">
-      <ConversationView />
+      <ConversationView
+        :is-fullscreen="isFullscreen"
+        @toggle-fullscreen="toggleFullscreen"
+      />
     </main>
 
     <div
@@ -188,6 +205,8 @@ function onRightDoubleClick() {
   flex: 1;
   overflow-y: auto;
   min-width: 400px;
+  display: flex;
+  flex-direction: column;
 }
 
 .right-panel {

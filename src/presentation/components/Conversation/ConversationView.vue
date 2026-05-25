@@ -5,6 +5,14 @@ import QuestionBubble from "./QuestionBubble.vue";
 import AnswerBubble from "./AnswerBubble.vue";
 import TagSelector from "../Document/TagSelector.vue";
 
+const props = defineProps<{
+  isFullscreen?: boolean;
+}>();
+
+const emit = defineEmits<{
+  toggleFullscreen: [];
+}>();
+
 const documentStore = useDocumentStore();
 const messagesContainer = ref<HTMLElement | null>(null);
 
@@ -62,6 +70,10 @@ watch(
     }
   },
 );
+
+function toggleFullscreen() {
+  emit("toggleFullscreen");
+}
 </script>
 
 <template>
@@ -71,9 +83,18 @@ watch(
       class="conversation-view__content"
     >
       <div class="conversation-view__header">
-        <h2 class="conversation-view__title">
-          {{ documentStore.selectedDocument.title }}
-        </h2>
+        <div class="header-row">
+          <h2 class="conversation-view__title">
+            {{ documentStore.selectedDocument.title }}
+          </h2>
+          <button
+            class="fullscreen-btn"
+            :title="props.isFullscreen ? '退出全屏' : '全屏专注'"
+            @click="toggleFullscreen"
+          >
+            {{ props.isFullscreen ? "⤫" : "⤢" }}
+          </button>
+        </div>
         <TagSelector />
       </div>
       <div ref="messagesContainer" class="conversation-view__messages">
@@ -120,16 +141,47 @@ watch(
 }
 
 .conversation-view__header {
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--color-border);
   background-color: var(--color-surface);
 }
 
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
 .conversation-view__title {
-  margin: 0 0 12px 0;
+  flex: 1;
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
   color: var(--color-text);
+}
+
+.fullscreen-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.fullscreen-btn:hover {
+  background-color: var(--color-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .conversation-view__messages {
