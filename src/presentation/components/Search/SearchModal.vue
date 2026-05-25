@@ -14,6 +14,26 @@ interface SearchResult {
   questionId?: string;
 }
 
+const STORAGE_KEY = "search-history";
+const MAX_HISTORY = 10;
+
+function loadHistory(): string[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(history: string[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  } catch {
+    // ignore
+  }
+}
+
 const isOpen = ref(false);
 const query = ref("");
 const results = ref<SearchResults>({
@@ -25,6 +45,7 @@ const results = ref<SearchResults>({
 const selectedIndex = ref(-1);
 const isLoading = ref(false);
 const inputRef = ref<InstanceType<typeof SearchInput> | null>(null);
+const searchHistory = ref<string[]>(loadHistory());
 
 const flatResults = computed(() => {
   const items: SearchResult[] = [];
@@ -70,16 +91,42 @@ const flatResults = computed(() => {
   return items;
 });
 
+const showHistory = computed(() => {
+  return isOpen.value && !query.value.trim() && searchHistory.value.length > 0;
+});
+
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-async function handleSearch(searchQuery: string) {
-  query.value = searchQuery;
+function addToHistory(searchText: string) {
+  if (!searchText.trim()) return;
+  const history = searchHistory.value.filter((h) => h !== searchText);
+  history.unshift(searchText);
+  if (history.length > MAX_HISTORY) {
+    history.pop();
+  }
+  searchHistory.value = history;
+  saveHistory(history);
+}
+
+function removeFromHistory(searchText: string) {
+  const history = searchHistory.value.filter((h) => h !== searchText);
+  searchHistory.value = history;
+  saveHistory(history);
+}
+
+function clearHistory() {
+  searchHistory.value = [];
+  saveHistory([]);
+}
+
+async function handleSearch(searchText: string) {
+  query.value = searchText;
 
   if (debounceTimer) {
     clearTimeout(debounceTimer);
   }
 
-  if (!searchQuery.trim()) {
+  if (!searchText.trim()) {
     results.value = { documents: [], questions: [], answers: [], tags: [] };
     selectedIndex.value = -1;
     return;
@@ -88,7 +135,7 @@ async function handleSearch(searchQuery: string) {
   debounceTimer = setTimeout(async () => {
     isLoading.value = true;
     try {
-      results.value = await window.electronAPI.search.query(searchQuery);
+      results.value = await window.electronAPI.search.query(searchText);
       selectedIndex.value = flatResults.value.length > 0 ? 0 : -1;
     } catch (error) {
       console.error("Search failed:", error);
@@ -109,8 +156,12 @@ function open() {
 }
 
 function close() {
+  const lastQuery = query.value;
   isOpen.value = false;
   query.value = "";
+  if (lastQuery.trim()) {
+    addToHistory(lastQuery);
+  }
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -145,14 +196,26 @@ function handleKeydown(e: KeyboardEvent) {
 function selectCurrent() {
   const item = flatResults.value[selectedIndex.value];
   if (item) {
+    if (query.value.trim()) {
+      addToHistory(query.value);
+    }
     emit("select", { item, searchText: query.value });
     close();
   }
 }
 
 function handleSelect(data: { item: SearchResult; searchText: string }) {
+  if (data.searchText.trim()) {
+    addToHistory(data.searchText);
+  }
   emit("select", data);
   close();
+}
+
+function handleHistoryClick(searchText: string) {
+  query.value = searchText;
+  handleSearch(searchText);
+  inputRef.value?.focus();
 }
 
 const emit = defineEmits<{
@@ -190,6 +253,29 @@ onUnmounted(() => {
           @select="handleSelect"
           @hover="(index) => (selectedIndex = index)"
         />
+
+        <div v-else-if="showHistory" class="search-modal__history">
+          <div class="search-modal__history-header">
+            <span class="search-modal__history-title">最近搜索</span>
+            <button class="search-modal__history-clear" @click="clearHistory">清除</button>
+          </div>
+          <div class="search-modal__history-list">
+            <div
+              v-for="(historyItem, index) in searchHistory"
+              :key="index"
+              class="search-modal__history-item"
+              @click="handleHistoryClick(historyItem)"
+            >
+              <span class="search-modal__history-text">🔍 {{ historyItem }}</span>
+              <button
+                class="search-modal__history-remove"
+                @click.stop="removeFromHistory(historyItem)"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
 
         <div v-else-if="query.trim()" class="search-modal__empty">
           未找到匹配结果
@@ -234,6 +320,86 @@ onUnmounted(() => {
   padding: 32px;
   text-align: center;
   color: var(--color-text-secondary);
+}
+
+.search-modal__history {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-modal__history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.search-modal__history-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.search-modal__history-clear {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.search-modal__history-clear:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.search-modal__history-list {
+  padding: 8px 0;
+}
+
+.search-modal__history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.search-modal__history-item:hover {
+  background: var(--color-hover);
+}
+
+.search-modal__history-text {
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.search-modal__history-remove {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: var(--color-hover);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+.search-modal__history-item:hover .search-modal__history-remove {
+  opacity: 1;
+}
+
+.search-modal__history-remove:hover {
+  background: var(--color-border);
+  color: var(--color-text);
 }
 
 .search-modal__hint {
