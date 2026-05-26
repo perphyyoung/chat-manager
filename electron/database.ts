@@ -72,13 +72,15 @@ interface Migration {
 const migrations: Migration[] = [
   {
     version: 1,
-    name: "初始 schema - 创建 documents, questions, answers 表",
+    name: "完整 schema - documents, questions, answers, tags, search_fts 和触发器",
     sql: `
       CREATE TABLE IF NOT EXISTS documents (
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
         created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        updated_at TEXT NOT NULL,
+        is_deleted INTEGER DEFAULT 0,
+        deleted_at TEXT
       );
 
       CREATE TABLE IF NOT EXISTS questions (
@@ -88,7 +90,9 @@ const migrations: Migration[] = [
         sort_order INTEGER NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
-        FOREIGN KEY (document_id) REFERENCES documents(id)
+        is_deleted INTEGER DEFAULT 0,
+        deleted_at TEXT,
+        FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
       );
 
       CREATE TABLE IF NOT EXISTS answers (
@@ -100,29 +104,6 @@ const migrations: Migration[] = [
         FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
       );
 
-      CREATE INDEX IF NOT EXISTS idx_questions_document_id ON questions(document_id);
-      CREATE INDEX IF NOT EXISTS idx_questions_sort_order ON questions(document_id, sort_order);
-      CREATE INDEX IF NOT EXISTS idx_answers_question_id ON answers(question_id);
-    `,
-  },
-  {
-    version: 2,
-    name: "添加软删除支持 - is_deleted 和 deleted_at 字段",
-    sql: `
-      ALTER TABLE documents ADD COLUMN is_deleted INTEGER DEFAULT 0;
-      ALTER TABLE documents ADD COLUMN deleted_at TEXT;
-
-      ALTER TABLE questions ADD COLUMN is_deleted INTEGER DEFAULT 0;
-      ALTER TABLE questions ADD COLUMN deleted_at TEXT;
-
-      CREATE INDEX IF NOT EXISTS idx_documents_is_deleted ON documents(is_deleted);
-      CREATE INDEX IF NOT EXISTS idx_questions_is_deleted ON questions(is_deleted);
-    `,
-  },
-  {
-    version: 3,
-    name: "添加标签支持 - tags 表和 document_tags 关联表",
-    sql: `
       CREATE TABLE IF NOT EXISTS tags (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL UNIQUE,
@@ -137,14 +118,6 @@ const migrations: Migration[] = [
         FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
       );
 
-      CREATE INDEX IF NOT EXISTS idx_document_tags_document_id ON document_tags(document_id);
-      CREATE INDEX IF NOT EXISTS idx_document_tags_tag_id ON document_tags(tag_id);
-    `,
-  },
-  {
-    version: 4,
-    name: "添加全局搜索 FTS5 索引",
-    sql: `
       CREATE VIRTUAL TABLE IF NOT EXISTS search_fts USING fts5(
         id,
         type,
@@ -152,39 +125,15 @@ const migrations: Migration[] = [
         metadata,
         tokenize='unicode61'
       );
-    `,
-  },
-  {
-    version: 5,
-    name: "修复 questions 表外键约束，添加级联删除",
-    sql: `
-      PRAGMA foreign_keys = OFF;
-      CREATE TABLE IF NOT EXISTS questions_new (
-        id TEXT PRIMARY KEY,
-        document_id TEXT NOT NULL,
-        text TEXT NOT NULL,
-        sort_order INTEGER NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        is_deleted INTEGER NOT NULL DEFAULT 0,
-        deleted_at TEXT,
-        FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
-      );
-      INSERT INTO questions_new SELECT
-        id, document_id, text, sort_order, created_at, updated_at, is_deleted, deleted_at
-      FROM questions;
-      DROP TABLE questions;
-      ALTER TABLE questions_new RENAME TO questions;
+
       CREATE INDEX IF NOT EXISTS idx_questions_document_id ON questions(document_id);
       CREATE INDEX IF NOT EXISTS idx_questions_sort_order ON questions(document_id, sort_order);
       CREATE INDEX IF NOT EXISTS idx_questions_is_deleted ON questions(is_deleted);
-      PRAGMA foreign_keys = ON;
-    `,
-  },
-  {
-    version: 6,
-    name: "添加触发器自动更新 documents.updated_at",
-    sql: `
+      CREATE INDEX IF NOT EXISTS idx_answers_question_id ON answers(question_id);
+      CREATE INDEX IF NOT EXISTS idx_documents_is_deleted ON documents(is_deleted);
+      CREATE INDEX IF NOT EXISTS idx_document_tags_document_id ON document_tags(document_id);
+      CREATE INDEX IF NOT EXISTS idx_document_tags_tag_id ON document_tags(tag_id);
+
       CREATE TRIGGER IF NOT EXISTS trg_questions_updated
       AFTER UPDATE ON questions
       FOR EACH ROW
