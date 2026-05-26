@@ -154,6 +154,33 @@ const migrations: Migration[] = [
       );
     `,
   },
+  {
+    version: 5,
+    name: "修复 questions 表外键约束，添加级联删除",
+    sql: `
+      PRAGMA foreign_keys = OFF;
+      CREATE TABLE IF NOT EXISTS questions_new (
+        id TEXT PRIMARY KEY,
+        document_id TEXT NOT NULL,
+        text TEXT NOT NULL,
+        sort_order INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        is_deleted INTEGER NOT NULL DEFAULT 0,
+        deleted_at TEXT,
+        FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+      );
+      INSERT INTO questions_new SELECT
+        id, document_id, text, sort_order, created_at, updated_at, is_deleted, deleted_at
+      FROM questions;
+      DROP TABLE questions;
+      ALTER TABLE questions_new RENAME TO questions;
+      CREATE INDEX IF NOT EXISTS idx_questions_document_id ON questions(document_id);
+      CREATE INDEX IF NOT EXISTS idx_questions_sort_order ON questions(document_id, sort_order);
+      CREATE INDEX IF NOT EXISTS idx_questions_is_deleted ON questions(is_deleted);
+      PRAGMA foreign_keys = ON;
+    `,
+  },
 ];
 
 function initVersionControl(db: SqliteDB): void {
