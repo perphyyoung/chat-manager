@@ -181,6 +181,27 @@ const migrations: Migration[] = [
       PRAGMA foreign_keys = ON;
     `,
   },
+  {
+    version: 6,
+    name: "添加触发器自动更新 documents.updated_at",
+    sql: `
+      CREATE TRIGGER IF NOT EXISTS trg_questions_updated
+      AFTER UPDATE ON questions
+      FOR EACH ROW
+      BEGIN
+        UPDATE documents SET updated_at = strftime('%Y-%m-%dT%H:%M:%S.000Z', 'now') WHERE id = OLD.document_id;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS trg_answers_updated
+      AFTER UPDATE ON answers
+      FOR EACH ROW
+      BEGIN
+        UPDATE documents SET updated_at = strftime('%Y-%m-%dT%H:%M:%S.000Z', 'now') WHERE id = (
+          SELECT document_id FROM questions WHERE id = OLD.question_id
+        );
+      END;
+    `,
+  },
 ];
 
 function initVersionControl(db: SqliteDB): void {
