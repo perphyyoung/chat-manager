@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, shallowRef, computed, watch, nextTick } from "vue";
 import { Marked } from "marked";
 import { markedHighlight } from "marked-highlight";
 import Prism from "prismjs";
 import { EditorView, keymap, lineNumbers } from "@codemirror/view";
-import { EditorState } from "@codemirror/state";
+import { EditorState, Compartment } from "@codemirror/state";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { defaultKeymap } from "@codemirror/commands";
+import { defaultKeymap, history, undo, redo, historyKeymap } from "@codemirror/commands";
 import { languages } from "@codemirror/language-data";
 import {
   search,
@@ -60,9 +60,10 @@ const emit = defineEmits<{
 const isEditing = ref(false);
 const editContent = ref("");
 const editorContainer = ref<HTMLElement | null>(null);
-const editorView = ref<EditorView | null>(null);
+const editorView = shallowRef<EditorView | null>(null);
 const showLineNumbers = ref(false);
 const wordWrap = ref(false);
+const historyCompartment = new Compartment();
 
 // 右键菜单状态
 const contextMenu = ref({
@@ -189,12 +190,13 @@ function initCodeMirror(restoreScrollTop?: number) {
     state: EditorState.create({
       doc: editContent.value,
       extensions: [
+        historyCompartment.of(history()), // 启用撤销/重做
         showLineNumbers.value ? lineNumbers() : [], // 显示行号（默认关闭）
         wordWrap.value ? EditorView.lineWrapping : [], // 长文本换行
         markdown({ codeLanguages: languages }),
         oneDark,
         search({ top: true }), // 官方搜索面板，显示在顶部
-        keymap.of([...defaultKeymap, ...searchKeymap]),
+        keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
         highlightSelectionMatches(), // 高亮选中的匹配
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
@@ -208,6 +210,14 @@ function initCodeMirror(restoreScrollTop?: number) {
       ],
     }),
     parent: editorContainer.value,
+  });
+
+  // 通过重新配置 history 来清除初始状态之前的空历史，防止撤销时状态不匹配
+  editorView.value.dispatch({
+    effects: historyCompartment.reconfigure([]),
+  });
+  editorView.value.dispatch({
+    effects: historyCompartment.reconfigure(history()),
   });
 
   // 恢复滚动位置
@@ -237,6 +247,22 @@ function saveEdit() {
 function cancelEdit() {
   isEditing.value = false;
   editContent.value = "";
+}
+
+// 撤销
+function handleUndo() {
+  if (editorView.value) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (undo as (view: any) => void)(editorView.value);
+  }
+}
+
+// 重做
+function handleRedo() {
+  if (editorView.value) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (redo as (view: any) => void)(editorView.value);
+  }
 }
 
 // 右键菜单
@@ -361,6 +387,8 @@ function toggleWordWrap() {
           <div class="fullscreen-edit-header">
             <span class="edit-title">编辑回答</span>
             <div class="fullscreen-edit-actions">
+              <button class="btn-action" @click="handleUndo" title="撤销 (Ctrl+Z)">↩</button>
+              <button class="btn-action" @click="handleRedo" title="重做 (Ctrl+Y)">↪</button>
               <button class="btn-cancel" @click="cancelEdit">取消</button>
               <button class="btn-save" @click="saveEdit">保存</button>
             </div>
@@ -747,6 +775,22 @@ function toggleWordWrap() {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+.btn-action {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+  background-color: var(--color-hover);
+  color: var(--color-text);
 }
 
 .btn-save,
