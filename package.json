@@ -5,11 +5,12 @@
   "type": "module",
   "main": "out/main/index.js",
   "scripts": {
+    "build": "electron-vite build",
     "dev": "electron-vite build && electron .",
     "test": "vitest run",
     "test:src": "vitest run src/",
     "test:electron": "vitest run electron/",
-    "e2e": "playwright test --project=chromium",
+    "e2e": "run-s build && playwright test --project=chromium",
     "release": "electron-vite build && electron-builder",
     "type-check": "vue-tsc --build",
     "check": "run-s type-check lint",
