@@ -100,6 +100,7 @@ describe("SearchService", () => {
         text: "What is this?",
         documentId: "doc-1",
         documentTitle: "Test Document",
+        snippet: "<mark>What</mark> is this?",
       });
     });
 
@@ -113,6 +114,7 @@ describe("SearchService", () => {
         questionId: "q-1",
         documentId: "doc-1",
         documentTitle: "Test Document",
+        snippet: "This is a <mark>test</mark> answer",
       });
     });
 
@@ -155,6 +157,7 @@ describe("SearchService", () => {
         text: "Question",
         documentId: "",
         documentTitle: "",
+        snippet: "<mark>Question</mark>",
       });
     });
 
@@ -167,6 +170,7 @@ describe("SearchService", () => {
         questionId: "",
         documentId: "",
         documentTitle: "",
+        snippet: "<mark>Answer</mark>",
       });
     });
 
