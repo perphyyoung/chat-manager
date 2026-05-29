@@ -30,11 +30,9 @@ test('settings menu opens settings modal', async () => {
   const settingsModal = window.locator('.modal-content')
   const isVisible = await settingsModal.isVisible().catch(() => false)
 
-  console.log('Settings modal visible:', isVisible)
   expect(isVisible).toBe(true)
 
   const modalText = await settingsModal.textContent()
-  console.log('Modal text:', modalText)
   expect(modalText).toContain('设置')
   expect(modalText).toContain('黑暗主题')
 
@@ -61,7 +59,6 @@ test('settings shortcut is configured correctly', async () => {
     return settingsItem?.accelerator || null
   })
 
-  console.log('Settings accelerator:', accelerator)
   // 验证快捷键已配置（CmdOrCtrl+, 在 Windows 上显示为 Ctrl+,）
   expect(accelerator).toBeTruthy()
   expect(accelerator).toMatch(/CmdOrCtrl\+.|CommandOrControl\+./)

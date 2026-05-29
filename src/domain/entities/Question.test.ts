@@ -63,6 +63,8 @@ describe('Question', () => {
       order: 2,
       createdAt: mockDate.toISOString(),
       updatedAt: mockDate.toISOString(),
+      isDeleted: false,
+      deletedAt: undefined,
     })
   })
 })

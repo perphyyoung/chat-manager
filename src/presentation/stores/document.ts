@@ -5,14 +5,21 @@ import { DocumentApplicationService } from "@/application/services/DocumentAppli
 import { AnswerApplicationService } from "@/application/services/AnswerApplicationService";
 import { TagApplicationService } from "@/application/services/TagApplicationService";
 import { SqliteDocumentRepository } from "@/infrastructure/storage/SqliteDocumentRepository";
+import { SqliteQuestionRepository } from "@/infrastructure/storage/SqliteQuestionRepository";
 import { SqliteAnswerRepository } from "@/infrastructure/storage/SqliteAnswerRepository";
 import { SqliteTagRepository } from "@/infrastructure/storage/SqliteTagRepository";
 import { globalEventBus } from "@/domain/events";
 import { mockDocuments } from "@/infrastructure/data/mockData";
 
-const documentRepo = new SqliteDocumentRepository();
+// 先创建所有 Repository
+const questionRepo = new SqliteQuestionRepository();
 const answerRepo = new SqliteAnswerRepository();
+const documentRepo = new SqliteDocumentRepository();
 const tagRepo = new SqliteTagRepository();
+
+// 设置 Repository 之间的依赖关系（解决循环依赖）
+documentRepo.setRepositories(questionRepo, answerRepo);
+
 const documentService = new DocumentApplicationService(
   documentRepo,
   globalEventBus,
@@ -121,7 +128,7 @@ export const useDocumentStore = defineStore("document", () => {
   });
 
   const selectedDocumentQuestions = computed(() => {
-    const questions = selectedDocument.value?.questions || [];
+    const questions = selectedDocument.value?.activeQuestions || [];
     return sortQuestions(
       questions,
       questionSortField.value,
@@ -264,7 +271,7 @@ export const useDocumentStore = defineStore("document", () => {
       throw new Error("Document not found after adding question");
     }
     // 找到新添加的问题（最后一个）
-    const newQuestion = updatedDoc.questions[updatedDoc.questions.length - 1];
+    const newQuestion = updatedDoc.activeQuestions[updatedDoc.activeQuestions.length - 1];
     if (!newQuestion) {
       throw new Error("Failed to add question");
     }
@@ -534,6 +541,19 @@ export const useDocumentStore = defineStore("document", () => {
 
     // 刷新回收站列表
     deletedQuestions.value = [];
+
+    // 重新加载当前文档，确保内存中的文档对象与数据库同步
+    const updatedDoc = await documentService.getDocument(docId);
+    if (updatedDoc) {
+      const index = documents.value.findIndex((d) => d.id === docId);
+      if (index !== -1) {
+        documents.value[index] = updatedDoc;
+      }
+      // 如果当前有选中的问题，检查它是否仍然有效
+      if (activeQuestionId.value && !updatedDoc.hasQuestion(activeQuestionId.value)) {
+        activeQuestionId.value = null;
+      }
+    }
   }
 
   const deletedQuestionCount = computed(() => deletedQuestions.value.length);
@@ -570,28 +590,13 @@ export const useDocumentStore = defineStore("document", () => {
     documentId: string,
     tagId: string,
   ): Promise<void> {
-    console.log(
-      "[STORE] addTagToDocument called, docId:",
-      documentId,
-      "tagId:",
-      tagId,
-    );
     await tagService.addTagToDocument(documentId, tagId);
-    console.log("[STORE] tagService.addTagToDocument completed");
     // 刷新文档数据
     const updatedDoc = await documentService.getDocument(documentId);
-    console.log(
-      "[STORE] Refreshed document, tags:",
-      updatedDoc?.tags.length,
-      updatedDoc?.tags.map((t) => t.name),
-    );
     if (updatedDoc) {
       const index = documents.value.findIndex((d) => d.id === documentId);
       if (index !== -1) {
-        documents.value.splice(index, 1, updatedDoc);
-        console.log("[STORE] Updated document in store, index:", index);
-      } else {
-        console.log("[STORE] Document not found in store");
+        documents.value[index] = updatedDoc;
       }
     }
   }
@@ -606,7 +611,7 @@ export const useDocumentStore = defineStore("document", () => {
     if (updatedDoc) {
       const index = documents.value.findIndex((d) => d.id === documentId);
       if (index !== -1) {
-        documents.value.splice(index, 1, updatedDoc);
+        documents.value[index] = updatedDoc;
       }
     }
   }
@@ -619,20 +624,11 @@ export const useDocumentStore = defineStore("document", () => {
   }
 
   async function updateTagName(tagId: string, newName: string): Promise<void> {
-    console.log(
-      "[STORE] updateTagName called, tagId:",
-      tagId,
-      "newName:",
-      newName,
-    );
     await tagService.updateTagName(tagId, newName);
-    console.log("[STORE] tagService.updateTagName completed");
     // 刷新标签列表
     await loadTags();
-    console.log("[STORE] loadTags completed");
     // 刷新所有文档数据（因为标签名可能在多个文档中）
     await loadDocuments();
-    console.log("[STORE] loadDocuments completed");
   }
 
   return {

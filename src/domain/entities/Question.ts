@@ -2,14 +2,20 @@ import { ValidationError } from "../errors";
 
 export class Question {
   private _updatedAt: Date;
+  private _isDeleted: boolean = false;
+  private _deletedAt?: Date;
 
   constructor(
     public readonly id: string,
     private _text: string,
     private _order: number,
     private readonly _createdAt: Date = new Date(),
+    isDeleted: boolean = false,
+    deletedAt?: Date,
   ) {
     this._updatedAt = _createdAt;
+    this._isDeleted = isDeleted;
+    this._deletedAt = deletedAt;
     this.validateText(_text);
     this.validateOrder(_order);
   }
@@ -30,6 +36,14 @@ export class Question {
     return this._updatedAt;
   }
 
+  get isDeleted(): boolean {
+    return this._isDeleted;
+  }
+
+  get deletedAt(): Date | undefined {
+    return this._deletedAt;
+  }
+
   updateText(newText: string): void {
     this.validateText(newText);
     this._text = newText;
@@ -39,6 +53,18 @@ export class Question {
   changeOrder(newOrder: number): void {
     this.validateOrder(newOrder);
     this._order = newOrder;
+    this._updatedAt = new Date();
+  }
+
+  softDelete(): void {
+    this._isDeleted = true;
+    this._deletedAt = new Date();
+    this._updatedAt = new Date();
+  }
+
+  restore(): void {
+    this._isDeleted = false;
+    this._deletedAt = undefined;
     this._updatedAt = new Date();
   }
 
@@ -61,6 +87,8 @@ export class Question {
       order: this._order,
       createdAt: this._createdAt.toISOString(),
       updatedAt: this._updatedAt.toISOString(),
+      isDeleted: this._isDeleted,
+      deletedAt: this._deletedAt?.toISOString(),
     };
   }
 }

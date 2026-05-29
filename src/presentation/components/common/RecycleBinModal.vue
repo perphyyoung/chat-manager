@@ -120,7 +120,7 @@ function formatDate(date: Date): string {
 
 <template>
   <Teleport to="body">
-    <div v-if="show" class="modal-overlay" @click.self="handleClose">
+    <div v-if="show" class="deleted-questions-modal" @click.self="handleClose">
       <div class="modal">
         <div class="modal-header">
           <h3>{{ title }}</h3>
@@ -184,7 +184,7 @@ function formatDate(date: Date): string {
 </template>
 
 <style scoped>
-.modal-overlay {
+.deleted-questions-modal {
   position: fixed;
   top: 0;
   left: 0;

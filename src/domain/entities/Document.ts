@@ -2,6 +2,7 @@ import { Question } from "./Question";
 import { Answer } from "./Answer";
 import { Tag } from "./Tag";
 import { ValidationError, NotFoundError } from "../errors";
+import { generateQuestionId } from "../../common/idGenerator";
 
 export interface DocumentSummary {
   id: string;
@@ -11,15 +12,24 @@ export interface DocumentSummary {
 }
 
 export class Document {
+  private _updatedAt: Date;
+  private _isDeleted: boolean = false;
+  private _deletedAt?: Date;
+
   constructor(
     public readonly id: string,
     private _title: string,
     private _questions: Question[] = [],
     private _answers: Answer[] = [],
     private readonly _createdAt: Date = new Date(),
-    private _updatedAt: Date = _createdAt,
+    updatedAt?: Date,
     private _tags: Tag[] = [],
+    isDeleted: boolean = false,
+    deletedAt?: Date,
   ) {
+    this._updatedAt = updatedAt || _createdAt;
+    this._isDeleted = isDeleted;
+    this._deletedAt = deletedAt;
     this.validateTitle(_title);
   }
 
@@ -29,6 +39,14 @@ export class Document {
 
   get questions(): readonly Question[] {
     return this._questions;
+  }
+
+  get activeQuestions(): readonly Question[] {
+    return this._questions.filter((q) => !q.isDeleted);
+  }
+
+  get deletedQuestions(): readonly Question[] {
+    return this._questions.filter((q) => q.isDeleted);
   }
 
   get answers(): readonly Answer[] {
@@ -53,6 +71,14 @@ export class Document {
 
   get tags(): readonly Tag[] {
     return this._tags;
+  }
+
+  get isDeleted(): boolean {
+    return this._isDeleted;
+  }
+
+  get deletedAt(): Date | undefined {
+    return this._deletedAt;
   }
 
   addTag(tag: Tag): void {
@@ -91,7 +117,7 @@ export class Document {
   }
 
   addQuestion(text: string, order?: number): Question {
-    const id = `q${Date.now()}`;
+    const id = generateQuestionId();
     const newOrder = order ?? this._questions.length;
     const question = new Question(id, text, newOrder);
     this._questions.push(question);
@@ -99,13 +125,36 @@ export class Document {
     return question;
   }
 
-  removeQuestion(questionId: string): void {
+  softDeleteQuestion(questionId: string): void {
+    const question = this.getQuestionById(questionId);
+    if (!question) {
+      throw new NotFoundError("Question", questionId);
+    }
+    if (!question.isDeleted) {
+      question.softDelete();
+      this._updatedAt = new Date();
+    }
+  }
+
+  restoreQuestion(questionId: string): void {
+    const question = this.getQuestionById(questionId);
+    if (!question) {
+      throw new NotFoundError("Question", questionId);
+    }
+    if (question.isDeleted) {
+      question.restore();
+      this._updatedAt = new Date();
+    }
+  }
+
+  permanentlyDeleteQuestion(questionId: string): void {
     const index = this._questions.findIndex((q) => q.id === questionId);
     if (index === -1) {
       throw new NotFoundError("Question", questionId);
     }
     this._questions.splice(index, 1);
-    this.reorderQuestionsAfterRemoval();
+    // 同时删除关联的答案
+    this._answers = this._answers.filter((a) => a.questionId !== questionId);
     this._updatedAt = new Date();
   }
 
@@ -165,6 +214,18 @@ export class Document {
     return { question, answer };
   }
 
+  softDelete(): void {
+    this._isDeleted = true;
+    this._deletedAt = new Date();
+    this._updatedAt = new Date();
+  }
+
+  restore(): void {
+    this._isDeleted = false;
+    this._deletedAt = undefined;
+    this._updatedAt = new Date();
+  }
+
   getSummary(): DocumentSummary {
     return {
       id: this.id,
@@ -183,6 +244,8 @@ export class Document {
       tags: this._tags.map((t) => t.toJSON()),
       createdAt: this._createdAt.toISOString(),
       updatedAt: this._updatedAt.toISOString(),
+      isDeleted: this._isDeleted,
+      deletedAt: this._deletedAt?.toISOString(),
     };
   }
 
@@ -190,9 +253,5 @@ export class Document {
     if (!title || title.trim().length === 0) {
       throw new ValidationError("Document title cannot be empty");
     }
-  }
-
-  private reorderQuestionsAfterRemoval(): void {
-    this._questions.forEach((q, index) => q.changeOrder(index));
   }
 }

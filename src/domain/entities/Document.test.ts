@@ -76,21 +76,21 @@ describe('Document', () => {
       expect(doc.questions[2]!.order).toBe(2)
     })
 
-    it('should remove question by id', () => {
+    it('should permanently delete question by id', () => {
       const q1 = new Question('q1', 'Q1', 0, mockDate)
       const q2 = new Question('q2', 'Q2', 1, mockDate)
       const doc = new Document('doc1', 'Test', [q1, q2], [], mockDate)
 
-      doc.removeQuestion('q1')
+      doc.permanentlyDeleteQuestion('q1')
 
       expect(doc.questions).toHaveLength(1)
       expect(doc.questions[0]!.id).toBe('q2')
     })
 
-    it('should throw NotFoundError when removing non-existent question', () => {
+    it('should throw NotFoundError when permanently deleting non-existent question', () => {
       const doc = new Document('doc1', 'Test', [], [], mockDate)
 
-      expect(() => doc.removeQuestion('q1')).toThrow(NotFoundError)
+      expect(() => doc.permanentlyDeleteQuestion('q1')).toThrow(NotFoundError)
     })
 
     it('should reorder questions', () => {

@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import SearchInput from "./SearchInput.vue";
 import SearchResultsComponent from "./SearchResults.vue";
-import type { SearchResults } from "../../../../env.d.ts";
+import type { SearchResults } from "@/types/search";
 
 interface SearchResult {
   id: string;

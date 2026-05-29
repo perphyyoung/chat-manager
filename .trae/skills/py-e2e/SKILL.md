@@ -11,12 +11,13 @@ description: "用于 e2e 测试. Invoke when writing e2e test file."
 - timeout 不要超过 2000 毫秒, 否则需要说明理由
 - 测试的生命周期通过 fixture 管理, 测试文件只包含具体测试逻辑
 - 不要依赖已有的数据, 自己生成数据, 消除警告
+- 禁止延长超时时间尝试通过，添加相关日志排查根因
 
 ## 日志使用指南
 
 E2E 测试中的日志统一输出到项目根目录 `cm.log`，便于调试。
 
-- 清空 cm.log, 而不是删除
+- 通过 `Clear-Content cm.log` 清空日志, 而不是删除
 
 ### E2E 测试文件中的日志
 

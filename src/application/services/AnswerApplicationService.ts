@@ -7,6 +7,7 @@ import {
   AnswerDeletedEvent,
 } from '../../domain/events/AnswerEvents'
 import { NotFoundError } from '../../domain/errors'
+import { generateAnswerId } from '../../common/idGenerator'
 
 export class AnswerApplicationService {
   constructor(
@@ -31,7 +32,7 @@ export class AnswerApplicationService {
       throw new Error(`Answer already exists for question ${questionId}`)
     }
 
-    const answerId = `a${Date.now()}`
+    const answerId = generateAnswerId()
     const answer = new Answer(answerId, questionId, content)
 
     document.addAnswer(answer)

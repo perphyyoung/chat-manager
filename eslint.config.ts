@@ -29,7 +29,10 @@ export default defineConfigWithVueTs(
 
   {
     ...pluginVitest.configs.recommended,
-    files: ['src/**/__tests__/*'],
+    files: ['src/**/__tests__/*', 'src/**/*.test.ts'],
+    rules: {
+      'vitest/require-mock-type-parameters': 'off',
+    },
   },
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),

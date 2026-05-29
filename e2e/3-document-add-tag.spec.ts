@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test, generateUniqueTagName } from "./utils";
+import { test, generateUniqueTagName, logToFile } from "./utils";
 
 test("add existing tag to document via conversation view", async ({
   window,
@@ -33,11 +33,6 @@ test("add existing tag to document via conversation view", async ({
   // 等待对话视图显示
   await window.waitForSelector(".conversation-view", { timeout: 2000 });
 
-  // 获取初始标签数量（从对话视图顶部的 TagSelector）
-  const initialTagCount = await window
-    .locator(".tag-selector__current .tag-badge")
-    .count();
-
   // 打开标签选择器
   await window.locator(".tag-selector__toggle").click();
 
@@ -51,16 +46,18 @@ test("add existing tag to document via conversation view", async ({
   await expect(newTagOption).toBeVisible({ timeout: 2000 });
   await newTagOption.click();
 
-  // 等待标签添加完成（通过验证标签数量增加）
-  await expect(window.locator(".tag-selector__current .tag-badge")).toHaveCount(
-    initialTagCount + 1,
-  );
-
-  // 验证标签数量增加
-  const finalTagCount = await window
-    .locator(".tag-selector__current .tag-badge")
-    .count();
-  expect(finalTagCount).toBeGreaterThan(initialTagCount);
+  // 等待标签添加完成（通过验证标签出现在当前标签列表中）
+  const addedTag = window.locator(".tag-selector__current .tag-badge", {
+    hasText: uniqueTagName,
+  });
+  try {
+    await expect(addedTag).toBeVisible({ timeout: 2000 });
+  } catch (e) {
+    // 记录当前页面中的所有标签
+    const allTags = await window.locator(".tag-selector__current .tag-badge").allTextContents();
+    await logToFile(window, "error", `标签未找到。当前所有标签: ${JSON.stringify(allTags)}`);
+    throw e;
+  }
 
   // 验证标签也在文档列表项中显示
   const documentItemTags = document.locator(".tag-badge");
@@ -100,11 +97,6 @@ test("create and add new tag to document via tag filter", async ({
   // 等待对话视图显示
   await window.waitForSelector(".conversation-view", { timeout: 2000 });
 
-  // 获取初始标签数量
-  const initialTagCount = await window
-    .locator(".tag-selector__current .tag-badge")
-    .count();
-
   // 打开标签选择器
   await window.locator(".tag-selector__toggle").click();
 
@@ -115,16 +107,11 @@ test("create and add new tag to document via tag filter", async ({
   await expect(newTagOption).toBeVisible({ timeout: 2000 });
   await newTagOption.click();
 
-  // 等待标签添加完成（通过验证标签数量增加）
-  await expect(window.locator(".tag-selector__current .tag-badge")).toHaveCount(
-    initialTagCount + 1,
-  );
-
-  // 验证标签数量增加
-  const finalTagCount = await window
-    .locator(".tag-selector__current .tag-badge")
-    .count();
-  expect(finalTagCount).toBeGreaterThan(initialTagCount);
+  // 等待标签添加完成（通过验证标签出现在当前标签列表中）
+  const addedTag = window.locator(".tag-selector__current .tag-badge", {
+    hasText: uniqueTagName,
+  });
+  await expect(addedTag).toBeVisible({ timeout: 2000 });
 
   // 验证新标签已添加到文档
   const addedTagNames = await window
@@ -178,11 +165,6 @@ test("remove tag from document via conversation view", async ({ window }) => {
   });
   await expect(tagInDocument).toBeVisible({ timeout: 2000 });
 
-  // 获取添加后的标签数量
-  const tagsAfterCreate = await window
-    .locator(".tag-selector__current .tag-badge")
-    .count();
-
   // 右键点击标签打开删除菜单
   const tagToRemove = window.locator(".tag-selector__current .tag-badge", {
     hasText: uniqueTagName,
@@ -202,10 +184,8 @@ test("remove tag from document via conversation view", async ({ window }) => {
   // 点击确认弹窗的确定按钮
   await window.locator(".confirm-dialog .btn-danger").click();
 
-  // 等待标签被移除（通过验证标签数量减少）
-  await expect(window.locator(".tag-selector__current .tag-badge")).toHaveCount(
-    tagsAfterCreate - 1,
-  );
+  // 等待标签被移除（通过验证特定标签不存在）
+  await expect(tagToRemove).toBeHidden({ timeout: 2000 });
 
   // 验证特定标签已不存在
   const remainingTagNames = await window

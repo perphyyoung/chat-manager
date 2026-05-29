@@ -1,13 +1,6 @@
 import type { AnswerRepository } from "../../domain/repositories";
 import { Answer } from "../../domain/entities";
-
-interface AnswerDTO {
-  id: string;
-  questionId: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { AnswerDTO } from "@/types/dto";
 
 function toAnswer(dto: AnswerDTO): Answer {
   return new Answer(
@@ -37,7 +30,23 @@ export class SqliteAnswerRepository implements AnswerRepository {
     await window.electronAPI.answer.save(JSON.stringify(answer.toJSON()));
   }
 
+  async saveAll(documentId: string, answers: Answer[]): Promise<void> {
+    const answerJsons = answers.map((a) => ({
+      id: a.id,
+      questionId: a.questionId,
+      content: a.content,
+      createdAt: a.createdAt.toISOString(),
+      updatedAt: a.updatedAt.toISOString(),
+    }));
+    await window.electronAPI.db.answers.save(documentId, answerJsons);
+  }
+
   async delete(id: string): Promise<void> {
     await window.electronAPI.answer.delete(id);
+  }
+
+  async deleteAll(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    await window.electronAPI.db.answers.delete(ids);
   }
 }

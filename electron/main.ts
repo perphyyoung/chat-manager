@@ -2,45 +2,19 @@ import { app, BrowserWindow, Menu, ipcMain, globalShortcut } from "electron";
 import path from "node:path";
 import logger from "electron-log";
 import { getDatabase, closeDatabase } from "./database";
-import { SearchService } from "./services/SearchService";
-
-interface DocRow {
-  id: string;
-  title: string;
-  created_at: string;
-  updated_at: string;
-  is_deleted?: number;
-  deleted_at?: string;
-}
-
-interface QuestionRow {
-  id: string;
-  document_id: string;
-  text: string;
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
-  is_deleted?: number;
-  deleted_at?: string;
-}
-
-interface AnswerRow {
-  id: string;
-  question_id: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ExistsRow {
-  "1": number;
-}
-
-interface TagRow {
-  id: string;
-  name: string;
-  created_at: string;
-}
+import { SearchService } from "../src/infrastructure/search/SearchService";
+import type {
+  DocRow,
+  QuestionRow,
+  AnswerRow,
+  ExistsRow,
+  TagRow,
+} from "../src/types/db";
+import type {
+  DocumentInput,
+  QuestionInput,
+  AnswerInput,
+} from "../src/types/dto";
 
 logger.initialize();
 logger.transports.file.resolvePathFn = () => path.join(process.cwd(), "cm.log");
@@ -193,83 +167,6 @@ ipcMain.handle("db:findById", (_, id: string) => {
   };
 });
 
-ipcMain.handle("db:save", (_, documentJson: string) => {
-  const database = getDatabase();
-  const doc = JSON.parse(documentJson);
-  const now = new Date().toISOString();
-
-  database.exec("BEGIN TRANSACTION");
-  try {
-    database
-      .prepare(
-        "INSERT INTO documents (id, title, created_at, updated_at, is_deleted, deleted_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at",
-      )
-      .run(
-        doc.id,
-        doc.title,
-        doc.createdAt ?? now,
-        doc.updatedAt ?? now,
-        0,
-        null,
-      );
-
-    database.prepare("DELETE FROM questions WHERE document_id = ?").run(doc.id);
-    for (const q of doc.questions ?? []) {
-      database
-        .prepare(
-          "INSERT INTO questions (id, document_id, text, sort_order, created_at, updated_at, is_deleted, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        )
-        .run(
-          q.id,
-          doc.id,
-          q.text,
-          q.order,
-          q.createdAt ?? now,
-          q.updatedAt ?? now,
-          q.isDeleted ? 1 : 0,
-          q.deletedAt ?? null,
-        );
-    }
-
-    database
-      .prepare(
-        "DELETE FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)",
-      )
-      .run(doc.id);
-    for (const a of doc.answers ?? []) {
-      database
-        .prepare(
-          "INSERT INTO answers (id, question_id, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-        )
-        .run(
-          a.id,
-          a.questionId,
-          a.content,
-          a.createdAt ?? now,
-          a.updatedAt ?? now,
-        );
-    }
-
-    // 保存标签关联
-    database
-      .prepare("DELETE FROM document_tags WHERE document_id = ?")
-      .run(doc.id);
-    for (const t of doc.tags ?? []) {
-      database
-        .prepare(
-          "INSERT INTO document_tags (document_id, tag_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
-        )
-        .run(doc.id, t.id);
-    }
-
-    database.exec("COMMIT");
-  } catch (e) {
-    database.exec("ROLLBACK");
-    throw e;
-  }
-  SearchService.markDirty();
-});
-
 ipcMain.handle("db:softDelete", (_, id: string) => {
   const database = getDatabase();
   const now = new Date().toISOString();
@@ -287,12 +184,6 @@ ipcMain.handle("db:restore", (_, id: string) => {
       "UPDATE documents SET is_deleted = 0, deleted_at = NULL, updated_at = ? WHERE id = ?",
     )
     .run(now, id);
-  SearchService.markDirty();
-});
-
-ipcMain.handle("db:delete", (_, id: string) => {
-  const database = getDatabase();
-  database.prepare("DELETE FROM documents WHERE id = ?").run(id);
   SearchService.markDirty();
 });
 
@@ -336,6 +227,7 @@ ipcMain.handle("answer:save", (_, answerJson: string) => {
       answer.createdAt ?? now,
       answer.updatedAt ?? now,
     );
+  SearchService.markDirty();
 });
 
 ipcMain.handle("answer:delete", (_, id: string) => {
@@ -592,6 +484,160 @@ ipcMain.handle("search:rebuild", async () => {
   await searchService.rebuildIndex();
 });
 
+// Transaction IPC handlers for DDD repository pattern
+const activeTransactions = new Map<string, ReturnType<typeof getDatabase>>();
+
+ipcMain.handle("db:transaction:begin", () => {
+  const database = getDatabase();
+  const txId = `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  database.exec("BEGIN TRANSACTION");
+  activeTransactions.set(txId, database);
+  return txId;
+});
+
+ipcMain.handle("db:transaction:commit", (_, txId: string) => {
+  const database = activeTransactions.get(txId);
+  if (!database) {
+    throw new Error(`Transaction not found: ${txId}`);
+  }
+  database.exec("COMMIT");
+  activeTransactions.delete(txId);
+});
+
+ipcMain.handle("db:transaction:rollback", (_, txId: string) => {
+  const database = activeTransactions.get(txId);
+  if (!database) {
+    throw new Error(`Transaction not found: ${txId}`);
+  }
+  database.exec("ROLLBACK");
+  activeTransactions.delete(txId);
+});
+
+ipcMain.handle("db:document:save", (_, doc: DocumentInput) => {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  database
+    .prepare(
+      "INSERT INTO documents (id, title, created_at, updated_at, is_deleted, deleted_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at",
+    )
+    .run(
+      doc.id,
+      doc.title,
+      doc.createdAt ?? now,
+      doc.updatedAt ?? now,
+      0,
+      null,
+    );
+  SearchService.markDirty();
+});
+
+ipcMain.handle("db:document:delete", (_, id: string) => {
+  const database = getDatabase();
+  // 删除文档关联的标签
+  database.prepare("DELETE FROM document_tags WHERE document_id = ?").run(id);
+  // 删除文档关联的问题和答案
+  database
+    .prepare(
+      "DELETE FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)",
+    )
+    .run(id);
+  database.prepare("DELETE FROM questions WHERE document_id = ?").run(id);
+  // 删除文档
+  database.prepare("DELETE FROM documents WHERE id = ?").run(id);
+  SearchService.markDirty();
+});
+
+ipcMain.handle(
+  "db:questions:save",
+  (_, docId: string, questions: QuestionInput[]) => {
+    const database = getDatabase();
+    const now = new Date().toISOString();
+    for (const q of questions) {
+      database
+        .prepare(
+          `INSERT INTO questions (id, document_id, text, sort_order, created_at, updated_at, is_deleted, deleted_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           text = excluded.text,
+           sort_order = excluded.sort_order,
+           updated_at = excluded.updated_at,
+           is_deleted = excluded.is_deleted,
+           deleted_at = excluded.deleted_at`,
+        )
+        .run(
+          q.id,
+          docId,
+          q.text,
+          q.order,
+          q.createdAt ?? now,
+          q.updatedAt ?? now,
+          q.isDeleted ? 1 : 0,
+          q.deletedAt ?? null,
+        );
+    }
+    SearchService.markDirty();
+  },
+);
+
+ipcMain.handle("db:questions:delete", (_, ids: string[]) => {
+  const database = getDatabase();
+  for (const id of ids) {
+    database.prepare("DELETE FROM answers WHERE question_id = ?").run(id);
+    database.prepare("DELETE FROM questions WHERE id = ?").run(id);
+  }
+  SearchService.markDirty();
+});
+
+ipcMain.handle(
+  "db:answers:save",
+  (_, docId: string, answers: AnswerInput[]) => {
+    const database = getDatabase();
+    const now = new Date().toISOString();
+
+    // Get all question IDs for this document
+    const questionIds = database
+      .prepare("SELECT id FROM questions WHERE document_id = ?")
+      .all(docId) as Array<{ id: string }>;
+    const validQuestionIds = new Set(questionIds.map((q) => q.id));
+
+    // Delete answers for questions not in the new set
+    const answerQuestionIds = answers.map((a) => a.questionId);
+    for (const qid of validQuestionIds) {
+      if (!answerQuestionIds.includes(qid)) {
+        database.prepare("DELETE FROM answers WHERE question_id = ?").run(qid);
+      }
+    }
+
+    // Upsert all answers
+    for (const a of answers) {
+      database
+        .prepare(
+          `INSERT INTO answers (id, question_id, content, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           content = excluded.content,
+           updated_at = excluded.updated_at`,
+        )
+        .run(
+          a.id,
+          a.questionId,
+          a.content,
+          a.createdAt ?? now,
+          a.updatedAt ?? now,
+        );
+    }
+    SearchService.markDirty();
+  },
+);
+
+ipcMain.handle("db:answers:delete", (_, ids: string[]) => {
+  const database = getDatabase();
+  for (const id of ids) {
+    database.prepare("DELETE FROM answers WHERE id = ?").run(id);
+  }
+  SearchService.markDirty();
+});
+
 function openSettings() {
   const window = BrowserWindow.getFocusedWindow();
   if (window) {
@@ -696,15 +742,20 @@ app.whenReady().then(() => {
   createMenu();
 
   // 检查是否需要重建索引（首次安装或索引为空时）
-  const countResult = db.prepare("SELECT COUNT(*) as count FROM search_fts").get() as { count: number };
+  const countResult = db
+    .prepare("SELECT COUNT(*) as count FROM search_fts")
+    .get() as { count: number };
   if (countResult.count === 0) {
     logger.info("Search index is empty, rebuilding...");
     const searchService = new SearchService(db);
-    searchService.rebuildIndex().then(() => {
-      logger.info("Search index rebuilt successfully");
-    }).catch((err) => {
-      logger.error("Failed to rebuild search index:", err);
-    });
+    searchService
+      .rebuildIndex()
+      .then(() => {
+        logger.info("Search index rebuilt successfully");
+      })
+      .catch((err) => {
+        logger.error("Failed to rebuild search index:", err);
+      });
   }
 
   const shortcutRegistered = globalShortcut.register("Ctrl+,", openSettings);

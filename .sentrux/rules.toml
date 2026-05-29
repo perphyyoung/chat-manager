@@ -5,6 +5,16 @@ max_cc = 25
 no_god_files = true
 
 [[layers]]
+name = "common"
+paths = ["src/common/**"]
+order = 0
+
+[[layers]]
+name = "types"
+paths = ["src/types/**"]
+order = 0
+
+[[layers]]
 name = "domain"
 paths = ["src/domain/**"]
 order = 1

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SearchResults, DocumentSearchResult, QuestionSearchResult, AnswerSearchResult, TagSearchResult } from "../../../../env.d.ts";
+import type { SearchResults, DocumentSearchResult, QuestionSearchResult, AnswerSearchResult, TagSearchResult } from "@/types/search";
 import { escapeHtml, escapeRegex } from "../../utils/html";
 interface SearchResult {
   id: string;

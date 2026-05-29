@@ -54,12 +54,6 @@ function handleCancel() {
 
 // 显示右键菜单
 function showContextMenu(event: MouseEvent, tagId: string, tagName: string) {
-  console.log(
-    "[UI] showContextMenu called, tagId:",
-    tagId,
-    "tagName:",
-    tagName,
-  );
   event.preventDefault();
   contextMenu.value = {
     show: true,
@@ -68,7 +62,6 @@ function showContextMenu(event: MouseEvent, tagId: string, tagName: string) {
     tagId,
     tagName,
   };
-  console.log("[UI] contextMenu set to:", contextMenu.value);
 }
 
 // 隐藏右键菜单
@@ -84,34 +77,20 @@ function requestDeleteTag() {
 
 // 请求编辑标签
 function requestEditTag() {
-  console.log("[UI] requestEditTag called");
   hideContextMenu();
   editingTagId.value = contextMenu.value.tagId;
   editTagName.value = contextMenu.value.tagName;
   showEditInput.value = true;
-  console.log(
-    "[UI] showEditInput set to true, editingTagId:",
-    editingTagId.value,
-  );
 }
 
 async function handleEditTag() {
-  console.log(
-    "[UI] handleEditTag called, editingTagId:",
-    editingTagId.value,
-    "editTagName:",
-    editTagName.value,
-  );
   if (!editTagName.value.trim() || !editingTagId.value) {
-    console.log("[UI] handleEditTag early return");
     return;
   }
-  console.log("[UI] calling documentStore.updateTagName");
   await documentStore.updateTagName(
     editingTagId.value,
     editTagName.value.trim(),
   );
-  console.log("[UI] documentStore.updateTagName completed");
   showEditInput.value = false;
   editTagName.value = "";
   editingTagId.value = "";

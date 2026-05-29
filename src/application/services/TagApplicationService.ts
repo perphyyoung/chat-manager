@@ -5,6 +5,7 @@ import type {
 import type { EventBus } from "../../domain/events/EventBus";
 import { Tag } from "../../domain/entities";
 import { NotFoundError, ValidationError } from "../../domain/errors";
+import { generateTagId } from "../../common/idGenerator";
 
 export class TagApplicationService {
   constructor(
@@ -28,7 +29,7 @@ export class TagApplicationService {
       throw new ValidationError(`Tag "${trimmedName}" already exists`);
     }
 
-    const id = `tag${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const id = generateTagId();
     const tag = new Tag(id, trimmedName);
     await this.tagRepo.save(tag);
     return tag;
@@ -68,25 +69,12 @@ export class TagApplicationService {
     // 更新标签名
     tag.updateName(trimmedName);
     await this.tagRepo.save(tag);
-    console.log("[SERVICE] Tag saved with new name:", tag.id, tag.name);
 
     // 更新所有关联文档中的标签名
     const documents = await this.documentRepo.findByTagId(tagId);
-    console.log("[SERVICE] Found documents with tag:", documents.length);
     for (const doc of documents) {
-      console.log(
-        "[SERVICE] Updating tag in document:",
-        doc.id,
-        "current tags:",
-        doc.tags.map((t) => ({ id: t.id, name: t.name })),
-      );
       doc.updateTagName(tagId, trimmedName);
-      console.log(
-        "[SERVICE] After update, tags:",
-        doc.tags.map((t) => ({ id: t.id, name: t.name })),
-      );
       await this.documentRepo.save(doc);
-      console.log("[SERVICE] Document saved:", doc.id);
     }
 
     return tag;

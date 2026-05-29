@@ -1,4 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type {
+  DocumentInput,
+  QuestionInput,
+  AnswerInput,
+} from "../src/types/dto";
 
 contextBridge.exposeInMainWorld("electronAPI", {
   onOpenSettings: (callback: () => void) => {
@@ -21,11 +26,30 @@ contextBridge.exposeInMainWorld("electronAPI", {
     findAll: (options?: { isDeleted?: boolean }) =>
       ipcRenderer.invoke("db:findAll", options),
     findById: (id: string) => ipcRenderer.invoke("db:findById", id),
-    save: (documentJson: string) => ipcRenderer.invoke("db:save", documentJson),
     softDelete: (id: string) => ipcRenderer.invoke("db:softDelete", id),
     restore: (id: string) => ipcRenderer.invoke("db:restore", id),
-    delete: (id: string) => ipcRenderer.invoke("db:delete", id),
     exists: (id: string) => ipcRenderer.invoke("db:exists", id),
+    transaction: {
+      begin: () => ipcRenderer.invoke("db:transaction:begin"),
+      commit: (txId: string) =>
+        ipcRenderer.invoke("db:transaction:commit", txId),
+      rollback: (txId: string) =>
+        ipcRenderer.invoke("db:transaction:rollback", txId),
+    },
+    document: {
+      save: (doc: DocumentInput) => ipcRenderer.invoke("db:document:save", doc),
+      delete: (id: string) => ipcRenderer.invoke("db:document:delete", id),
+    },
+    questions: {
+      save: (docId: string, questions: QuestionInput[]) =>
+        ipcRenderer.invoke("db:questions:save", docId, questions),
+      delete: (ids: string[]) => ipcRenderer.invoke("db:questions:delete", ids),
+    },
+    answers: {
+      save: (docId: string, answers: AnswerInput[]) =>
+        ipcRenderer.invoke("db:answers:save", docId, answers),
+      delete: (ids: string[]) => ipcRenderer.invoke("db:answers:delete", ids),
+    },
   },
   answer: {
     findByQuestionId: (questionId: string) =>

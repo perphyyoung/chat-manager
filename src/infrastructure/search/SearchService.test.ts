@@ -195,8 +195,8 @@ describe("SearchService", () => {
     it("should limit documents to 10 by default", async () => {
       const result = await service.query("Document");
       expect(result.documents).toHaveLength(10);
-      expect(result.documents[0].id).toBe("doc-0");
-      expect(result.documents[9].id).toBe("doc-9");
+      expect(result.documents[0]?.id).toBe("doc-0");
+      expect(result.documents[9]?.id).toBe("doc-9");
     });
 
     it("should respect custom limit", async () => {

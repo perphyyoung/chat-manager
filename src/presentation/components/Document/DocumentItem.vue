@@ -10,6 +10,7 @@ interface DocumentProp {
   id: string;
   title: string;
   questions: readonly { id: string; text: string; order: number }[];
+  activeQuestions: readonly { id: string; text: string; order: number }[];
   tags?: readonly TagProp[];
 }
 
@@ -40,7 +41,7 @@ function handleContextMenu(event: MouseEvent) {
     <div class="document-item__content">
       <div class="document-item__title">{{ document.title }}</div>
       <div class="document-item__meta">
-        <span>{{ document.questions.length }} 个问题</span>
+        <span>{{ document.activeQuestions.length }} 个问题</span>
         <span v-if="document.tags?.length" class="document-item__tags">
           <TagBadge
             v-for="tag in document.tags.slice(0, 2)"

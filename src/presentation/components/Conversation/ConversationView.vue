@@ -21,7 +21,7 @@ const qaPairs = computed(() => {
   const doc = documentStore.selectedDocument;
   if (!doc) return [];
 
-  return doc.questions.map((question) => {
+  return doc.activeQuestions.map((question) => {
     const answer = doc.answers.find((a) => a.questionId === question.id);
     return {
       question,

@@ -1,0 +1,13 @@
+{
+  "extends": "@tsconfig/node24/tsconfig.json",
+  "include": ["src/application/dto/**/*"],
+  "compilerOptions": {
+    "outDir": "./dist/types",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "composite": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

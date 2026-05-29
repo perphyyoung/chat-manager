@@ -49,7 +49,9 @@ describe("AnswerApplicationService", () => {
       findByQuestionId: vi.fn<() => Promise<Answer | null>>(),
       findByDocumentId: vi.fn<() => Promise<Answer[]>>(),
       save: vi.fn<() => Promise<void>>(),
+      saveAll: vi.fn<() => Promise<void>>(),
       delete: vi.fn<() => Promise<void>>(),
+      deleteAll: vi.fn<() => Promise<void>>(),
     };
 
     eventBus = new SimpleEventBus();

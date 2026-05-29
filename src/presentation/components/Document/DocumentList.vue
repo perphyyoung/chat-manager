@@ -168,6 +168,7 @@ async function handleClearRecycleBin() {
     await documentStore.permanentlyDeleteDocument(doc.id);
   }
   deletedDocuments.value = [];
+  closeRecycleBin();
 }
 
 onMounted(() => {
@@ -271,7 +272,7 @@ onMounted(() => {
     </button>
 
     <!-- 添加文档对话框 -->
-    <div v-if="showAddDialog" class="dialog-overlay" @click.self="handleCancel">
+    <div v-if="showAddDialog" class="add-doc-model" @click.self="handleCancel">
       <div class="dialog">
         <h3>添加文档</h3>
         <input
@@ -298,7 +299,7 @@ onMounted(() => {
     <!-- 编辑文档对话框 -->
     <div
       v-if="showEditDialog"
-      class="dialog-overlay"
+      class="add-doc-model"
       @click.self="handleCancelEdit"
     >
       <div class="dialog">
@@ -515,7 +516,7 @@ onMounted(() => {
 }
 
 /* 对话框样式 */
-.dialog-overlay {
+.add-doc-model {
   position: fixed;
   top: 0;
   left: 0;

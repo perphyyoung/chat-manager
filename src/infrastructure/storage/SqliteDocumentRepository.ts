@@ -1,49 +1,24 @@
-import type { DocumentRepository } from "../../domain/repositories";
+import type { DocumentRepository, QuestionRepository, AnswerRepository } from "../../domain/repositories";
 import { Document, Question, Answer, Tag } from "../../domain/entities";
-
-interface TagDTO {
-  id: string;
-  name: string;
-  createdAt: string;
-}
-
-interface QuestionDTO {
-  id: string;
-  text: string;
-  order: number;
-  createdAt: string;
-  updatedAt: string;
-  isDeleted?: number;
-  deletedAt?: string;
-}
-
-interface AnswerDTO {
-  id: string;
-  questionId: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface DocumentDTO {
-  id: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
-  questions: QuestionDTO[];
-  answers: AnswerDTO[];
-  tags?: TagDTO[];
-}
+import type { DocumentDTO } from "../../types/dto";
 
 function toDocument(stored: DocumentDTO): Document {
-  // 只过滤掉已删除的问题
-  const questions = (stored.questions ?? [])
-    .filter((q) => !q.isDeleted)
-    .map((q) => new Question(q.id, q.text, q.order, new Date(q.createdAt)));
-  const answers = (stored.answers ?? []).map(
-    (a) => new Answer(a.id, a.questionId, a.content, new Date(a.createdAt)),
+  // 加载所有问题（包括已删除的），传递软删除状态
+  const questions = (stored.questions ?? []).map(
+    (q) =>
+      new Question(
+        q.id,
+        q.text,
+        q.order,
+        new Date(q.createdAt),
+        !!q.isDeleted,
+        q.deletedAt ? new Date(q.deletedAt) : undefined,
+      ),
   );
+  const questionIds = new Set(questions.map((q) => q.id));
+  const answers = (stored.answers ?? [])
+    .filter((a) => questionIds.has(a.questionId))
+    .map((a) => new Answer(a.id, a.questionId, a.content, new Date(a.createdAt)));
   const tags = (stored.tags ?? []).map(
     (t) => new Tag(t.id, t.name, new Date(t.createdAt)),
   );
@@ -55,10 +30,26 @@ function toDocument(stored: DocumentDTO): Document {
     new Date(stored.createdAt),
     new Date(stored.updatedAt),
     tags,
+    !!stored.deletedAt,
+    stored.deletedAt ? new Date(stored.deletedAt) : undefined,
   );
 }
 
 export class SqliteDocumentRepository implements DocumentRepository {
+  private questionRepo: QuestionRepository;
+  private answerRepo: AnswerRepository;
+
+  constructor(questionRepo?: QuestionRepository, answerRepo?: AnswerRepository) {
+    // 延迟初始化，避免循环依赖
+    this.questionRepo = questionRepo!;
+    this.answerRepo = answerRepo!;
+  }
+
+  setRepositories(questionRepo: QuestionRepository, answerRepo: AnswerRepository) {
+    this.questionRepo = questionRepo;
+    this.answerRepo = answerRepo;
+  }
+
   async findAll(): Promise<Document[]> {
     const stored = await window.electronAPI.db.findAll({ isDeleted: false });
     return stored.map((d: DocumentDTO) => toDocument(d));
@@ -78,15 +69,55 @@ export class SqliteDocumentRepository implements DocumentRepository {
   }
 
   async save(document: Document): Promise<void> {
-    const json = JSON.stringify(document.toJSON());
-    console.log(
-      "[REPO] Saving document, id:",
-      document.id,
-      "tags:",
-      document.tags.length,
-      document.tags.map((t) => t.name),
-    );
-    await window.electronAPI.db.save(json);
+    // 使用新的事务和实体级 IPC 方法
+    const txId = await window.electronAPI.db.transaction.begin();
+    try {
+      // 1. 保存文档元数据
+      await window.electronAPI.db.document.save({
+        id: document.id,
+        title: document.title,
+        createdAt: document.createdAt.toISOString(),
+        updatedAt: document.updatedAt.toISOString(),
+      });
+
+      // 2. 保存所有问题（包括已删除的）
+      await this.questionRepo.saveAll(document.id, [...document.questions]);
+
+      // 3. 保存所有答案
+      await this.answerRepo.saveAll(document.id, [...document.answers]);
+
+      // 4. 保存标签关联（同步 document_tags 表）
+      await this.syncDocumentTags(document.id, [...document.tags]);
+
+      // 5. 提交事务
+      await window.electronAPI.db.transaction.commit(txId);
+    } catch (error) {
+      // 回滚事务
+      await window.electronAPI.db.transaction.rollback(txId);
+      console.error("[REPO] Failed to save document, transaction rolled back:", error);
+      throw error;
+    }
+  }
+
+  private async syncDocumentTags(documentId: string, tags: Tag[]): Promise<void> {
+    // 获取当前文档的标签
+    const currentTags = await window.electronAPI.tag?.getDocumentTags(documentId) || [];
+    const currentTagIds = new Set(currentTags.map((t) => t.id));
+    const newTagIds = new Set(tags.map((t) => t.id));
+
+    // 添加新标签关联
+    for (const tag of tags) {
+      if (!currentTagIds.has(tag.id)) {
+        await window.electronAPI.tag?.addToDocument(documentId, tag.id);
+      }
+    }
+
+    // 移除已删除的标签关联
+    for (const tagId of currentTagIds) {
+      if (!newTagIds.has(tagId)) {
+        await window.electronAPI.tag?.removeFromDocument(documentId, tagId);
+      }
+    }
   }
 
   async softDelete(id: string): Promise<void> {
@@ -98,7 +129,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await window.electronAPI.db.delete(id);
+    await window.electronAPI.db.document.delete(id);
   }
 
   async exists(id: string): Promise<boolean> {
@@ -135,10 +166,16 @@ export class SqliteDocumentRepository implements DocumentRepository {
     documentId: string,
     questionId: string,
   ): Promise<void> {
-    await window.electronAPI.question?.permanentlyDelete(
-      documentId,
-      questionId,
-    );
+    // DDD 规范：先加载实体，调用领域方法删除，再删除数据库记录
+    const document = await this.findById(documentId);
+    if (!document) {
+      throw new Error(`Document ${documentId} not found`);
+    }
+    document.permanentlyDeleteQuestion(questionId);
+    // 直接删除数据库记录，不通过 save 方法
+    await this.questionRepo.delete(questionId);
+    // 保存文档（不含已删除的问题）
+    await this.save(document);
   }
 
   async clearDeletedQuestions(documentId: string): Promise<void> {

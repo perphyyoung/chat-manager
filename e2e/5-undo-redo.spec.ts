@@ -1,74 +1,10 @@
-/* oxlint-disable no-empty-pattern */
-import { expect, type Page } from "@playwright/test";
-import { test } from "./utils";
-
-const DOC_TITLE_PREFIX = "e2e_undo_redo";
-
-function generateUniqueDocTitle(): string {
-  const timeSuffix = Date.now().toString(36).slice(-6);
-  const randomSuffix = Math.random().toString(36).substr(2, 4);
-  return `${DOC_TITLE_PREFIX}_${timeSuffix}_${randomSuffix}`;
-}
-
-async function createDocumentWithAnswer(window: Page, title: string): Promise<void> {
-  const docId = crypto.randomUUID();
-  const questionId = crypto.randomUUID();
-  const answerId = crypto.randomUUID();
-  const now = new Date().toISOString();
-
-  const document = {
-    id: docId,
-    title: title,
-    createdAt: now,
-    updatedAt: now,
-    questions: [
-      {
-        id: questionId,
-        text: "测试问题",
-        order: 0,
-        createdAt: now,
-        updatedAt: now,
-      },
-    ],
-    answers: [
-      {
-        id: answerId,
-        questionId: questionId,
-        content: "初始回答内容",
-        createdAt: now,
-        updatedAt: now,
-      },
-    ],
-    tags: [],
-  };
-
-  await window.evaluate(
-    async (doc: typeof document) => {
-      /* eslint-disable @typescript-eslint/no-explicit-any */
-      await (window as any).electronAPI.db.save(JSON.stringify(doc));
-    },
-    document,
-  );
-}
-
-async function clickFirstDocument(window: Page): Promise<void> {
-  const document = window.locator(".document-item").first();
-  await expect(document).toBeVisible({ timeout: 2000 });
-  await document.click();
-  await window.waitForSelector(".conversation-view", { timeout: 2000 });
-}
-
-async function doubleClickAnswerToEdit(window: Page): Promise<void> {
-  const answer = window.locator(".answer-bubble__content").first();
-  await expect(answer).toBeVisible({ timeout: 2000 });
-  await answer.dblclick();
-  await window.waitForSelector(".fullscreen-edit-overlay", { timeout: 2000 });
-}
+import { expect } from "@playwright/test";
+import { test, generateUniqueDocTitle, createDocumentWithAnswer, clickFirstDocument, doubleClickAnswerToEdit } from "./utils";
 
 test.describe("撤销和重做功能", () => {
   test.beforeEach(async ({ window }) => {
     await window.waitForSelector(".document-list", { timeout: 2000 });
-    const title = generateUniqueDocTitle();
+    const title = generateUniqueDocTitle("undo");
     await createDocumentWithAnswer(window, title);
     await clickFirstDocument(window);
     await doubleClickAnswerToEdit(window);
@@ -195,7 +131,7 @@ test.describe("撤销和重做功能", () => {
 
     await window.waitForSelector(".fullscreen-edit-overlay", {
       state: "detached",
-      timeout: 2000,
-    });
+      timeout: 2000 },
+    );
   });
 });

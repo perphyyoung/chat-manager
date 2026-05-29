@@ -1,42 +1,5 @@
 import type { DatabaseSync as SqliteDB } from "node:sqlite";
-
-export interface SearchResults {
-  documents: DocumentResult[];
-  questions: QuestionResult[];
-  answers: AnswerResult[];
-  tags: TagResult[];
-}
-
-export interface DocumentResult {
-  id: string;
-  title: string;
-  questionCount: number;
-  answerCount: number;
-}
-
-export interface QuestionResult {
-  id: string;
-  text: string;
-  snippet?: string;
-  documentId: string;
-  documentTitle: string;
-}
-
-export interface AnswerResult {
-  id: string;
-  content: string;
-  snippet?: string;
-  questionText: string;
-  questionId: string;
-  documentId: string;
-  documentTitle: string;
-}
-
-export interface TagResult {
-  id: string;
-  name: string;
-  documentCount: number;
-}
+import type { SearchResults } from "../../types/search";
 
 interface FtsRow {
   id: string;
@@ -181,7 +144,11 @@ export class SearchService {
       return text.slice(0, 80) + (text.length > 80 ? "..." : "");
     }
 
-    const firstKeyword = keywordList[0].toLowerCase();
+    const firstKeyword = keywordList[0]?.toLowerCase();
+    if (!firstKeyword) {
+      return text.slice(0, 80) + (text.length > 80 ? "..." : "");
+    }
+
     const lowerText = text.toLowerCase();
     const index = lowerText.indexOf(firstKeyword);
 

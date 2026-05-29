@@ -35,23 +35,29 @@ const sortFieldLabels: Record<QuestionSortField, string> = {
 }
 
 async function handleCreateQA() {
-  if (!newQuestionText.value.trim() || !newAnswerContent.value.trim()) return
+  const questionText = newQuestionText.value.trim()
+  const answerText = newAnswerContent.value.trim()
+
+  if (!questionText || !answerText) {
+    return
+  }
 
   isCreating.value = true
   try {
-    await documentStore.addQuestionAndAnswer(
-      newQuestionText.value.trim(),
-      newAnswerContent.value.trim(),
-    )
+    await documentStore.addQuestionAndAnswer(questionText, answerText)
     newQuestionText.value = ''
     newAnswerContent.value = ''
     showAddDialog.value = false
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : '未知错误'
+    console.error('[QuestionList] 创建问答失败:', errorMsg)
+    window.electronAPI.logToFile('error', `[QuestionList] 创建问答失败: ${errorMsg}`)
   } finally {
     isCreating.value = false
   }
 }
 
-function handleCancel() {
+function closeAddDialog() {
   newQuestionText.value = ''
   newAnswerContent.value = ''
   showAddDialog.value = false
@@ -256,11 +262,11 @@ onUnmounted(() => {
       @close="showRecycleBin = false"
       @restore="(id) => documentStore.restoreQuestion(id)"
       @delete="(id) => documentStore.permanentlyDeleteQuestion(id)"
-      @clear="documentStore.clearDeletedQuestions()"
+      @clear="() => { documentStore.clearDeletedQuestions(); showRecycleBin = false; }"
     />
 
     <!-- 添加问答对对话框 -->
-    <div v-if="showAddDialog" class="dialog-overlay" @click.self="handleCancel">
+    <div v-if="showAddDialog" class="add-question-model" @click.self="closeAddDialog">
       <div class="dialog">
         <h3>添加问答对</h3>
         <div class="dialog-field">
@@ -282,7 +288,7 @@ onUnmounted(() => {
           />
         </div>
         <div class="dialog-actions">
-          <button class="btn-secondary" @click="handleCancel">取消</button>
+          <button class="btn-secondary" @click="closeAddDialog">取消</button>
           <button
             class="btn-primary"
             :disabled="!newQuestionText.trim() || !newAnswerContent.trim() || isCreating"
@@ -308,7 +314,7 @@ onUnmounted(() => {
     </Teleport>
 
     <!-- 编辑问题对话框 -->
-    <div v-if="showEditDialog" class="dialog-overlay" @click.self="cancelEdit">
+    <div v-if="showEditDialog" class="add-question-model" @click.self="cancelEdit">
       <div class="dialog">
         <h3>编辑问题</h3>
         <div class="dialog-field">
@@ -548,7 +554,7 @@ onUnmounted(() => {
 }
 
 /* 对话框样式 */
-.dialog-overlay {
+.add-question-model {
   position: fixed;
   top: 0;
   left: 0;

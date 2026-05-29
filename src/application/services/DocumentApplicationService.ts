@@ -15,6 +15,7 @@ import {
   QuestionUpdatedEvent,
 } from "../../domain/events/QuestionEvents";
 import { NotFoundError } from "../../domain/errors";
+import { generateDocumentId } from "../../common/idGenerator";
 
 export class DocumentApplicationService {
   constructor(
@@ -44,7 +45,7 @@ export class DocumentApplicationService {
     title: string,
     questionTexts: string[] = [],
   ): Promise<Document> {
-    const id = `doc${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const id = generateDocumentId();
     const document = new Document(id, title, []);
 
     for (const text of questionTexts) {
@@ -122,7 +123,7 @@ export class DocumentApplicationService {
       throw new NotFoundError("Document", documentId);
     }
 
-    document.removeQuestion(questionId);
+    document.softDeleteQuestion(questionId);
     await this.documentRepo.save(document);
     this.eventBus.emit(new QuestionDeletedEvent(documentId, questionId));
   }
