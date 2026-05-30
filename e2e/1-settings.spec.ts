@@ -13,8 +13,6 @@ test('settings menu opens settings modal', async () => {
   const window = await electronApp.firstWindow()
   await window.waitForLoadState('domcontentloaded')
 
-  await window.screenshot({ path: 'e2e/screenshots/before-settings.png' })
-
   await electronApp.evaluate(async ({ app }) => {
     const menu = app.applicationMenu
     const fileMenu = menu?.items.find(item => item.label === 'File')
@@ -25,7 +23,6 @@ test('settings menu opens settings modal', async () => {
   })
 
   await window.waitForTimeout(500)
-  await window.screenshot({ path: 'e2e/screenshots/after-settings.png' })
 
   const settingsModal = window.locator('.modal-content')
   const isVisible = await settingsModal.isVisible().catch(() => false)

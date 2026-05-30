@@ -3,14 +3,22 @@
  * 位于 src/types 目录，可被渲染进程和 E2E 测试共享
  */
 
-import type { DocumentDTO, TagDTO, AnswerDTO, DocumentInput, QuestionInput, AnswerInput } from "./dto";
+import type {
+  DocumentDTO,
+  TagDTO,
+  AnswerDTO,
+  DocumentInput,
+  QuestionInput,
+  AnswerInput,
+} from "./dto";
+import type { ExportResult, ImportResult } from "./importExport";
 import type { SearchResults } from "./search";
 
 export interface ElectronAPI {
   onOpenSettings: (callback: () => void) => void;
   onOpenSearch: (callback: () => void) => void;
   openSearch: () => void;
-  logToFile: (level: string, message: string) => void;
+  renderLog: (level: string, message: string) => void;
   db: {
     findAll: (options?: { isDeleted?: boolean }) => Promise<DocumentDTO[]>;
     findById: (id: string) => Promise<DocumentDTO | null>;
@@ -68,4 +76,6 @@ export interface ElectronAPI {
     query: (query: string) => Promise<SearchResults>;
     rebuild: () => Promise<void>;
   };
+  onExportComplete: (callback: (result: ExportResult) => void) => void;
+  onImportComplete: (callback: (result: ImportResult) => void) => void;
 }

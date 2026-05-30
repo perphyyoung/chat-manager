@@ -61,8 +61,7 @@ async function handleCreateQA() {
     showAddDialog.value = false
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : '未知错误'
-    console.error('[QuestionList] 创建问答失败:', errorMsg)
-    window.electronAPI.logToFile('error', `[QuestionList] 创建问答失败: ${errorMsg}`)
+    window.electronAPI.renderLog("error", `[QuestionList] 创建问答失败: ${errorMsg}`)
   } finally {
     isCreating.value = false
   }

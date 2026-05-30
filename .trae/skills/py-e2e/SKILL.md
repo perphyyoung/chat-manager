@@ -18,16 +18,18 @@ description: "用于 e2e 测试. Invoke when writing e2e test file."
 E2E 测试中的日志统一输出到项目根目录 `cm.log`，便于调试。
 
 - 通过 `Clear-Content cm.log` 清空日志, 而不是删除
+- 测试文件中的日志使用 `log`, 见下文
+- 其他文件的日志使用参考 `py-electron-log` skill
 
 ### E2E 测试文件中的日志
 
 必须使用 `e2e/utils.ts` 中的辅助函数：
 
 ```typescript
-import { logToFile } from './utils'
+import { log } from './utils';
 
 // 写入日志
-await logToFile(window, 'info', '测试步骤信息')
-await logToFile(window, 'error', '错误信息')
+await log.debug(`调试信息`);
+await log.error('错误信息');
 
 ```

@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test, generateUniqueTagName, logToFile } from "./utils";
+import { test, generateUniqueTagName, log } from "./utils";
 
 test("add existing tag to document via conversation view", async ({
   window,
@@ -55,7 +55,7 @@ test("add existing tag to document via conversation view", async ({
   } catch (e) {
     // 记录当前页面中的所有标签
     const allTags = await window.locator(".tag-selector__current .tag-badge").allTextContents();
-    await logToFile(window, "error", `标签未找到。当前所有标签: ${JSON.stringify(allTags)}`);
+    log.error(`标签未找到。当前所有标签: ${JSON.stringify(allTags)}`);
     throw e;
   }
 

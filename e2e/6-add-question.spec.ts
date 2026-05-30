@@ -1,19 +1,17 @@
 import { expect } from "@playwright/test";
 import {
   test,
-  cleanupE2EDocuments,
   generateUniqueDocTitle,
   createDocumentWithAnswer,
   clickDocumentByTitle,
   openAddDialog,
   deleteFirstQuestion,
-  logToFile,
+  log,
 } from "./utils";
 
 test.describe("添加问题功能", () => {
   test.beforeEach(async ({ window }) => {
     await window.waitForSelector(".document-list", { timeout: 2000 });
-    await cleanupE2EDocuments(window);
     const title = generateUniqueDocTitle("add_question");
     await createDocumentWithAnswer(window, title);
     await window.waitForSelector(".document-list", { timeout: 2000 });
@@ -46,7 +44,7 @@ test.describe("添加问题功能", () => {
         timeout: 2000,
       });
     } catch (e) {
-      await logToFile(window, "error", `对话框关闭超时: ${e}`);
+      log.error(`对话框关闭超时: ${e}`);
       throw e;
     }
 

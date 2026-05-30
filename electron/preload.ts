@@ -4,6 +4,7 @@ import type {
   QuestionInput,
   AnswerInput,
 } from "../src/types/dto";
+import type { ExportResult, ImportResult } from "../src/types/importExport";
 
 contextBridge.exposeInMainWorld("electronAPI", {
   onOpenSettings: (callback: () => void) => {
@@ -19,8 +20,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   openSearch: () => {
     ipcRenderer.send("shortcut:open-search");
   },
-  logToFile: (level: string, message: string) => {
-    ipcRenderer.invoke("log-to-file", level, message);
+  renderLog: (level: string, message: string) => {
+    ipcRenderer.invoke("render-log", level, message);
   },
   db: {
     findAll: (options?: { isDeleted?: boolean }) =>
@@ -88,5 +89,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   search: {
     query: (query: string) => ipcRenderer.invoke("search:query", query),
     rebuild: () => ipcRenderer.invoke("search:rebuild"),
+  },
+  onExportComplete: (callback: (result: ExportResult) => void) => {
+    ipcRenderer.on("export-complete", (_, result) => callback(result));
+  },
+  onImportComplete: (callback: (result: ImportResult) => void) => {
+    ipcRenderer.on("import-complete", (_, result) => callback(result));
   },
 });

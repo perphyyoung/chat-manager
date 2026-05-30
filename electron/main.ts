@@ -1,6 +1,6 @@
 import { app, BrowserWindow, Menu, ipcMain, globalShortcut } from "electron";
 import path from "node:path";
-import logger from "electron-log";
+import { log } from "./logger";
 import { getDatabase, closeDatabase } from "./database";
 import { SearchService } from "../src/infrastructure/search/SearchService";
 import type {
@@ -15,9 +15,11 @@ import type {
   QuestionInput,
   AnswerInput,
 } from "../src/types/dto";
+import { exportData, importData } from "./importExport";
+import { dataDirManager } from "./DataDirManager";
 
-logger.initialize();
-logger.transports.file.resolvePathFn = () => path.join(process.cwd(), "cm.log");
+// 初始化数据目录（确保 py-data 目录存在）
+dataDirManager.init();
 
 // 请求单实例锁，防止应用多开（仅生产环境）
 if (app.isPackaged) {
@@ -41,14 +43,15 @@ if (app.isPackaged) {
   }
 }
 
-ipcMain.handle("log-to-file", (_, level: string, message: string) => {
-  const logLevels: Record<string, (msg: string) => void> = {
-    error: logger.error,
-    warn: logger.warn,
-    info: logger.info,
-    debug: logger.debug,
-  };
-  const logMethod = logLevels[level] || logger.info;
+const logLevels: Record<string, (msg: string) => void> = {
+  error: log.error,
+  warn: log.warn,
+  info: log.info,
+  debug: log.debug,
+};
+
+ipcMain.handle("render-log", (_, level: string, message: string) => {
+  const logMethod = logLevels[level] || log.info;
   logMethod(message);
 });
 
@@ -643,7 +646,7 @@ function openSettings() {
   if (window) {
     window.webContents.send("open-settings");
   } else {
-    logger.error("No focused window, cannot open settings");
+    log.error("No focused window, cannot open settings");
   }
 }
 
@@ -677,7 +680,7 @@ function createWindow() {
   }
 
   win.webContents.on("preload-error", (_, preloadPath, error) => {
-    logger.error(`Preload error for ${preloadPath}: ${error.message}`);
+    log.error(`Preload error for ${preloadPath}: ${error.message}`);
   });
 }
 
@@ -687,13 +690,22 @@ function createMenu() {
       label: "File",
       submenu: [
         {
+          label: "导出数据",
+          click: exportData,
+        },
+        {
+          label: "导入数据",
+          click: importData,
+        },
+        { type: "separator" },
+        {
           label: "设置",
           accelerator: "CmdOrCtrl+,",
           click: () => {
             if (win) {
               win.webContents.send("open-settings");
             } else {
-              logger.error("Window is null, cannot send open-settings");
+              log.error("Window is null, cannot send open-settings");
             }
           },
         },
@@ -746,21 +758,23 @@ app.whenReady().then(() => {
     .prepare("SELECT COUNT(*) as count FROM search_fts")
     .get() as { count: number };
   if (countResult.count === 0) {
-    logger.info("Search index is empty, rebuilding...");
+    log.info("Search index is empty, rebuilding...");
     const searchService = new SearchService(db);
     searchService
       .rebuildIndex()
       .then(() => {
-        logger.info("Search index rebuilt successfully");
+        log.info("Search index rebuilt successfully");
       })
       .catch((err) => {
-        logger.error("Failed to rebuild search index:", err);
+        log.error(
+          `Failed to rebuild search index: ${err instanceof Error ? err.message : String(err)}`,
+        );
       });
   }
 
   const shortcutRegistered = globalShortcut.register("Ctrl+,", openSettings);
   if (!shortcutRegistered) {
-    logger.error("Failed to register global shortcut Ctrl+,");
+    log.error("Failed to register global shortcut Ctrl+,");
   }
 
   // Ctrl+F 打开搜索面板（已在渲染进程通过 keydown 处理）

@@ -1,9 +1,15 @@
 /* oxlint-disable no-empty-pattern */
 import type { Page, ElectronApplication } from "@playwright/test";
 import { test as base, expect } from "@playwright/test";
-import { join } from "path";
+import path, { join } from "path";
 import type { ElectronAPI } from "../src/types/api";
-import type { DocumentDTO, TagDTO } from "../src/types/dto";
+import type { DocumentDTO } from "../src/types/dto";
+import log from "electron-log";
+
+log.transports.file.resolvePathFn = () => path.join(process.cwd(), "cm.log");
+log.transports.file.level = "debug";
+log.transports.console.level = "warn";
+export { log };
 
 // Electron Window 类型，包含 electronAPI
 export type ElectronWindow = Page & {
@@ -20,125 +26,6 @@ export type TestFixtures = {
 type WindowWithElectronAPI = Window & {
   electronAPI: ElectronAPI;
 };
-
-/**
- * 获取类型安全的 electronAPI
- * @param page Playwright Page 对象
- * @returns 类型化的 electronAPI
- */
-export function getElectronAPI(page: Page) {
-  return {
-    async createDocument(document: DocumentDTO): Promise<void> {
-      await page.evaluate(async (doc: DocumentDTO) => {
-        const win = window as unknown as WindowWithElectronAPI;
-        const { id, title, createdAt, updatedAt, questions, answers } = doc;
-
-        // 使用 DDD Repository 模式保存文档
-        await win.electronAPI.db.document.save({
-          id,
-          title,
-          createdAt,
-          updatedAt,
-        });
-
-        if (questions.length > 0) {
-          await win.electronAPI.db.questions.save(
-            id,
-            questions.map((q) => ({
-              id: q.id,
-              text: q.text,
-              order: q.order,
-              createdAt: q.createdAt,
-              updatedAt: q.updatedAt,
-              isDeleted: q.isDeleted === 1,
-              deletedAt: q.deletedAt,
-            }))
-          );
-        }
-
-        if (answers.length > 0) {
-          await win.electronAPI.db.answers.save(
-            id,
-            answers.map((a) => ({
-              id: a.id,
-              questionId: a.questionId,
-              content: a.content,
-              createdAt: a.createdAt,
-              updatedAt: a.updatedAt,
-            }))
-          );
-        }
-      }, document);
-    },
-
-    async findAllDocuments(options?: { isDeleted?: boolean }): Promise<DocumentDTO[]> {
-      return page.evaluate(async (opts) => {
-        const win = window as unknown as WindowWithElectronAPI;
-        return win.electronAPI.db.findAll(opts);
-      }, options);
-    },
-
-    async deleteDocument(id: string): Promise<void> {
-      await page.evaluate(async (docId: string) => {
-        const win = window as unknown as WindowWithElectronAPI;
-        await win.electronAPI.db.document.delete(docId);
-      }, id);
-    },
-
-    async findAllTags(): Promise<TagDTO[]> {
-      return page.evaluate(async () => {
-        const win = window as unknown as WindowWithElectronAPI;
-        return win.electronAPI.tag.findAll();
-      });
-    },
-
-    async saveTag(tag: TagDTO): Promise<void> {
-      await page.evaluate(async (t: TagDTO) => {
-        const win = window as unknown as WindowWithElectronAPI;
-        await win.electronAPI.tag.save(JSON.stringify(t));
-      }, tag);
-    },
-
-    async deleteTag(id: string): Promise<void> {
-      await page.evaluate(async (tagId: string) => {
-        const win = window as unknown as WindowWithElectronAPI;
-        await win.electronAPI.tag.delete(tagId);
-      }, id);
-    },
-
-    openSearch(): Promise<void> {
-      return page.evaluate(() => {
-        const win = window as unknown as WindowWithElectronAPI;
-        win.electronAPI.openSearch();
-      });
-    },
-
-    logToFile(level: "info" | "error" | "debug", message: string): Promise<void> {
-      return page.evaluate(
-        ({ lvl, msg }) => {
-          const win = window as unknown as WindowWithElectronAPI;
-          win.electronAPI.logToFile(lvl, `[E2E-TEST] ${msg}`);
-        },
-        { lvl: level, msg: message }
-      );
-    },
-  };
-}
-
-/**
- * 写入日志到 cm.log
- * @param page Playwright Page 对象
- * @param level 日志级别: info | error | debug
- * @param message 日志消息
- */
-export async function logToFile(
-  page: Page,
-  level: "info" | "error" | "debug",
-  message: string,
-): Promise<void> {
-  const api = getElectronAPI(page);
-  await api.logToFile(level, message);
-}
 
 /**
  * 生成唯一标签名，以 e2e 开头便于识别和清理
@@ -168,7 +55,10 @@ export function generateUniqueDocTitle(label: string): string {
  * @param title 文档标题
  * @returns 创建的文档 ID
  */
-export async function createDocumentWithAnswer(page: Page, title: string): Promise<string> {
+export async function createDocumentWithAnswer(
+  page: Page,
+  title: string,
+): Promise<string> {
   const docId = crypto.randomUUID();
   const questionId = crypto.randomUUID();
   const answerId = crypto.randomUUID();
@@ -200,8 +90,41 @@ export async function createDocumentWithAnswer(page: Page, title: string): Promi
     tags: [],
   };
 
-  const api = getElectronAPI(page);
-  await api.createDocument(document);
+  await page.evaluate(async (doc: DocumentDTO) => {
+    const win = window as unknown as WindowWithElectronAPI;
+    const { id, title, createdAt, updatedAt, questions, answers } = doc;
+
+    await win.electronAPI.db.document.save({ id, title, createdAt, updatedAt });
+
+    if (questions.length > 0) {
+      await win.electronAPI.db.questions.save(
+        id,
+        questions.map((q) => ({
+          id: q.id,
+          text: q.text,
+          order: q.order,
+          createdAt: q.createdAt,
+          updatedAt: q.updatedAt,
+          isDeleted: q.isDeleted === 1,
+          deletedAt: q.deletedAt,
+        })),
+      );
+    }
+
+    if (answers.length > 0) {
+      await win.electronAPI.db.answers.save(
+        id,
+        answers.map((a) => ({
+          id: a.id,
+          questionId: a.questionId,
+          content: a.content,
+          createdAt: a.createdAt,
+          updatedAt: a.updatedAt,
+        })),
+      );
+    }
+  }, document);
+
   await page.reload();
   return docId;
 }
@@ -212,8 +135,10 @@ export async function createDocumentWithAnswer(page: Page, title: string): Promi
  */
 export async function cleanupE2ETags(page: Page): Promise<void> {
   try {
-    const api = getElectronAPI(page);
-    const allTags = await api.findAllTags();
+    const allTags = await page.evaluate(async () => {
+      const win = window as unknown as WindowWithElectronAPI;
+      return win.electronAPI.tag.findAll();
+    });
 
     // 筛选出 e2e 开头的标签
     const e2eTags = allTags.filter((tag) => tag.name.startsWith("e2e"));
@@ -221,13 +146,16 @@ export async function cleanupE2ETags(page: Page): Promise<void> {
     // 删除这些标签
     for (const tag of e2eTags) {
       try {
-        await api.deleteTag(tag.id);
+        await page.evaluate(async (tagId: string) => {
+          const win = window as unknown as WindowWithElectronAPI;
+          await win.electronAPI.tag.delete(tagId);
+        }, tag.id);
       } catch (e) {
-        await api.logToFile("error", `清理标签失败: ${tag.name} - ${e}`);
+        log.error(`清理标签失败: ${tag.name} - ${e}`);
       }
     }
   } catch (e) {
-    await logToFile(page, "error", `清理标签过程出错: ${e}`);
+    log.error(`清理标签过程出错: ${e}`);
   }
 }
 
@@ -237,8 +165,10 @@ export async function cleanupE2ETags(page: Page): Promise<void> {
  */
 export async function cleanupE2EDocuments(page: Page): Promise<void> {
   try {
-    const api = getElectronAPI(page);
-    const allDocs = await api.findAllDocuments();
+    const allDocs = await page.evaluate(async () => {
+      const win = window as unknown as WindowWithElectronAPI;
+      return win.electronAPI.db.findAll();
+    });
 
     // 筛选出 e2e 开头的文档
     const e2eDocs = allDocs.filter((doc) => doc.title.startsWith("e2e"));
@@ -246,13 +176,16 @@ export async function cleanupE2EDocuments(page: Page): Promise<void> {
     // 永久删除这些文档
     for (const doc of e2eDocs) {
       try {
-        await api.deleteDocument(doc.id);
+        await page.evaluate(async (docId: string) => {
+          const win = window as unknown as WindowWithElectronAPI;
+          await win.electronAPI.db.document.delete(docId);
+        }, doc.id);
       } catch (e) {
-        await api.logToFile("error", `清理文档失败: ${doc.title} - ${e}`);
+        log.error(`清理文档失败: ${doc.title} - ${e}`);
       }
     }
   } catch (e) {
-    await logToFile(page, "error", `清理文档过程出错: ${e}`);
+    log.error(`清理文档过程出错: ${e}`);
   }
 }
 
@@ -281,8 +214,10 @@ export async function doubleClickAnswerToEdit(page: Page): Promise<void> {
  * @param page Playwright Page 对象
  */
 export async function openSearch(page: Page): Promise<void> {
-  const api = getElectronAPI(page);
-  await api.openSearch();
+  await page.evaluate(() => {
+    const win = window as unknown as WindowWithElectronAPI;
+    win.electronAPI.openSearch();
+  });
 }
 
 /**
@@ -290,7 +225,10 @@ export async function openSearch(page: Page): Promise<void> {
  * @param page Playwright Page 对象
  * @param title 文档标题
  */
-export async function clickDocumentByTitle(page: Page, title: string): Promise<void> {
+export async function clickDocumentByTitle(
+  page: Page,
+  title: string,
+): Promise<void> {
   const document = page.locator(".document-item").filter({ hasText: title });
   await expect(document).toBeVisible({ timeout: 2000 });
   await document.click();
@@ -348,7 +286,7 @@ export const test = base.extend<TestFixtures>({
         await cleanupE2ETags(window);
         await cleanupE2EDocuments(window);
       } catch (e) {
-        console.log("[CLEANUP-ERROR]", e);
+        log.error(`[E2E CLEANUP-ERROR]: ${e}`);
       }
 
       // 关闭应用

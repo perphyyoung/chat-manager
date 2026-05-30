@@ -2,45 +2,14 @@ import { DatabaseSync } from "node:sqlite";
 import type { DatabaseSync as SqliteDB } from "node:sqlite";
 import path from "node:path";
 import fs from "node:fs";
-import { app } from "electron";
+import { dataDirManager } from "./DataDirManager";
 
-const DB_DIR = "py-data";
 const DB_FILE = "chat-manager.db";
 
 let db: SqliteDB | null = null;
-let dbDir: string | null = null;
-
-/**
- * 获取数据库目录路径
- * 开发环境：使用项目根目录下的 py-data（避免污染生产数据）
- * 生产环境：使用 Electron 的 userData 目录（%APPDATA%/Chat Manager/py-data）
- */
-function getDbDir(): string {
-  if (dbDir) {
-    return dbDir;
-  }
-
-  // 通过 process.execPath 判断是否为开发环境
-  // 开发环境：execPath 指向 node_modules/electron/dist/electron.exe
-  // 生产环境：execPath 指向安装目录的 Chat Manager.exe
-  const isDev =
-    process.execPath.includes("node_modules") ||
-    process.execPath.includes("electron");
-
-  if (isDev) {
-    // 开发环境：使用项目根目录
-    dbDir = path.join(process.cwd(), DB_DIR);
-  } else {
-    // 生产环境：使用 userData 目录
-    const userData = app.getPath("userData");
-    dbDir = path.join(userData, DB_DIR);
-  }
-
-  return dbDir;
-}
 
 export function getDbPath(): string {
-  return path.join(getDbDir(), DB_FILE);
+  return path.join(dataDirManager.getDbDir(), DB_FILE);
 }
 
 export function getDatabase(): SqliteDB {
@@ -48,7 +17,7 @@ export function getDatabase(): SqliteDB {
     return db;
   }
 
-  const dbDir = getDbDir();
+  const dbDir = dataDirManager.getDbDir();
   if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
   }
@@ -164,16 +133,16 @@ function initVersionControl(db: SqliteDB): void {
 }
 
 function getCurrentVersion(db: SqliteDB): number {
-  const result = db.prepare("SELECT MAX(version) as version FROM db_version").get() as { version: number | null } | undefined;
+  const result = db
+    .prepare("SELECT MAX(version) as version FROM db_version")
+    .get() as { version: number | null } | undefined;
   return result?.version ?? 0;
 }
 
 function recordMigration(db: SqliteDB, migration: Migration): void {
-  db.prepare("INSERT INTO db_version (version, name, applied_at) VALUES (?, ?, ?)").run(
-    migration.version,
-    migration.name,
-    new Date().toISOString(),
-  );
+  db.prepare(
+    "INSERT INTO db_version (version, name, applied_at) VALUES (?, ?, ?)",
+  ).run(migration.version, migration.name, new Date().toISOString());
 }
 
 function runMigrations(db: SqliteDB): void {
