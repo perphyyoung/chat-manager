@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useDocumentStore } from "../../stores/document";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
 
@@ -7,6 +7,17 @@ const documentStore = useDocumentStore();
 const showNewTagInput = ref(false);
 const newTagName = ref("");
 const isCollapsed = ref(false);
+
+// 新标签输入框 ref，用于自动聚焦
+const newTagInput = ref<HTMLInputElement | null>(null);
+
+// 显示新标签输入框时自动聚焦
+watch(showNewTagInput, async (show) => {
+  if (show) {
+    await nextTick();
+    newTagInput.value?.focus();
+  }
+});
 
 // 右键菜单状态
 const contextMenu = ref({
@@ -161,6 +172,7 @@ onUnmounted(() => {
 
     <div v-if="showNewTagInput" class="tag-filter__input-wrapper">
       <input
+        ref="newTagInput"
         v-model="newTagName"
         type="text"
         placeholder="标签名称"

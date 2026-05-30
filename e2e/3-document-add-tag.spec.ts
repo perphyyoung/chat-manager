@@ -196,6 +196,62 @@ test("remove tag from document via conversation view", async ({ window }) => {
   );
 });
 
+test("tag filter input auto focus when creating new tag", async ({ window }) => {
+  // 等待文档列表加载
+  await window.waitForSelector(".document-list", { timeout: 2000 });
+
+  // 点击新建标签按钮
+  await window.locator(".tag-filter__add-btn").click();
+
+  // 等待输入框出现并验证自动聚焦
+  const tagInput = window.locator(".tag-filter__input");
+  await window.waitForSelector(".tag-filter__input", { timeout: 2000 });
+  await expect(tagInput).toBeFocused();
+
+  // 验证输入框可编辑
+  await tagInput.fill("聚焦测试标签");
+  await expect(tagInput).toHaveValue("聚焦测试标签");
+
+  // 取消创建
+  await window.locator(".tag-filter__btn-cancel").click();
+  await window.waitForSelector(".tag-filter__input-wrapper", {
+    state: "detached",
+    timeout: 2000,
+  });
+});
+
+test("tag selector input auto focus when creating new tag", async ({ window }) => {
+  // 等待文档列表加载
+  await window.waitForSelector(".document-list", { timeout: 2000 });
+
+  // 使用第二个文档
+  const document = window.locator(".document-item").nth(1);
+  await expect(document).toBeVisible({ timeout: 2000 });
+  await document.click();
+
+  // 等待对话视图显示
+  await window.waitForSelector(".conversation-view", { timeout: 2000 });
+
+  // 打开标签选择器
+  await window.locator(".tag-selector__toggle").click();
+  await window.waitForSelector(".tag-selector__dropdown", { timeout: 2000 });
+
+  // 点击创建新标签按钮
+  await window.locator(".tag-selector__create-btn").click();
+
+  // 等待输入框出现并验证自动聚焦
+  const tagInput = window.locator(".tag-selector__input");
+  await window.waitForSelector(".tag-selector__input", { timeout: 2000 });
+  await expect(tagInput).toBeFocused();
+
+  // 验证输入框可编辑
+  await tagInput.fill("聚焦测试标签2");
+  await expect(tagInput).toHaveValue("聚焦测试标签2");
+
+  // 取消创建
+  await window.locator(".tag-selector__btn-cancel").click();
+});
+
 test("update tag name via tag filter", async ({ window }) => {
   // 等待文档列表加载
   await window.waitForSelector(".document-list", { timeout: 2000 });
