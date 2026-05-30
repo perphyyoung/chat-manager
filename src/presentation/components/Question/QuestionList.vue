@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useDocumentStore, type QuestionSortField } from '../../stores/document'
 import QuestionItem from './QuestionItem.vue'
 import RecycleBinModal from '../common/RecycleBinModal.vue'
@@ -12,6 +12,17 @@ const newAnswerContent = ref('')
 const isCreating = ref(false)
 const showSortMenu = ref(false)
 const showRecycleBin = ref(false)
+
+// 问题输入框 ref，用于弹窗打开时聚焦
+const questionInput = ref<HTMLInputElement | null>(null)
+
+// 弹窗打开时聚焦到问题输入框
+watch(showAddDialog, async (show) => {
+  if (show) {
+    await nextTick()
+    questionInput.value?.focus()
+  }
+})
 
 // 右键菜单状态
 const contextMenu = ref({
@@ -272,6 +283,7 @@ onUnmounted(() => {
         <div class="dialog-field">
           <label>问题</label>
           <input
+            ref="questionInput"
             v-model="newQuestionText"
             type="text"
             placeholder="请输入问题"

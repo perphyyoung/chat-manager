@@ -193,4 +193,16 @@ test.describe("添加问题功能", () => {
     const cancelledQuestion = questionList.filter({ hasText: "取消的问题" });
     await expect(cancelledQuestion).toHaveCount(0);
   });
+
+  test("弹窗打开时问题输入框自动聚焦", async ({ window }) => {
+    await openAddDialog(window);
+
+    // 验证问题输入框获得焦点
+    const questionInput = window.locator(".dialog-input");
+    await expect(questionInput).toBeFocused();
+
+    // 验证输入框可编辑
+    await questionInput.fill("聚焦测试问题");
+    await expect(questionInput).toHaveValue("聚焦测试问题");
+  });
 });
