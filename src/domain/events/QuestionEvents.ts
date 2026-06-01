@@ -59,7 +59,7 @@ export class QuestionUpdatedEvent extends DomainEvent {
   constructor(
     public readonly documentId: string,
     public readonly questionId: string,
-    public readonly changes: { text?: string },
+    public readonly changes: { text?: string; order?: number },
   ) {
     super();
   }

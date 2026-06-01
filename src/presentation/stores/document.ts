@@ -635,6 +635,57 @@ export const useDocumentStore = defineStore("document", () => {
     await loadDocuments();
   }
 
+  // 重新排序问题
+  async function reorderQuestions(): Promise<void> {
+    if (!selectedDocumentId.value) {
+      throw new Error("No document selected");
+    }
+    const docId = selectedDocumentId.value;
+
+    // 获取当前文档的所有活动问题
+    const doc = selectedDocument.value;
+    if (!doc) {
+      throw new Error("Document not found");
+    }
+
+    // 按当前 order 升序排序
+    const questions = [...doc.activeQuestions].sort(
+      (a, b) => a.order - b.order,
+    );
+
+    // 找到最大连续已排序位置
+    let maxOrderedIndex = -1;
+    for (let i = 0; i < questions.length; i++) {
+      if (questions[i]?.order === i) {
+        maxOrderedIndex = i;
+      } else {
+        break;
+      }
+    }
+
+    // 如果全部已排序，无需操作
+    if (maxOrderedIndex === questions.length - 1) {
+      return;
+    }
+
+    // 从 maxOrderedIndex + 1 开始重新编号
+    for (let i = maxOrderedIndex + 1; i < questions.length; i++) {
+      const question = questions[i];
+      if (question) {
+        await documentService.updateQuestionOrder(docId, question.id, i);
+      }
+    }
+
+    // 刷新当前文档数据
+    const updatedDoc = await documentService.getDocument(docId);
+    if (updatedDoc) {
+      const index = documents.value.findIndex((d) => d.id === docId);
+      if (index !== -1) {
+        documents.value.splice(index, 1, updatedDoc);
+      }
+    }
+  }
+
   return {
     documents,
     sortedDocuments,
@@ -689,6 +740,7 @@ export const useDocumentStore = defineStore("document", () => {
     restoreQuestion,
     permanentlyDeleteQuestion,
     clearDeletedQuestions,
+    reorderQuestions,
   };
 });
 

@@ -156,4 +156,28 @@ export class DocumentApplicationService {
       }),
     );
   }
+
+  async updateQuestionOrder(
+    documentId: string,
+    questionId: string,
+    newOrder: number,
+  ): Promise<void> {
+    const document = await this.documentRepo.findById(documentId);
+    if (!document) {
+      throw new NotFoundError("Document", documentId);
+    }
+
+    const question = document.getQuestionById(questionId);
+    if (!question) {
+      throw new NotFoundError("Question", questionId);
+    }
+
+    question.changeOrder(newOrder);
+    await this.documentRepo.save(document);
+    this.eventBus.emit(
+      new QuestionUpdatedEvent(documentId, questionId, {
+        order: newOrder,
+      }),
+    );
+  }
 }

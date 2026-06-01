@@ -144,6 +144,20 @@ function cancelEdit() {
   contextMenu.value.questionText = "";
 }
 
+// 重新排序问题
+async function handleReorderClick() {
+  contextMenu.value.show = false;
+  try {
+    await documentStore.reorderQuestions();
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : "未知错误";
+    window.electronAPI.renderLog(
+      "error",
+      `[QuestionList] 重新排序失败: ${errorMsg}`,
+    );
+  }
+}
+
 // 点击外部关闭右键菜单
 function handleClickOutside(event: MouseEvent) {
   const target = event.target as HTMLElement;
@@ -360,6 +374,7 @@ onUnmounted(() => {
         @click.stop
       >
         <button class="menu-item" @click="handleEditClick">编辑问题</button>
+        <button class="menu-item" @click="handleReorderClick">重新排序</button>
         <button class="menu-item menu-item--danger" @click="handleDeleteClick">
           删除问题
         </button>
