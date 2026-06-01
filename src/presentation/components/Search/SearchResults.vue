@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import type { SearchResults, DocumentSearchResult, QuestionSearchResult, AnswerSearchResult, TagSearchResult } from "@/types/search";
+import type {
+  SearchResults,
+  DocumentSearchResult,
+  QuestionSearchResult,
+  AnswerSearchResult,
+  TagSearchResult,
+} from "@/types/search";
 import { escapeHtml, escapeRegex } from "../../utils/html";
 interface SearchResult {
   id: string;
@@ -60,7 +66,14 @@ function getTypeName(type: string): string {
   }
 }
 
-function getItemsByType(type: string): Array<DocumentSearchResult | QuestionSearchResult | AnswerSearchResult | TagSearchResult> {
+function getItemsByType(
+  type: string,
+): Array<
+  | DocumentSearchResult
+  | QuestionSearchResult
+  | AnswerSearchResult
+  | TagSearchResult
+> {
   switch (type) {
     case "document":
       return props.results.documents;
@@ -75,7 +88,14 @@ function getItemsByType(type: string): Array<DocumentSearchResult | QuestionSear
   }
 }
 
-function getDisplayContent(item: DocumentSearchResult | QuestionSearchResult | AnswerSearchResult | TagSearchResult, type: string): string {
+function getDisplayContent(
+  item:
+    | DocumentSearchResult
+    | QuestionSearchResult
+    | AnswerSearchResult
+    | TagSearchResult,
+  type: string,
+): string {
   switch (type) {
     case "document":
       return (item as DocumentSearchResult).title;
@@ -86,7 +106,9 @@ function getDisplayContent(item: DocumentSearchResult | QuestionSearchResult | A
       if (answer.snippet) {
         return answer.snippet;
       }
-      return answer.content.slice(0, 80) + (answer.content.length > 80 ? "..." : "");
+      return (
+        answer.content.slice(0, 80) + (answer.content.length > 80 ? "..." : "")
+      );
     }
     case "tag":
       return (item as TagSearchResult).name;
@@ -95,7 +117,14 @@ function getDisplayContent(item: DocumentSearchResult | QuestionSearchResult | A
   }
 }
 
-function getMetadata(item: DocumentSearchResult | QuestionSearchResult | AnswerSearchResult | TagSearchResult, type: string): string {
+function getMetadata(
+  item:
+    | DocumentSearchResult
+    | QuestionSearchResult
+    | AnswerSearchResult
+    | TagSearchResult,
+  type: string,
+): string {
   switch (type) {
     case "document":
       return `问题: ${(item as DocumentSearchResult).questionCount}  |  回答: ${(item as DocumentSearchResult).answerCount}`;
@@ -110,7 +139,14 @@ function getMetadata(item: DocumentSearchResult | QuestionSearchResult | AnswerS
   }
 }
 
-function getDocumentId(item: DocumentSearchResult | QuestionSearchResult | AnswerSearchResult | TagSearchResult, type: string): string | undefined {
+function getDocumentId(
+  item:
+    | DocumentSearchResult
+    | QuestionSearchResult
+    | AnswerSearchResult
+    | TagSearchResult,
+  type: string,
+): string | undefined {
   switch (type) {
     case "document":
       return undefined;
@@ -125,7 +161,14 @@ function getDocumentId(item: DocumentSearchResult | QuestionSearchResult | Answe
   }
 }
 
-function getQuestionId(item: DocumentSearchResult | QuestionSearchResult | AnswerSearchResult | TagSearchResult, type: string): string | undefined {
+function getQuestionId(
+  item:
+    | DocumentSearchResult
+    | QuestionSearchResult
+    | AnswerSearchResult
+    | TagSearchResult,
+  type: string,
+): string | undefined {
   switch (type) {
     case "question":
       return (item as QuestionSearchResult).id;
@@ -139,7 +182,7 @@ function getQuestionId(item: DocumentSearchResult | QuestionSearchResult | Answe
 function getGlobalIndex(type: string, localIndex: number): number {
   let offset = 0;
   const types = ["document", "question", "answer", "tag"] as const;
-  const typeIndex = types.indexOf(type as typeof types[number]);
+  const typeIndex = types.indexOf(type as (typeof types)[number]);
 
   for (let i = 0; i < typeIndex; i++) {
     const t = types[i];
@@ -166,14 +209,28 @@ function handleClick(item: SearchResult) {
       <template v-if="getItemsByType(type).length > 0">
         <div class="search-results__group-title">
           {{ getTypeIcon(type) }} {{ getTypeName(type) }}
-          <span class="search-results__count">({{ getItemsByType(type).length }})</span>
+          <span class="search-results__count"
+            >({{ getItemsByType(type).length }})</span
+          >
         </div>
         <div
           v-for="(item, index) in getItemsByType(type)"
           :key="item.id"
           class="search-results__item"
-          :class="{ 'search-results__item--selected': getGlobalIndex(type, index) === selectedIndex }"
-          @click="handleClick({ id: item.id, type: type as 'document' | 'question' | 'answer' | 'tag', content: getDisplayContent(item, type), metadata: getMetadata(item, type), documentId: getDocumentId(item, type), questionId: getQuestionId(item, type) })"
+          :class="{
+            'search-results__item--selected':
+              getGlobalIndex(type, index) === selectedIndex,
+          }"
+          @click="
+            handleClick({
+              id: item.id,
+              type: type as 'document' | 'question' | 'answer' | 'tag',
+              content: getDisplayContent(item, type),
+              metadata: getMetadata(item, type),
+              documentId: getDocumentId(item, type),
+              questionId: getQuestionId(item, type),
+            })
+          "
           @mouseenter="emit('hover', getGlobalIndex(type, index))"
         >
           <div

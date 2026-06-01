@@ -39,7 +39,8 @@ describe("SqliteAnswerRepository", () => {
         delete: vi.fn(),
       },
     };
-    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI = mockElectronAPI;
+    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =
+      mockElectronAPI;
     repository = new SqliteAnswerRepository();
   });
 
@@ -114,13 +115,13 @@ describe("SqliteAnswerRepository", () => {
         "a1",
         "q1",
         "Answer content",
-        new Date("2024-01-01")
+        new Date("2024-01-01"),
       );
 
       await repository.save(answer);
 
       expect(mockElectronAPI.answer.save).toHaveBeenCalledWith(
-        JSON.stringify(answer.toJSON())
+        JSON.stringify(answer.toJSON()),
       );
     });
   });
@@ -147,7 +148,7 @@ describe("SqliteAnswerRepository", () => {
             questionId: "q2",
             content: "Answer 2",
           }),
-        ])
+        ]),
       );
     });
   });

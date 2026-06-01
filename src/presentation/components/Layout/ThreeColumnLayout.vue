@@ -134,7 +134,6 @@ function toggleFullscreen() {
     isFullscreen.value = true;
   }
 }
-
 </script>
 
 <template>
@@ -149,11 +148,18 @@ function toggleFullscreen() {
 
     <div
       class="resize-handle"
-      :class="{ 'is-dragging': isDraggingLeft, 'is-collapsed': leftCollapsed }"
+      :class="{
+        'is-dragging': isDraggingLeft,
+        'is-collapsed': leftCollapsed,
+      }"
       @pointerdown="onLeftResizeStart"
       @dblclick="onLeftDoubleClick"
     >
-      <div v-if="leftCollapsed" class="collapse-button left" @click.stop="expandLeft">
+      <div
+        v-if="leftCollapsed"
+        class="collapse-button left"
+        @click.stop="expandLeft"
+      >
         <span class="collapse-icon">▶</span>
       </div>
       <div v-else class="resize-line" />
@@ -168,11 +174,18 @@ function toggleFullscreen() {
 
     <div
       class="resize-handle"
-      :class="{ 'is-dragging': isDraggingRight, 'is-collapsed': rightCollapsed }"
+      :class="{
+        'is-dragging': isDraggingRight,
+        'is-collapsed': rightCollapsed,
+      }"
       @pointerdown="onRightResizeStart"
       @dblclick="onRightDoubleClick"
     >
-      <div v-if="rightCollapsed" class="collapse-button right" @click.stop="expandRight">
+      <div
+        v-if="rightCollapsed"
+        class="collapse-button right"
+        @click.stop="expandRight"
+      >
         <span class="collapse-icon">◀</span>
       </div>
       <div v-else class="resize-line" />
@@ -259,7 +272,9 @@ function toggleFullscreen() {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
 }
 
 .collapse-button:hover {

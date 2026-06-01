@@ -49,7 +49,10 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
       // 收集所有匹配位置
       let result = cursor.next();
       while (!result.done) {
-        matches.push({ from: result.value.from, to: result.value.to });
+        matches.push({
+          from: result.value.from,
+          to: result.value.to,
+        });
         result = cursor.next();
       }
 
@@ -126,7 +129,9 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
             updateSearchDisplay(update.view);
           }),
           // 确保编辑器可聚焦
-          EditorView.contentAttributes.of({ tabindex: "0" }),
+          EditorView.contentAttributes.of({
+            tabindex: "0",
+          }),
         ],
       }),
       parent: editorContainer.value,

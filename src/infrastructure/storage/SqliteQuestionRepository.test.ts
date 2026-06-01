@@ -17,8 +17,7 @@ interface MockElectronAPI {
 }
 
 // 辅助函数：创建 QuestionDTO
-function createQuestionDTO(overrides: Partial<QuestionDTO> = {}): QuestionDTO
- {
+function createQuestionDTO(overrides: Partial<QuestionDTO> = {}): QuestionDTO {
   return {
     id: "q1",
     text: "Question 1",
@@ -44,7 +43,8 @@ describe("SqliteQuestionRepository", () => {
         },
       },
     };
-    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI = mockElectronAPI;
+    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =
+      mockElectronAPI;
     repository = new SqliteQuestionRepository();
   });
 
@@ -60,8 +60,16 @@ describe("SqliteQuestionRepository", () => {
     it("should return questions when document exists", async () => {
       const mockDoc = {
         questions: [
-          createQuestionDTO({ id: "q1", text: "Question 1", order: 0 }),
-          createQuestionDTO({ id: "q2", text: "Question 2", order: 1 }),
+          createQuestionDTO({
+            id: "q1",
+            text: "Question 1",
+            order: 0,
+          }),
+          createQuestionDTO({
+            id: "q2",
+            text: "Question 2",
+            order: 1,
+          }),
         ],
       };
       mockElectronAPI.db.findById.mockResolvedValue(mockDoc);
@@ -96,7 +104,9 @@ describe("SqliteQuestionRepository", () => {
 
   describe("findById", () => {
     it("should return null when question not found", async () => {
-      mockElectronAPI.db.findById.mockResolvedValue({ questions: [] });
+      mockElectronAPI.db.findById.mockResolvedValue({
+        questions: [],
+      });
 
       const result = await repository.findById("q1");
 
@@ -140,7 +150,7 @@ describe("SqliteQuestionRepository", () => {
             order: 1,
             isDeleted: false,
           }),
-        ])
+        ]),
       );
     });
 
@@ -149,13 +159,17 @@ describe("SqliteQuestionRepository", () => {
         "q1",
         "Question 1",
         0,
-        new Date("2024-01-01")
+        new Date("2024-01-01"),
       );
       question.softDelete();
 
       await repository.saveAll("doc1", [question]);
 
-      const savedQuestions = mockElectronAPI.db.questions.save.mock.calls[0]?.[1] as Array<{ isDeleted: boolean; deletedAt: string }>;
+      const savedQuestions = mockElectronAPI.db.questions.save.mock
+        .calls[0]?.[1] as Array<{
+        isDeleted: boolean;
+        deletedAt: string;
+      }>;
       expect(savedQuestions).toBeDefined();
       expect(savedQuestions[0]?.isDeleted).toBe(true);
       expect(savedQuestions[0]?.deletedAt).toBeDefined();

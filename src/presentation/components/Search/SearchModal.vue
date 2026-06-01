@@ -127,7 +127,12 @@ async function handleSearch(searchText: string) {
   }
 
   if (!searchText.trim()) {
-    results.value = { documents: [], questions: [], answers: [], tags: [] };
+    results.value = {
+      documents: [],
+      questions: [],
+      answers: [],
+      tags: [],
+    };
     selectedIndex.value = -1;
     return;
   }
@@ -148,7 +153,12 @@ async function handleSearch(searchText: string) {
 function open() {
   isOpen.value = true;
   query.value = "";
-  results.value = { documents: [], questions: [], answers: [], tags: [] };
+  results.value = {
+    documents: [],
+    questions: [],
+    answers: [],
+    tags: [],
+  };
   selectedIndex.value = -1;
   setTimeout(() => {
     inputRef.value?.focus();
@@ -238,11 +248,14 @@ onUnmounted(() => {
   <Teleport to="body">
     <div v-if="isOpen" class="search-modal" @click.self="close">
       <div class="search-modal__container">
-        <SearchInput ref="inputRef" :value="query" @search="handleSearch" @close="close" />
+        <SearchInput
+          ref="inputRef"
+          :value="query"
+          @search="handleSearch"
+          @close="close"
+        />
 
-        <div v-if="isLoading" class="search-modal__loading">
-          搜索中...
-        </div>
+        <div v-if="isLoading" class="search-modal__loading">搜索中...</div>
 
         <SearchResultsComponent
           v-else-if="flatResults.length > 0"
@@ -257,7 +270,9 @@ onUnmounted(() => {
         <div v-else-if="showHistory" class="search-modal__history">
           <div class="search-modal__history-header">
             <span class="search-modal__history-title">最近搜索</span>
-            <button class="search-modal__history-clear" @click="clearHistory">清除</button>
+            <button class="search-modal__history-clear" @click="clearHistory">
+              清除
+            </button>
           </div>
           <div class="search-modal__history-list">
             <div
@@ -266,7 +281,9 @@ onUnmounted(() => {
               class="search-modal__history-item"
               @click="handleHistoryClick(historyItem)"
             >
-              <span class="search-modal__history-text">🔍 {{ historyItem }}</span>
+              <span class="search-modal__history-text"
+                >🔍 {{ historyItem }}</span
+              >
               <button
                 class="search-modal__history-remove"
                 @click.stop="removeFromHistory(historyItem)"
@@ -282,9 +299,7 @@ onUnmounted(() => {
         </div>
 
         <div class="search-modal__hint">
-          <span>↑↓</span> 导航
-          <span>Enter</span> 跳转
-          <span>Esc</span> 关闭
+          <span>↑↓</span> 导航 <span>Enter</span> 跳转 <span>Esc</span> 关闭
         </div>
       </div>
     </div>

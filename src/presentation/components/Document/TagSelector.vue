@@ -227,7 +227,10 @@ onUnmounted(() => {
       <div
         v-if="contextMenu.show"
         class="tag-context-menu"
-        :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
+        :style="{
+          left: contextMenu.x + 'px',
+          top: contextMenu.y + 'px',
+        }"
       >
         <div
           class="tag-context-menu__item tag-context-menu__item--danger"

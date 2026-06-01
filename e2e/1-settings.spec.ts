@@ -1,64 +1,68 @@
-import { test, expect } from '@playwright/test'
-import { join } from 'path'
+import { test, expect } from "@playwright/test";
+import { join } from "path";
 
-test('settings menu opens settings modal', async () => {
-  const projectRoot = process.cwd()
-  const { _electron: electron } = await import('@playwright/test')
+test("settings menu opens settings modal", async () => {
+  const projectRoot = process.cwd();
+  const { _electron: electron } = await import("@playwright/test");
 
   const electronApp = await electron.launch({
-    args: [join(projectRoot, 'out/main/index.js')],
+    args: [join(projectRoot, "out/main/index.js")],
     cwd: projectRoot,
-  })
+  });
 
-  const window = await electronApp.firstWindow()
-  await window.waitForLoadState('domcontentloaded')
+  const window = await electronApp.firstWindow();
+  await window.waitForLoadState("domcontentloaded");
 
   await electronApp.evaluate(async ({ app }) => {
-    const menu = app.applicationMenu
-    const fileMenu = menu?.items.find(item => item.label === 'File')
-    const settingsItem = fileMenu?.submenu?.items.find(item => item.label === '设置')
+    const menu = app.applicationMenu;
+    const fileMenu = menu?.items.find((item) => item.label === "File");
+    const settingsItem = fileMenu?.submenu?.items.find(
+      (item) => item.label === "设置",
+    );
     if (settingsItem) {
-      settingsItem.click()
+      settingsItem.click();
     }
-  })
+  });
 
-  await window.waitForTimeout(500)
+  await window.waitForTimeout(500);
 
-  const settingsModal = window.locator('.modal-content')
-  const isVisible = await settingsModal.isVisible().catch(() => false)
+  const settingsModal = window.locator(".modal-content");
+  const isVisible = await settingsModal.isVisible().catch(() => false);
 
-  expect(isVisible).toBe(true)
+  expect(isVisible).toBe(true);
 
-  const modalText = await settingsModal.textContent()
-  expect(modalText).toContain('设置')
-  expect(modalText).toContain('黑暗主题')
+  const modalText = await settingsModal.textContent();
+  expect(modalText).toContain("设置");
+  expect(modalText).toContain("黑暗主题");
 
-  await electronApp.close()
-})
+  await electronApp.close();
+});
 
-test('settings shortcut is configured correctly', async () => {
-  const projectRoot = process.cwd()
-  const { _electron: electron } = await import('@playwright/test')
+test("settings shortcut is configured correctly", async () => {
+  const projectRoot = process.cwd();
+  const { _electron: electron } = await import("@playwright/test");
 
   const electronApp = await electron.launch({
-    args: [join(projectRoot, 'out/main/index.js')],
+    args: [join(projectRoot, "out/main/index.js")],
     cwd: projectRoot,
-  })
+  });
 
-  const window = await electronApp.firstWindow()
-  await window.waitForLoadState('domcontentloaded')
+  const window = await electronApp.firstWindow();
+  await window.waitForLoadState("domcontentloaded");
 
   // 验证菜单项的快捷键配置
   const accelerator = await electronApp.evaluate(async ({ app }) => {
-    const menu = app.applicationMenu
-    const fileMenu = menu?.items.find(item => item.label === 'File')
-    const settingsItem = fileMenu?.submenu?.items.find(item => item.label === '设置')
-    return settingsItem?.accelerator || null
-  })
+    const menu = app.applicationMenu;
+    const fileMenu = menu?.items.find((item) => item.label === "File");
+    const settingsItem = fileMenu?.submenu?.items.find(
+      (item) => item.label === "设置",
+    );
+    return settingsItem?.accelerator || null;
+  });
 
   // 验证快捷键已配置（CmdOrCtrl+, 在 Windows 上显示为 Ctrl+,）
-  expect(accelerator).toBeTruthy()
-  expect(accelerator).toMatch(/CmdOrCtrl\+.|CommandOrControl\+./)
+  expect(accelerator).toBeTruthy();
+  expect(accelerator).toMatch(/CmdOrCtrl\+.|CommandOrControl\+./);
 
-  await electronApp.close()
-})
+  await electronApp.close();
+});

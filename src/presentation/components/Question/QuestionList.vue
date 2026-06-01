@@ -1,91 +1,97 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { useDocumentStore, type QuestionSortField } from '../../stores/document'
-import QuestionItem from './QuestionItem.vue'
-import RecycleBinModal from '../common/RecycleBinModal.vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import {
+  useDocumentStore,
+  type QuestionSortField,
+} from "../../stores/document";
+import QuestionItem from "./QuestionItem.vue";
+import RecycleBinModal from "../common/RecycleBinModal.vue";
 
-const documentStore = useDocumentStore()
+const documentStore = useDocumentStore();
 
-const showAddDialog = ref(false)
-const newQuestionText = ref('')
-const newAnswerContent = ref('')
-const isCreating = ref(false)
-const showSortMenu = ref(false)
-const showRecycleBin = ref(false)
+const showAddDialog = ref(false);
+const newQuestionText = ref("");
+const newAnswerContent = ref("");
+const isCreating = ref(false);
+const showSortMenu = ref(false);
+const showRecycleBin = ref(false);
 
 // 问题输入框 ref，用于弹窗打开时聚焦
-const questionInput = ref<HTMLInputElement | null>(null)
+const questionInput = ref<HTMLInputElement | null>(null);
 
 // 弹窗打开时聚焦到问题输入框
 watch(showAddDialog, async (show) => {
   if (show) {
-    await nextTick()
-    questionInput.value?.focus()
+    await nextTick();
+    questionInput.value?.focus();
   }
-})
+});
 
 // 右键菜单状态
 const contextMenu = ref({
   show: false,
   x: 0,
   y: 0,
-  questionId: '',
-  questionText: '',
-})
+  questionId: "",
+  questionText: "",
+});
 
 // 编辑对话框状态
-const showEditDialog = ref(false)
-const editQuestionText = ref('')
-const isEditing = ref(false)
+const showEditDialog = ref(false);
+const editQuestionText = ref("");
+const isEditing = ref(false);
 
 const sortFieldLabels: Record<QuestionSortField, string> = {
-  createdAt: '创建时间',
-  updatedAt: '更新时间',
-  title: '文本',
-  sortOrder: '出现顺序',
-}
+  createdAt: "创建时间",
+  updatedAt: "更新时间",
+  title: "文本",
+  sortOrder: "出现顺序",
+};
 
 async function handleCreateQA() {
-  const questionText = newQuestionText.value.trim()
-  const answerText = newAnswerContent.value.trim()
+  const questionText = newQuestionText.value.trim();
+  const answerText = newAnswerContent.value.trim();
 
   if (!questionText || !answerText) {
-    return
+    return;
   }
 
-  isCreating.value = true
+  isCreating.value = true;
   try {
-    await documentStore.addQuestionAndAnswer(questionText, answerText)
-    newQuestionText.value = ''
-    newAnswerContent.value = ''
-    showAddDialog.value = false
+    await documentStore.addQuestionAndAnswer(questionText, answerText);
+    newQuestionText.value = "";
+    newAnswerContent.value = "";
+    showAddDialog.value = false;
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : '未知错误'
-    window.electronAPI.renderLog("error", `[QuestionList] 创建问答失败: ${errorMsg}`)
+    const errorMsg = error instanceof Error ? error.message : "未知错误";
+    window.electronAPI.renderLog(
+      "error",
+      `[QuestionList] 创建问答失败: ${errorMsg}`,
+    );
   } finally {
-    isCreating.value = false
+    isCreating.value = false;
   }
 }
 
 function closeAddDialog() {
-  newQuestionText.value = ''
-  newAnswerContent.value = ''
-  showAddDialog.value = false
+  newQuestionText.value = "";
+  newAnswerContent.value = "";
+  showAddDialog.value = false;
 }
 
 function handleSortFieldChange(field: QuestionSortField) {
-  documentStore.setQuestionSortField(field)
-  showSortMenu.value = false
+  documentStore.setQuestionSortField(field);
+  showSortMenu.value = false;
 }
 
 function handleQuestionClick(questionId: string) {
-  documentStore.setActiveQuestion(questionId)
+  documentStore.setActiveQuestion(questionId);
 }
 
 // 右键菜单处理
 function handleContextMenu(event: MouseEvent, questionId: string) {
-  const question = documentStore.selectedDocument?.getQuestionById(questionId)
-  if (!question) return
+  const question = documentStore.selectedDocument?.getQuestionById(questionId);
+  if (!question) return;
 
   contextMenu.value = {
     show: true,
@@ -93,67 +99,67 @@ function handleContextMenu(event: MouseEvent, questionId: string) {
     y: event.clientY,
     questionId,
     questionText: question.text,
-  }
+  };
 }
 
 // 删除问题 - 软删除到回收站
 async function handleDeleteClick() {
-  if (!contextMenu.value.questionId) return
-  await documentStore.softDeleteQuestion(contextMenu.value.questionId)
+  if (!contextMenu.value.questionId) return;
+  await documentStore.softDeleteQuestion(contextMenu.value.questionId);
   await documentStore.loadDeletedQuestions(); // 立即更新回收站计数
-  contextMenu.value.show = false
-  contextMenu.value.questionId = ''
-  contextMenu.value.questionText = ''
+  contextMenu.value.show = false;
+  contextMenu.value.questionId = "";
+  contextMenu.value.questionText = "";
 }
 
 // 编辑功能
 function handleEditClick() {
-  contextMenu.value.show = false
-  editQuestionText.value = contextMenu.value.questionText
-  showEditDialog.value = true
+  contextMenu.value.show = false;
+  editQuestionText.value = contextMenu.value.questionText;
+  showEditDialog.value = true;
 }
 
 async function confirmEdit() {
-  if (!contextMenu.value.questionId || !editQuestionText.value.trim()) return
+  if (!contextMenu.value.questionId || !editQuestionText.value.trim()) return;
 
-  isEditing.value = true
+  isEditing.value = true;
   try {
     await documentStore.updateQuestionText(
       contextMenu.value.questionId,
       editQuestionText.value.trim(),
-    )
-    showEditDialog.value = false
-    editQuestionText.value = ''
-    contextMenu.value.questionId = ''
-    contextMenu.value.questionText = ''
+    );
+    showEditDialog.value = false;
+    editQuestionText.value = "";
+    contextMenu.value.questionId = "";
+    contextMenu.value.questionText = "";
   } finally {
-    isEditing.value = false
+    isEditing.value = false;
   }
 }
 
 function cancelEdit() {
-  showEditDialog.value = false
-  editQuestionText.value = ''
-  contextMenu.value.questionId = ''
-  contextMenu.value.questionText = ''
+  showEditDialog.value = false;
+  editQuestionText.value = "";
+  contextMenu.value.questionId = "";
+  contextMenu.value.questionText = "";
 }
 
 // 点击外部关闭右键菜单
 function handleClickOutside(event: MouseEvent) {
-  const target = event.target as HTMLElement
-  if (!target.closest('.context-menu')) {
-    contextMenu.value.show = false
+  const target = event.target as HTMLElement;
+  if (!target.closest(".context-menu")) {
+    contextMenu.value.show = false;
   }
 }
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
+  document.addEventListener("click", handleClickOutside);
   documentStore.loadDeletedQuestions();
-})
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+  document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <template>
@@ -176,7 +182,13 @@ onUnmounted(() => {
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <polyline points="5 12 12 5 19 12"></polyline>
           </svg>
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            v-else
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <polyline points="5 12 12 19 19 12"></polyline>
           </svg>
@@ -200,7 +212,9 @@ onUnmounted(() => {
               v-for="(label, field) in sortFieldLabels"
               :key="field"
               class="sort-menu-item"
-              :class="{ active: documentStore.questionSortField === field }"
+              :class="{
+                active: documentStore.questionSortField === field,
+              }"
               @click="handleSortFieldChange(field)"
             >
               {{ label }}
@@ -230,7 +244,12 @@ onUnmounted(() => {
       :disabled="!documentStore.selectedDocument"
       @click="showAddDialog = true"
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
@@ -243,18 +262,25 @@ onUnmounted(() => {
       title="回收站"
       @click="
         showRecycleBin = true;
-        documentStore.loadDeletedQuestions()
+        documentStore.loadDeletedQuestions();
       "
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
         <polyline points="3 6 5 6 21 6"></polyline>
         <path
           d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
         ></path>
       </svg>
-      <span v-if="documentStore.deletedQuestionCount > 0" class="recycle-badge">{{
-        documentStore.deletedQuestionCount
-      }}</span>
+      <span
+        v-if="documentStore.deletedQuestionCount > 0"
+        class="recycle-badge"
+        >{{ documentStore.deletedQuestionCount }}</span
+      >
     </button>
 
     <!-- 回收站弹窗 -->
@@ -272,11 +298,20 @@ onUnmounted(() => {
       @close="showRecycleBin = false"
       @restore="(id) => documentStore.restoreQuestion(id)"
       @delete="(id) => documentStore.permanentlyDeleteQuestion(id)"
-      @clear="() => { documentStore.clearDeletedQuestions(); showRecycleBin = false; }"
+      @clear="
+        () => {
+          documentStore.clearDeletedQuestions();
+          showRecycleBin = false;
+        }
+      "
     />
 
     <!-- 添加问答对对话框 -->
-    <div v-if="showAddDialog" class="add-question-model" @click.self="closeAddDialog">
+    <div
+      v-if="showAddDialog"
+      class="add-question-model"
+      @click.self="closeAddDialog"
+    >
       <div class="dialog">
         <h3>添加问答对</h3>
         <div class="dialog-field">
@@ -302,10 +337,12 @@ onUnmounted(() => {
           <button class="btn-secondary" @click="closeAddDialog">取消</button>
           <button
             class="btn-primary"
-            :disabled="!newQuestionText.trim() || !newAnswerContent.trim() || isCreating"
+            :disabled="
+              !newQuestionText.trim() || !newAnswerContent.trim() || isCreating
+            "
             @click="handleCreateQA"
           >
-            {{ isCreating ? '创建中...' : '创建' }}
+            {{ isCreating ? "创建中..." : "创建" }}
           </button>
         </div>
       </div>
@@ -316,16 +353,25 @@ onUnmounted(() => {
       <div
         v-if="contextMenu.show"
         class="context-menu"
-        :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
+        :style="{
+          left: `${contextMenu.x}px`,
+          top: `${contextMenu.y}px`,
+        }"
         @click.stop
       >
         <button class="menu-item" @click="handleEditClick">编辑问题</button>
-        <button class="menu-item menu-item--danger" @click="handleDeleteClick">删除问题</button>
+        <button class="menu-item menu-item--danger" @click="handleDeleteClick">
+          删除问题
+        </button>
       </div>
     </Teleport>
 
     <!-- 编辑问题对话框 -->
-    <div v-if="showEditDialog" class="add-question-model" @click.self="cancelEdit">
+    <div
+      v-if="showEditDialog"
+      class="add-question-model"
+      @click.self="cancelEdit"
+    >
       <div class="dialog">
         <h3>编辑问题</h3>
         <div class="dialog-field">
@@ -345,7 +391,7 @@ onUnmounted(() => {
             :disabled="!editQuestionText.trim() || isEditing"
             @click="confirmEdit"
           >
-            {{ isEditing ? '保存中...' : '保存' }}
+            {{ isEditing ? "保存中..." : "保存" }}
           </button>
         </div>
       </div>

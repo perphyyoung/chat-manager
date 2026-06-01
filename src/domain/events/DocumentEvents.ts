@@ -9,7 +9,12 @@ export class DocumentSelectedEvent extends DomainEvent {
 
 export class DocumentsLoadedEvent extends DomainEvent {
   readonly type = "DocumentsLoaded";
-  constructor(public readonly documents: { id: string; title: string }[]) {
+  constructor(
+    public readonly documents: {
+      id: string;
+      title: string;
+    }[],
+  ) {
     super();
   }
 }

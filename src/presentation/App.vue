@@ -19,8 +19,17 @@ const notification = ref<{
   details: string[];
 }>({ show: false, title: "", message: "", details: [] });
 
-function showNotification(title: string, message: string, details: string[] = []) {
-  notification.value = { show: true, title, message, details };
+function showNotification(
+  title: string,
+  message: string,
+  details: string[] = [],
+) {
+  notification.value = {
+    show: true,
+    title,
+    message,
+    details,
+  };
 }
 
 function hideNotification() {
@@ -76,7 +85,10 @@ function scrollToQuestion(questionId: string) {
       `[data-question-id="${questionId}"]`,
     );
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
     }
   });
 }
@@ -88,7 +100,10 @@ onMounted(() => {
   if (window.electronAPI.onOpenSettings) {
     window.electronAPI.onOpenSettings(openSettings);
   } else {
-    window.electronAPI.renderLog("error", "window.electronAPI.onOpenSettings not available")
+    window.electronAPI.renderLog(
+      "error",
+      "window.electronAPI.onOpenSettings not available",
+    );
   }
 
   // 监听导入完成事件
@@ -97,7 +112,9 @@ onMounted(() => {
       if (result.success) {
         const details: string[] = [];
         if (result.skippedDocs && result.skippedDocs.length > 0) {
-          details.push(`以下 ${result.skippedDocs.length} 个文档已存在，已跳过：`);
+          details.push(
+            `以下 ${result.skippedDocs.length} 个文档已存在，已跳过：`,
+          );
           details.push(...result.skippedDocs);
         }
         showNotification(
@@ -118,10 +135,7 @@ onMounted(() => {
   if (window.electronAPI.onExportComplete) {
     window.electronAPI.onExportComplete((result) => {
       if (result.success) {
-        showNotification(
-          "导出成功",
-          `文件已保存到：${result.filePath}`,
-        );
+        showNotification("导出成功", `文件已保存到：${result.filePath}`);
       } else {
         showNotification("导出失败", result.error || "未知错误");
       }

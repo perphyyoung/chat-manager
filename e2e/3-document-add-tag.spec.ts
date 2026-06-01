@@ -54,7 +54,9 @@ test("add existing tag to document via conversation view", async ({
     await expect(addedTag).toBeVisible({ timeout: 2000 });
   } catch (e) {
     // 记录当前页面中的所有标签
-    const allTags = await window.locator(".tag-selector__current .tag-badge").allTextContents();
+    const allTags = await window
+      .locator(".tag-selector__current .tag-badge")
+      .allTextContents();
     log.error(`标签未找到。当前所有标签: ${JSON.stringify(allTags)}`);
     throw e;
   }
@@ -196,7 +198,9 @@ test("remove tag from document via conversation view", async ({ window }) => {
   );
 });
 
-test("tag filter input auto focus when creating new tag", async ({ window }) => {
+test("tag filter input auto focus when creating new tag", async ({
+  window,
+}) => {
   // 等待文档列表加载
   await window.waitForSelector(".document-list", { timeout: 2000 });
 
@@ -220,7 +224,9 @@ test("tag filter input auto focus when creating new tag", async ({ window }) => 
   });
 });
 
-test("tag selector input auto focus when creating new tag", async ({ window }) => {
+test("tag selector input auto focus when creating new tag", async ({
+  window,
+}) => {
   // 等待文档列表加载
   await window.waitForSelector(".document-list", { timeout: 2000 });
 

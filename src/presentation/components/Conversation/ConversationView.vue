@@ -45,7 +45,10 @@ function scrollToQuestion(questionId: string) {
       `[data-question-id="${questionId}"]`,
     );
     if (targetElement) {
-      targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      targetElement.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }
   });
 }
@@ -175,7 +178,10 @@ function toggleFullscreen() {
   justify-content: center;
   font-size: 14px;
   flex-shrink: 0;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .fullscreen-btn:hover {

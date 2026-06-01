@@ -9,8 +9,16 @@ interface TagProp {
 interface DocumentProp {
   id: string;
   title: string;
-  questions: readonly { id: string; text: string; order: number }[];
-  activeQuestions: readonly { id: string; text: string; order: number }[];
+  questions: readonly {
+    id: string;
+    text: string;
+    order: number;
+  }[];
+  activeQuestions: readonly {
+    id: string;
+    text: string;
+    order: number;
+  }[];
   tags?: readonly TagProp[];
 }
 
@@ -39,7 +47,9 @@ function handleContextMenu(event: MouseEvent) {
   >
     <div class="document-item__icon">📄</div>
     <div class="document-item__content">
-      <div class="document-item__title">{{ document.title }}</div>
+      <div class="document-item__title">
+        {{ document.title }}
+      </div>
       <div class="document-item__meta">
         <span>{{ document.activeQuestions.length }} 个问题</span>
         <span v-if="document.tags?.length" class="document-item__tags">

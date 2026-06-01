@@ -14,7 +14,11 @@ export class QuestionAddedEvent extends DomainEvent {
   readonly type = "QuestionAdded";
   constructor(
     public readonly documentId: string,
-    public readonly question: { id: string; text: string; order: number },
+    public readonly question: {
+      id: string;
+      text: string;
+      order: number;
+    },
   ) {
     super();
   }

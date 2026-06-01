@@ -186,9 +186,15 @@ describe("SearchService", () => {
 
   describe("query respects limit per type", () => {
     beforeEach(() => {
-      db.exec(`CREATE VIRTUAL TABLE search_fts USING fts5(id, type, content, metadata, tokenize='unicode61');`);
+      db.exec(
+        `CREATE VIRTUAL TABLE search_fts USING fts5(id, type, content, metadata, tokenize='unicode61');`,
+      );
       for (let i = 0; i < 15; i++) {
-        db.prepare(`INSERT INTO search_fts VALUES (?, 'document', ?, ?)`).run(`doc-${i}`, `Document ${i}`, `{"questionCount": ${i}, "answerCount": ${i}}`);
+        db.prepare(`INSERT INTO search_fts VALUES (?, 'document', ?, ?)`).run(
+          `doc-${i}`,
+          `Document ${i}`,
+          `{"questionCount": ${i}, "answerCount": ${i}}`,
+        );
       }
     });
 
@@ -243,18 +249,28 @@ describe("SearchService", () => {
     });
 
     it("should clear existing index before rebuilding", async () => {
-      db.prepare(`INSERT INTO search_fts VALUES ('old-doc', 'document', 'Old', '{}')`).run();
+      db.prepare(
+        `INSERT INTO search_fts VALUES ('old-doc', 'document', 'Old', '{}')`,
+      ).run();
 
       await service.rebuildIndex();
 
-      const result = db.prepare(`SELECT COUNT(*) as count FROM search_fts WHERE id = 'old-doc'`).get() as { count: number };
+      const result = db
+        .prepare(
+          `SELECT COUNT(*) as count FROM search_fts WHERE id = 'old-doc'`,
+        )
+        .get() as { count: number };
       expect(result.count).toBe(0);
     });
 
     it("should rebuild all entity types", async () => {
       await service.rebuildIndex();
 
-      const result = db.prepare(`SELECT COUNT(*) as count FROM search_fts`).get() as { count: number };
+      const result = db
+        .prepare(`SELECT COUNT(*) as count FROM search_fts`)
+        .get() as {
+        count: number;
+      };
       expect(result.count).toBeGreaterThan(0);
     });
   });

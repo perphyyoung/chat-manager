@@ -228,7 +228,9 @@ onMounted(() => {
               v-for="(label, field) in sortFieldLabels"
               :key="field"
               class="sort-menu-item"
-              :class="{ active: documentStore.documentSortField === field }"
+              :class="{
+                active: documentStore.documentSortField === field,
+              }"
               @click="handleSortFieldChange(field)"
             >
               {{ label }}

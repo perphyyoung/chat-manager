@@ -1,29 +1,29 @@
 <script setup lang="ts">
 interface QuestionProp {
-  id: string
-  text: string
-  order: number
+  id: string;
+  text: string;
+  order: number;
 }
 
 interface Props {
-  question: QuestionProp
-  isActive: boolean
+  question: QuestionProp;
+  isActive: boolean;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  click: [questionId: string]
-  contextMenu: [event: MouseEvent, questionId: string]
-}>()
+  click: [questionId: string];
+  contextMenu: [event: MouseEvent, questionId: string];
+}>();
 
 function handleClick() {
-  emit('click', props.question.id)
+  emit("click", props.question.id);
 }
 
 function handleContextMenu(event: MouseEvent) {
-  event.preventDefault()
-  emit('contextMenu', event, props.question.id)
+  event.preventDefault();
+  emit("contextMenu", event, props.question.id);
 }
 </script>
 
@@ -35,8 +35,12 @@ function handleContextMenu(event: MouseEvent) {
     @click="handleClick"
     @contextmenu="handleContextMenu"
   >
-    <div class="question-item__number">{{ question.order }}</div>
-    <div class="question-item__text">{{ question.text }}</div>
+    <div class="question-item__number">
+      {{ question.order }}
+    </div>
+    <div class="question-item__text">
+      {{ question.text }}
+    </div>
   </div>
 </template>
 

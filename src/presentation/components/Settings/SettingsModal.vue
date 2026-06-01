@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { useSettingsStore } from '../../stores/settings'
+import { useSettingsStore } from "../../stores/settings";
 
-const settingsStore = useSettingsStore()
+const settingsStore = useSettingsStore();
 
 defineProps<{
-  isOpen: boolean
-}>()
+  isOpen: boolean;
+}>();
 
 const emit = defineEmits<{
-  close: []
-}>()
+  close: [];
+}>();
 
 function handleClose() {
-  emit('close')
+  emit("close");
 }
 </script>
 
@@ -123,7 +123,7 @@ function handleClose() {
 
 .slider:before {
   position: absolute;
-  content: '';
+  content: "";
   height: 18px;
   width: 18px;
   left: 3px;

@@ -13,10 +13,7 @@ describe("CodeMirror editor", () => {
       const view = new EditorView({
         state: EditorState.create({
           doc: "initial content",
-          extensions: [
-            history(),
-            markdown({ codeLanguages: languages }),
-          ],
+          extensions: [history(), markdown({ codeLanguages: languages })],
         }),
         parent: container,
       });
@@ -139,10 +136,7 @@ describe("CodeMirror editor", () => {
       const view = new EditorView({
         state: EditorState.create({
           doc: "# Hello\n\nThis is **bold** and *italic*.",
-          extensions: [
-            history(),
-            markdown({ codeLanguages: languages }),
-          ],
+          extensions: [history(), markdown({ codeLanguages: languages })],
         }),
         parent: container,
       });
@@ -167,13 +161,17 @@ describe("CodeMirror editor", () => {
       };
 
       const view1 = createView();
-      view1.dispatch({ changes: { from: 0, insert: "step1" } });
+      view1.dispatch({
+        changes: { from: 0, insert: "step1" },
+      });
 
       const content1 = view1.state.doc.toString();
       view1.destroy();
 
       const view2 = createView();
-      view2.dispatch({ changes: { from: 0, insert: content1 + " + step2" } });
+      view2.dispatch({
+        changes: { from: 0, insert: content1 + " + step2" },
+      });
 
       expect(view2.state.doc.toString()).toBe("step1 + step2");
 
@@ -195,7 +193,9 @@ describe("editor helper functions", () => {
         parent: container,
       });
 
-      view.dispatch({ changes: { from: 0, insert: "more " } });
+      view.dispatch({
+        changes: { from: 0, insert: "more " },
+      });
       expect(view.state.doc.toString()).toBe("more test");
 
       view.destroy();
@@ -214,7 +214,9 @@ describe("editor helper functions", () => {
         parent: container,
       });
 
-      view.dispatch({ changes: { from: 0, insert: "before " } });
+      view.dispatch({
+        changes: { from: 0, insert: "before " },
+      });
       expect(view.state.doc.toString()).toBe("before test");
 
       view.destroy();

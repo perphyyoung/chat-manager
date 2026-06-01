@@ -8,7 +8,9 @@ interface FtsRow {
   metadata: string;
 }
 
-const segmenter = new Intl.Segmenter("zh", { granularity: "word" });
+const segmenter = new Intl.Segmenter("zh", {
+  granularity: "word",
+});
 
 function segmentText(text: string): string {
   const words: string[] = [];
@@ -61,14 +63,18 @@ export class SearchService {
       .map((t) => `"${t}"*`)
       .join(" ");
 
-    const rows = this.db.prepare(`
+    const rows = this.db
+      .prepare(`
       SELECT id, type, content, metadata,
              snippet(search_fts, 2, '<mark>', '</mark>', '...', 32) as snippet
       FROM search_fts
       WHERE search_fts MATCH ?
       ORDER BY rank
       LIMIT ?
-    `).all(ftsQuery, limit * 4) as unknown as (FtsRow & { snippet?: string })[];
+    `)
+      .all(ftsQuery, limit * 4) as unknown as (FtsRow & {
+      snippet?: string;
+    })[];
 
     return this.groupByType(rows, limit, escapedQuery);
   }
@@ -77,7 +83,11 @@ export class SearchService {
     return query.replace(/["*]/g, "").trim();
   }
 
-  private groupByType(rows: (FtsRow & { snippet?: string })[], limit: number, escapedQuery?: string): SearchResults {
+  private groupByType(
+    rows: (FtsRow & { snippet?: string })[],
+    limit: number,
+    escapedQuery?: string,
+  ): SearchResults {
     const results: SearchResults = {
       documents: [],
       questions: [],
@@ -115,7 +125,11 @@ export class SearchService {
             results.answers.push({
               id: row.id,
               content: row.content,
-              snippet: row.snippet || (escapedQuery ? this.extractSnippet(row.content, escapedQuery) : row.content.slice(0, 80)),
+              snippet:
+                row.snippet ||
+                (escapedQuery
+                  ? this.extractSnippet(row.content, escapedQuery)
+                  : row.content.slice(0, 80)),
               questionText: metadata.questionText || "",
               questionId: metadata.questionId || "",
               documentId: metadata.documentId || "",
@@ -158,7 +172,10 @@ export class SearchService {
 
     const contextRadius = 50;
     const start = Math.max(0, index - contextRadius);
-    const end = Math.min(text.length, index + firstKeyword.length + contextRadius);
+    const end = Math.min(
+      text.length,
+      index + firstKeyword.length + contextRadius,
+    );
 
     let snippet = text.slice(start, end);
     if (start > 0) snippet = "..." + snippet;
@@ -170,68 +187,130 @@ export class SearchService {
   async rebuildIndex(): Promise<void> {
     this.db.exec("DELETE FROM search_fts");
 
-    const docs = this.db.prepare(`
+    const docs = this.db
+      .prepare(`
       SELECT d.id, d.title,
         (SELECT COUNT(*) FROM questions WHERE document_id = d.id) as questionCount,
         (SELECT COUNT(*) FROM answers a JOIN questions q ON a.question_id = q.id WHERE q.document_id = d.id) as answerCount
       FROM documents d
       WHERE d.is_deleted = 0
-    `).all() as Array<{ id: string; title: string; questionCount: number; answerCount: number }>;
+    `)
+      .all() as Array<{
+      id: string;
+      title: string;
+      questionCount: number;
+      answerCount: number;
+    }>;
 
     for (const doc of docs) {
-      this.db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
-        doc.id,
-        "document",
-        segmentText(doc.title),
-        JSON.stringify({ title: doc.title, questionCount: doc.questionCount, answerCount: doc.answerCount }),
-      );
+      this.db
+        .prepare(
+          "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
+        )
+        .run(
+          doc.id,
+          "document",
+          segmentText(doc.title),
+          JSON.stringify({
+            title: doc.title,
+            questionCount: doc.questionCount,
+            answerCount: doc.answerCount,
+          }),
+        );
     }
 
-    const questions = this.db.prepare(`
+    const questions = this.db
+      .prepare(`
       SELECT q.id, q.text, q.document_id, d.title as documentTitle
       FROM questions q
       JOIN documents d ON q.document_id = d.id
       WHERE q.is_deleted = 0 AND d.is_deleted = 0
-    `).all() as Array<{ id: string; text: string; document_id: string; documentTitle: string }>;
+    `)
+      .all() as Array<{
+      id: string;
+      text: string;
+      document_id: string;
+      documentTitle: string;
+    }>;
 
     for (const q of questions) {
-      this.db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
-        q.id,
-        "question",
-        segmentText(q.text),
-        JSON.stringify({ questionId: q.id, documentId: q.document_id, documentTitle: q.documentTitle }),
-      );
+      this.db
+        .prepare(
+          "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
+        )
+        .run(
+          q.id,
+          "question",
+          segmentText(q.text),
+          JSON.stringify({
+            questionId: q.id,
+            documentId: q.document_id,
+            documentTitle: q.documentTitle,
+          }),
+        );
     }
 
-    const answers = this.db.prepare(`
+    const answers = this.db
+      .prepare(`
       SELECT a.id, a.content, a.question_id, q.text as questionText, d.id as documentId, d.title as documentTitle
       FROM answers a
       JOIN questions q ON a.question_id = q.id
       JOIN documents d ON q.document_id = d.id
       WHERE q.is_deleted = 0 AND d.is_deleted = 0
-    `).all() as Array<{ id: string; content: string; question_id: string; questionText: string; documentId: string; documentTitle: string }>;
+    `)
+      .all() as Array<{
+      id: string;
+      content: string;
+      question_id: string;
+      questionText: string;
+      documentId: string;
+      documentTitle: string;
+    }>;
 
     for (const a of answers) {
-      this.db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
-        a.id,
-        "answer",
-        segmentText(a.content),
-        JSON.stringify({ answerId: a.id, questionId: a.question_id, questionText: a.questionText, documentId: a.documentId, documentTitle: a.documentTitle }),
-      );
+      this.db
+        .prepare(
+          "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
+        )
+        .run(
+          a.id,
+          "answer",
+          segmentText(a.content),
+          JSON.stringify({
+            answerId: a.id,
+            questionId: a.question_id,
+            questionText: a.questionText,
+            documentId: a.documentId,
+            documentTitle: a.documentTitle,
+          }),
+        );
     }
 
-    const tags = this.db.prepare(`
+    const tags = this.db
+      .prepare(`
       SELECT t.id, t.name, (SELECT COUNT(*) FROM document_tags WHERE tag_id = t.id) as documentCount
       FROM tags t
-    `).all() as Array<{ id: string; name: string; documentCount: number }>;
+    `)
+      .all() as Array<{
+      id: string;
+      name: string;
+      documentCount: number;
+    }>;
 
     for (const t of tags) {
-      this.db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
-        t.id,
-        "tag",
-        segmentText(t.name),
-        JSON.stringify({ tagName: t.name, documentCount: t.documentCount }),
-      );
+      this.db
+        .prepare(
+          "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
+        )
+        .run(
+          t.id,
+          "tag",
+          segmentText(t.name),
+          JSON.stringify({
+            tagName: t.name,
+            documentCount: t.documentCount,
+          }),
+        );
     }
   }
 }

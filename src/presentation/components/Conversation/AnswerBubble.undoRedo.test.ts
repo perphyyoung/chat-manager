@@ -107,7 +107,9 @@ describe("undo/redo functionality", () => {
       parent: container,
     });
 
-    view.dispatch({ changes: { from: 0, insert: "hello world" } });
+    view.dispatch({
+      changes: { from: 0, insert: "hello world" },
+    });
     expect(view.state.doc.toString()).toBe("hello world");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -189,7 +191,9 @@ describe("undo/redo functionality", () => {
       parent: container,
     });
 
-    view.dispatch({ changes: { from: 5, to: 11, insert: "" } });
+    view.dispatch({
+      changes: { from: 5, to: 11, insert: "" },
+    });
     expect(view.state.doc.toString()).toBe("hello");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

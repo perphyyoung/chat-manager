@@ -271,7 +271,8 @@ export const useDocumentStore = defineStore("document", () => {
       throw new Error("Document not found after adding question");
     }
     // 找到新添加的问题（最后一个）
-    const newQuestion = updatedDoc.activeQuestions[updatedDoc.activeQuestions.length - 1];
+    const newQuestion =
+      updatedDoc.activeQuestions[updatedDoc.activeQuestions.length - 1];
     if (!newQuestion) {
       throw new Error("Failed to add question");
     }
@@ -550,7 +551,10 @@ export const useDocumentStore = defineStore("document", () => {
         documents.value[index] = updatedDoc;
       }
       // 如果当前有选中的问题，检查它是否仍然有效
-      if (activeQuestionId.value && !updatedDoc.hasQuestion(activeQuestionId.value)) {
+      if (
+        activeQuestionId.value &&
+        !updatedDoc.hasQuestion(activeQuestionId.value)
+      ) {
         activeQuestionId.value = null;
       }
     }

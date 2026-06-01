@@ -1,4 +1,8 @@
-import type { DocumentRepository, QuestionRepository, AnswerRepository } from "../../domain/repositories";
+import type {
+  DocumentRepository,
+  QuestionRepository,
+  AnswerRepository,
+} from "../../domain/repositories";
 import { Document, Question, Answer, Tag } from "../../domain/entities";
 import type { DocumentDTO } from "../../types/dto";
 
@@ -18,7 +22,9 @@ function toDocument(stored: DocumentDTO): Document {
   const questionIds = new Set(questions.map((q) => q.id));
   const answers = (stored.answers ?? [])
     .filter((a) => questionIds.has(a.questionId))
-    .map((a) => new Answer(a.id, a.questionId, a.content, new Date(a.createdAt)));
+    .map(
+      (a) => new Answer(a.id, a.questionId, a.content, new Date(a.createdAt)),
+    );
   const tags = (stored.tags ?? []).map(
     (t) => new Tag(t.id, t.name, new Date(t.createdAt)),
   );
@@ -39,24 +45,34 @@ export class SqliteDocumentRepository implements DocumentRepository {
   private questionRepo: QuestionRepository;
   private answerRepo: AnswerRepository;
 
-  constructor(questionRepo?: QuestionRepository, answerRepo?: AnswerRepository) {
+  constructor(
+    questionRepo?: QuestionRepository,
+    answerRepo?: AnswerRepository,
+  ) {
     // 延迟初始化，避免循环依赖
     this.questionRepo = questionRepo!;
     this.answerRepo = answerRepo!;
   }
 
-  setRepositories(questionRepo: QuestionRepository, answerRepo: AnswerRepository) {
+  setRepositories(
+    questionRepo: QuestionRepository,
+    answerRepo: AnswerRepository,
+  ) {
     this.questionRepo = questionRepo;
     this.answerRepo = answerRepo;
   }
 
   async findAll(): Promise<Document[]> {
-    const stored = await window.electronAPI.db.findAll({ isDeleted: false });
+    const stored = await window.electronAPI.db.findAll({
+      isDeleted: false,
+    });
     return stored.map((d: DocumentDTO) => toDocument(d));
   }
 
   async findAllDeleted(): Promise<Document[]> {
-    const stored = await window.electronAPI.db.findAll({ isDeleted: true });
+    const stored = await window.electronAPI.db.findAll({
+      isDeleted: true,
+    });
     return stored.map((d: DocumentDTO) => toDocument(d));
   }
 
@@ -94,14 +110,21 @@ export class SqliteDocumentRepository implements DocumentRepository {
     } catch (error) {
       // 回滚事务
       await window.electronAPI.db.transaction.rollback(txId);
-      console.error("[REPO] Failed to save document, transaction rolled back:", error);
+      console.error(
+        "[REPO] Failed to save document, transaction rolled back:",
+        error,
+      );
       throw error;
     }
   }
 
-  private async syncDocumentTags(documentId: string, tags: Tag[]): Promise<void> {
+  private async syncDocumentTags(
+    documentId: string,
+    tags: Tag[],
+  ): Promise<void> {
     // 获取当前文档的标签
-    const currentTags = await window.electronAPI.tag?.getDocumentTags(documentId) || [];
+    const currentTags =
+      (await window.electronAPI.tag?.getDocumentTags(documentId)) || [];
     const currentTagIds = new Set(currentTags.map((t) => t.id));
     const newTagIds = new Set(tags.map((t) => t.id));
 

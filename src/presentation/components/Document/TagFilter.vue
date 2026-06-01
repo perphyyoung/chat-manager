@@ -157,7 +157,13 @@ onUnmounted(() => {
         @click="isCollapsed = !isCollapsed"
         :title="isCollapsed ? '展开' : '收起'"
       >
-        <span class="tag-filter__toggle-icon" :class="{ 'tag-filter__toggle-icon--collapsed': isCollapsed }">▶</span>
+        <span
+          class="tag-filter__toggle-icon"
+          :class="{
+            'tag-filter__toggle-icon--collapsed': isCollapsed,
+          }"
+          >▶</span
+        >
         <span class="tag-filter__title">标签筛选</span>
       </button>
       <button
@@ -238,7 +244,10 @@ onUnmounted(() => {
     <div
       v-if="contextMenu.show"
       class="context-menu"
-      :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
+      :style="{
+        left: contextMenu.x + 'px',
+        top: contextMenu.y + 'px',
+      }"
     >
       <button class="context-menu__item" @click="requestEditTag">
         编辑标签

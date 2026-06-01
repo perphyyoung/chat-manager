@@ -27,7 +27,10 @@ export class DocumentApplicationService {
     const documents = await this.documentRepo.findAll();
     this.eventBus.emit(
       new DocumentsLoadedEvent(
-        documents.map((d) => ({ id: d.id, title: d.title })),
+        documents.map((d) => ({
+          id: d.id,
+          title: d.title,
+        })),
       ),
     );
     return documents;
@@ -69,7 +72,9 @@ export class DocumentApplicationService {
     document.updateTitle(newTitle);
     await this.documentRepo.save(document);
     this.eventBus.emit(
-      new DocumentUpdatedEvent(documentId, { title: newTitle }),
+      new DocumentUpdatedEvent(documentId, {
+        title: newTitle,
+      }),
     );
   }
 
@@ -146,7 +151,9 @@ export class DocumentApplicationService {
     question.updateText(newText);
     await this.documentRepo.save(document);
     this.eventBus.emit(
-      new QuestionUpdatedEvent(documentId, questionId, { text: newText }),
+      new QuestionUpdatedEvent(documentId, questionId, {
+        text: newText,
+      }),
     );
   }
 }

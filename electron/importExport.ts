@@ -88,14 +88,19 @@ export async function exportData() {
       JSON.stringify(exportData, null, 2),
       "utf-8",
     );
-    focusedWindow.webContents.send("export-complete", { success: true, filePath: result.filePath });
+    focusedWindow.webContents.send("export-complete", {
+      success: true,
+      filePath: result.filePath,
+    });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "导出失败";
     focusedWindow.webContents.send("export-complete", {
       success: false,
       error: errorMsg,
     });
-    log.error(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
+    log.error(
+      `Export failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -146,7 +151,9 @@ export async function importData() {
     }
 
     // 收集所有导入文档的标题
-    const importTitles = importData.documents.map((doc: { title: string }) => doc.title);
+    const importTitles = importData.documents.map(
+      (doc: { title: string }) => doc.title,
+    );
 
     // 一次性查询所有已存在的文档标题
     const placeholders = importTitles.map(() => "?").join(",");
@@ -252,6 +259,8 @@ export async function importData() {
       success: false,
       error: errorMsg,
     });
-    log.error(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
+    log.error(
+      `Import failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }

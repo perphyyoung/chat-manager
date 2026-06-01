@@ -48,17 +48,33 @@ export class MockDocumentRepository implements DocumentRepository {
     this.documentTags.get(documentId)?.delete(tagId);
   }
 
-  async getTags(documentId: string): Promise<Array<{ id: string; name: string }>> {
+  async getTags(
+    documentId: string,
+  ): Promise<Array<{ id: string; name: string }>> {
     const tagIds = this.documentTags.get(documentId) || new Set();
-    return Array.from(tagIds).map((id) => ({ id, name: "" }));
+    return Array.from(tagIds).map((id) => ({
+      id,
+      name: "",
+    }));
   }
 
-  async softDeleteQuestion(_documentId: string, _questionId: string): Promise<void> {}
-  async restoreQuestion(_documentId: string, _questionId: string): Promise<void> {}
-  async getDeletedQuestions(_documentId: string): Promise<Array<{ id: string; text: string; deletedAt: Date }>> {
+  async softDeleteQuestion(
+    _documentId: string,
+    _questionId: string,
+  ): Promise<void> {}
+  async restoreQuestion(
+    _documentId: string,
+    _questionId: string,
+  ): Promise<void> {}
+  async getDeletedQuestions(
+    _documentId: string,
+  ): Promise<Array<{ id: string; text: string; deletedAt: Date }>> {
     return [];
   }
-  async permanentlyDeleteQuestion(_documentId: string, _questionId: string): Promise<void> {}
+  async permanentlyDeleteQuestion(
+    _documentId: string,
+    _questionId: string,
+  ): Promise<void> {}
   async clearDeletedQuestions(_documentId: string): Promise<void> {}
 
   clear(): void {

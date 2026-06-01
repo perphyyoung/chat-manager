@@ -6,7 +6,8 @@ class Logger {
 
   private constructor() {
     ElectronLogger.initialize();
-    ElectronLogger.transports.file.resolvePathFn = () => path.join(process.cwd(), "cm.log");
+    ElectronLogger.transports.file.resolvePathFn = () =>
+      path.join(process.cwd(), "cm.log");
     ElectronLogger.transports.file.level = "debug";
     ElectronLogger.transports.console.level = "warn";
   }

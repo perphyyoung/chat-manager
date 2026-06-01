@@ -17,7 +17,7 @@
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint .",
     "lint:eslint": "eslint . --cache",
-    "format": "oxfmt src/"
+    "format": "oxfmt src/ electron/ e2e/"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.3",

@@ -1,49 +1,51 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted } from "vue";
 
 interface Props {
-  x: number
-  y: number
+  x: number;
+  y: number;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 
 const emit = defineEmits<{
-  edit: []
-  delete: []
-  close: []
-}>()
+  edit: [];
+  delete: [];
+  close: [];
+}>();
 
 function handleEdit() {
-  emit('edit')
-  emit('close')
+  emit("edit");
+  emit("close");
 }
 
 function handleDelete() {
-  emit('delete')
-  emit('close')
+  emit("delete");
+  emit("close");
 }
 
 function handleClickOutside(event: MouseEvent) {
-  const target = event.target as HTMLElement
-  if (!target.closest('.context-menu')) {
-    emit('close')
+  const target = event.target as HTMLElement;
+  if (!target.closest(".context-menu")) {
+    emit("close");
   }
 }
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
+  document.addEventListener("click", handleClickOutside);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+  document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <template>
   <div class="context-menu" :style="{ left: `${x}px`, top: `${y}px` }">
     <button class="menu-item" @click="handleEdit">编辑标题</button>
-    <button class="menu-item menu-item--danger" @click="handleDelete">删除文档</button>
+    <button class="menu-item menu-item--danger" @click="handleDelete">
+      删除文档
+    </button>
   </div>
 </template>
 

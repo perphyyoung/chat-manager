@@ -34,10 +34,15 @@ describe("AnswerApplicationService", () => {
       exists: vi.fn<() => Promise<boolean>>(),
       softDeleteQuestion: vi.fn<() => Promise<void>>(),
       restoreQuestion: vi.fn<() => Promise<void>>(),
-      getDeletedQuestions:
-        vi.fn<
-          () => Promise<Array<{ id: string; text: string; deletedAt: Date }>>
-        >(),
+      getDeletedQuestions: vi.fn<
+        () => Promise<
+          Array<{
+            id: string;
+            text: string;
+            deletedAt: Date;
+          }>
+        >
+      >(),
       permanentlyDeleteQuestion: vi.fn<() => Promise<void>>(),
       clearDeletedQuestions: vi.fn<() => Promise<void>>(),
       addTag: vi.fn<() => Promise<void>>(),

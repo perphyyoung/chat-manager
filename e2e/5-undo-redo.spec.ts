@@ -1,5 +1,11 @@
 import { expect } from "@playwright/test";
-import { test, generateUniqueDocTitle, createDocumentWithAnswer, clickFirstDocument, doubleClickAnswerToEdit } from "./utils";
+import {
+  test,
+  generateUniqueDocTitle,
+  createDocumentWithAnswer,
+  clickFirstDocument,
+  doubleClickAnswerToEdit,
+} from "./utils";
 
 test.describe("撤销和重做功能", () => {
   test.beforeEach(async ({ window }) => {
@@ -26,7 +32,8 @@ test.describe("撤销和重做功能", () => {
     await undoBtn.click();
 
     await window.waitForFunction(
-      () => !document.querySelector(".cm-content")?.textContent?.includes("hello"),
+      () =>
+        !document.querySelector(".cm-content")?.textContent?.includes("hello"),
       { timeout: 2000 },
     );
     const contentAfterUndo = await editor.locator(".cm-content").textContent();
@@ -46,7 +53,8 @@ test.describe("撤销和重做功能", () => {
     await undoBtn.click();
 
     await window.waitForFunction(
-      () => !document.querySelector(".cm-content")?.textContent?.includes("world"),
+      () =>
+        !document.querySelector(".cm-content")?.textContent?.includes("world"),
       { timeout: 2000 },
     );
 
@@ -54,7 +62,8 @@ test.describe("撤销和重做功能", () => {
     await redoBtn.click();
 
     await window.waitForFunction(
-      () => document.querySelector(".cm-content")?.textContent?.includes("world"),
+      () =>
+        document.querySelector(".cm-content")?.textContent?.includes("world"),
       { timeout: 2000 },
     );
     const contentAfterRedo = await editor.locator(".cm-content").textContent();
@@ -75,7 +84,8 @@ test.describe("撤销和重做功能", () => {
     await window.keyboard.press("Control+z");
 
     await window.waitForFunction(
-      () => !document.querySelector(".cm-content")?.textContent?.includes("test"),
+      () =>
+        !document.querySelector(".cm-content")?.textContent?.includes("test"),
       { timeout: 2000 },
     );
     const contentAfterUndo = await editor.locator(".cm-content").textContent();
@@ -93,14 +103,16 @@ test.describe("撤销和重做功能", () => {
     await window.keyboard.press("Control+z");
 
     await window.waitForFunction(
-      () => !document.querySelector(".cm-content")?.textContent?.includes("redo"),
+      () =>
+        !document.querySelector(".cm-content")?.textContent?.includes("redo"),
       { timeout: 2000 },
     );
 
     await window.keyboard.press("Control+y");
 
     await window.waitForFunction(
-      () => document.querySelector(".cm-content")?.textContent?.includes("redo"),
+      () =>
+        document.querySelector(".cm-content")?.textContent?.includes("redo"),
       { timeout: 2000 },
     );
     const contentAfterRedo = await editor.locator(".cm-content").textContent();
@@ -112,18 +124,23 @@ test.describe("撤销和重做功能", () => {
     await undoBtn.click();
 
     // 等待撤销操作完成（编辑器应该仍然可见）
-    await expect(window.locator(".fullscreen-edit-editor .cm-editor")).toBeVisible({ timeout: 2000 });
+    await expect(
+      window.locator(".fullscreen-edit-editor .cm-editor"),
+    ).toBeVisible({
+      timeout: 2000,
+    });
   });
 
   test("取消编辑不保存", async ({ window }) => {
-
     const editor = window.locator(".fullscreen-edit-editor .cm-editor");
     await expect(editor).toBeVisible({ timeout: 2000 });
     await editor.click();
 
     await window.keyboard.type("temp_content");
 
-    const contentBeforeCancel = await editor.locator(".cm-content").textContent();
+    const contentBeforeCancel = await editor
+      .locator(".cm-content")
+      .textContent();
     expect(contentBeforeCancel).toContain("temp_content");
 
     const cancelBtn = window.locator(".btn-cancel");
@@ -131,7 +148,7 @@ test.describe("撤销和重做功能", () => {
 
     await window.waitForSelector(".fullscreen-edit-overlay", {
       state: "detached",
-      timeout: 2000 },
-    );
+      timeout: 2000,
+    });
   });
 });

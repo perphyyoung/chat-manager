@@ -1,120 +1,122 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import ConfirmDialog from './ConfirmDialog.vue'
+import { ref, computed } from "vue";
+import ConfirmDialog from "./ConfirmDialog.vue";
 
 interface RecycleBinItem {
-  id: string
-  name: string
-  deletedAt: Date
-  type: 'document' | 'question'
+  id: string;
+  name: string;
+  deletedAt: Date;
+  type: "document" | "question";
 }
 
 interface Props {
-  show: boolean
-  title: string
-  items: RecycleBinItem[]
+  show: boolean;
+  title: string;
+  items: RecycleBinItem[];
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  close: []
-  restore: [itemId: string]
-  delete: [itemId: string]
-  clear: []
-}>()
+  close: [];
+  restore: [itemId: string];
+  delete: [itemId: string];
+  clear: [];
+}>();
 
-const isRestoring = ref<string | null>(null)
-const isDeleting = ref<string | null>(null)
-const isClearing = ref(false)
+const isRestoring = ref<string | null>(null);
+const isDeleting = ref<string | null>(null);
+const isClearing = ref(false);
 
 // 确认对话框状态
 const confirmDialog = ref<{
-  show: boolean
-  title: string
-  message: string
-  pendingItemId: string | null
-  pendingAction: 'delete' | 'clear' | null
+  show: boolean;
+  title: string;
+  message: string;
+  pendingItemId: string | null;
+  pendingAction: "delete" | "clear" | null;
 }>({
   show: false,
-  title: '',
-  message: '',
+  title: "",
+  message: "",
   pendingItemId: null,
   pendingAction: null,
-})
+});
 
 const sortedItems = computed(() => {
-  return [...props.items].sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime())
-})
+  return [...props.items].sort(
+    (a, b) => b.deletedAt.getTime() - a.deletedAt.getTime(),
+  );
+});
 
 function handleClose() {
-  emit('close')
+  emit("close");
 }
 
 async function handleRestore(itemId: string) {
-  isRestoring.value = itemId
+  isRestoring.value = itemId;
   try {
-    emit('restore', itemId)
+    emit("restore", itemId);
   } finally {
-    isRestoring.value = null
+    isRestoring.value = null;
   }
 }
 
 function handleDelete(itemId: string, itemName: string) {
   confirmDialog.value = {
     show: true,
-    title: '确认删除',
+    title: "确认删除",
     message: `确定要永久删除 "${itemName}" 吗？此操作不可恢复。`,
     pendingItemId: itemId,
-    pendingAction: 'delete',
-  }
+    pendingAction: "delete",
+  };
 }
 
 function handleClear() {
   confirmDialog.value = {
     show: true,
-    title: '确认清空',
-    message: '确定要清空回收站吗？所有项目将被永久删除，此操作不可恢复。',
+    title: "确认清空",
+    message: "确定要清空回收站吗？所有项目将被永久删除，此操作不可恢复。",
     pendingItemId: null,
-    pendingAction: 'clear',
-  }
+    pendingAction: "clear",
+  };
 }
 
 function closeConfirmDialog() {
-  confirmDialog.value.show = false
-  confirmDialog.value.pendingItemId = null
-  confirmDialog.value.pendingAction = null
+  confirmDialog.value.show = false;
+  confirmDialog.value.pendingItemId = null;
+  confirmDialog.value.pendingAction = null;
 }
 
 async function onConfirmDelete() {
-  const itemId = confirmDialog.value.pendingItemId
-  if (!itemId) return
-  isDeleting.value = itemId
+  const itemId = confirmDialog.value.pendingItemId;
+  if (!itemId) return;
+  isDeleting.value = itemId;
   try {
-    emit('delete', itemId)
+    emit("delete", itemId);
   } finally {
-    isDeleting.value = null
+    isDeleting.value = null;
   }
-  closeConfirmDialog()
+  closeConfirmDialog();
 }
 
 async function onConfirmClear() {
-  isClearing.value = true
+  isClearing.value = true;
   try {
-    emit('clear')
+    emit("clear");
   } finally {
-    isClearing.value = false
+    isClearing.value = false;
   }
-  closeConfirmDialog()
+  closeConfirmDialog();
 }
 
 function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('zh-CN', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }
 </script>
 
@@ -129,7 +131,12 @@ function formatDate(date: Date): string {
 
         <div class="modal-body">
           <div v-if="items.length === 0" class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
               <polyline points="3 6 5 6 21 6"></polyline>
               <path
                 d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
@@ -139,10 +146,16 @@ function formatDate(date: Date): string {
           </div>
 
           <div v-else class="items-list">
-            <div v-for="item in sortedItems" :key="item.id" class="recycle-item">
+            <div
+              v-for="item in sortedItems"
+              :key="item.id"
+              class="recycle-item"
+            >
               <div class="item-info">
                 <span class="item-name">{{ item.name }}</span>
-                <span class="item-date">删除于 {{ formatDate(item.deletedAt) }}</span>
+                <span class="item-date"
+                  >删除于 {{ formatDate(item.deletedAt) }}</span
+                >
               </div>
               <div class="item-actions">
                 <button
@@ -150,14 +163,14 @@ function formatDate(date: Date): string {
                   :disabled="isRestoring === item.id"
                   @click="handleRestore(item.id)"
                 >
-                  {{ isRestoring === item.id ? '恢复中...' : '恢复' }}
+                  {{ isRestoring === item.id ? "恢复中..." : "恢复" }}
                 </button>
                 <button
                   class="btn-delete"
                   :disabled="isDeleting === item.id"
                   @click="handleDelete(item.id, item.name)"
                 >
-                  {{ isDeleting === item.id ? '删除中...' : '删除' }}
+                  {{ isDeleting === item.id ? "删除中..." : "删除" }}
                 </button>
               </div>
             </div>
@@ -166,7 +179,7 @@ function formatDate(date: Date): string {
 
         <div v-if="items.length > 0" class="modal-footer">
           <button class="btn-clear" :disabled="isClearing" @click="handleClear">
-            {{ isClearing ? '清空中...' : '清空回收站' }}
+            {{ isClearing ? "清空中..." : "清空回收站" }}
           </button>
         </div>
       </div>
@@ -177,7 +190,11 @@ function formatDate(date: Date): string {
       :show="confirmDialog.show"
       :title="confirmDialog.title"
       :message="confirmDialog.message"
-      @confirm="confirmDialog.pendingAction === 'delete' ? onConfirmDelete() : onConfirmClear()"
+      @confirm="
+        confirmDialog.pendingAction === 'delete'
+          ? onConfirmDelete()
+          : onConfirmClear()
+      "
       @cancel="closeConfirmDialog"
     />
   </Teleport>
