@@ -686,6 +686,70 @@ export const useDocumentStore = defineStore("document", () => {
     }
   }
 
+  // 移动问题到指定位置（拖拽）
+  async function moveQuestion(
+    sourceId: string,
+    targetId: string,
+  ): Promise<void> {
+    if (!selectedDocumentId.value) {
+      throw new Error("No document selected");
+    }
+    const docId = selectedDocumentId.value;
+
+    const doc = selectedDocument.value;
+    if (!doc) {
+      throw new Error("Document not found");
+    }
+
+    // 获取所有问题并排序
+    const questions = [...doc.activeQuestions].sort(
+      (a, b) => a.order - b.order,
+    );
+
+    const sourceIndex = questions.findIndex((q) => q.id === sourceId);
+    const targetIndex = questions.findIndex((q) => q.id === targetId);
+
+    if (
+      sourceIndex === -1 ||
+      targetIndex === -1 ||
+      sourceIndex === targetIndex
+    ) {
+      return;
+    }
+
+    // 移除源问题
+    const [sourceQuestion] = questions.splice(sourceIndex, 1);
+    if (!sourceQuestion) {
+      return;
+    }
+
+    // 插入到目标位置前
+    // 如果源在目标后，移除后目标索引不变；如果源在目标前，目标索引-1
+    const adjustedTargetIndex =
+      sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    questions.splice(adjustedTargetIndex, 0, sourceQuestion);
+
+    // 计算变化的最小索引，从该位置开始重新编号
+    const minChangedIndex = Math.min(sourceIndex, adjustedTargetIndex);
+
+    // 从变化的最小索引开始重新编号
+    for (let i = minChangedIndex; i < questions.length; i++) {
+      const question = questions[i];
+      if (question && question.order !== i) {
+        await documentService.updateQuestionOrder(docId, question.id, i);
+      }
+    }
+
+    // 刷新当前文档数据
+    const updatedDoc = await documentService.getDocument(docId);
+    if (updatedDoc) {
+      const index = documents.value.findIndex((d) => d.id === docId);
+      if (index !== -1) {
+        documents.value.splice(index, 1, updatedDoc);
+      }
+    }
+  }
+
   return {
     documents,
     sortedDocuments,
@@ -741,6 +805,7 @@ export const useDocumentStore = defineStore("document", () => {
     permanentlyDeleteQuestion,
     clearDeletedQuestions,
     reorderQuestions,
+    moveQuestion,
   };
 });
 

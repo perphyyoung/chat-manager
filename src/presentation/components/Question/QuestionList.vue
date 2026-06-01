@@ -41,6 +41,12 @@ const showEditDialog = ref(false);
 const editQuestionText = ref("");
 const isEditing = ref(false);
 
+// 拖拽状态
+const dragState = ref({
+  draggingId: null as string | null,
+  dropTargetId: null as string | null,
+});
+
 const sortFieldLabels: Record<QuestionSortField, string> = {
   createdAt: "创建时间",
   updatedAt: "更新时间",
@@ -166,6 +172,50 @@ function handleClickOutside(event: MouseEvent) {
   }
 }
 
+// 拖拽开始
+function handleDragStart(questionId: string) {
+  dragState.value.draggingId = questionId;
+}
+
+// 拖拽结束
+function handleDragEnd() {
+  dragState.value.draggingId = null;
+  dragState.value.dropTargetId = null;
+}
+
+// 拖拽进入目标
+function handleDragEnter(targetId: string) {
+  if (dragState.value.draggingId && dragState.value.draggingId !== targetId) {
+    dragState.value.dropTargetId = targetId;
+  }
+}
+
+// 拖拽离开目标
+function handleDragLeave() {
+  dragState.value.dropTargetId = null;
+}
+
+// 放置
+async function handleDrop(targetId: string) {
+  const sourceId = dragState.value.draggingId;
+  if (!sourceId || sourceId === targetId) {
+    handleDragEnd();
+    return;
+  }
+
+  try {
+    await documentStore.moveQuestion(sourceId, targetId);
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : "未知错误";
+    window.electronAPI.renderLog(
+      "error",
+      `[QuestionList] 拖拽排序失败: ${errorMsg}`,
+    );
+  } finally {
+    handleDragEnd();
+  }
+}
+
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
   documentStore.loadDeletedQuestions();
@@ -243,8 +293,15 @@ onUnmounted(() => {
         :key="question.id"
         :question="question"
         :is-active="question.id === documentStore.activeQuestionId"
+        :is-dragging="dragState.draggingId === question.id"
+        :is-drop-target="dragState.dropTargetId === question.id"
         @click="handleQuestionClick"
         @context-menu="handleContextMenu"
+        @drag-start="handleDragStart"
+        @drag-end="handleDragEnd"
+        @drag-enter="handleDragEnter"
+        @drag-leave="handleDragLeave"
+        @drop="handleDrop"
       />
     </div>
     <div v-if="!documentStore.selectedDocument" class="question-list__empty">
