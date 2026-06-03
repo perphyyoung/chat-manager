@@ -636,6 +636,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0.5;
   transition:
     transform 0.2s,
     box-shadow 0.2s,

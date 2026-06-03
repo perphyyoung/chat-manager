@@ -48,6 +48,7 @@ function handleClick() {
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.2s;
+  opacity: 0.5;
 }
 
 .recycle-bin-btn:hover {
