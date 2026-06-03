@@ -714,17 +714,6 @@ function createMenu() {
       ],
     },
     {
-      label: "Edit",
-      submenu: [
-        { role: "undo" },
-        { role: "redo" },
-        { type: "separator" },
-        { role: "cut" },
-        { role: "copy" },
-        { role: "paste" },
-      ],
-    },
-    {
       label: "View",
       submenu: [
         { role: "reload" },
@@ -732,7 +721,7 @@ function createMenu() {
         { role: "toggleDevTools" },
         { type: "separator" },
         { role: "resetZoom" },
-        { role: "zoomIn" },
+        { role: "zoomIn", accelerator: "Ctrl+=" },
         { role: "zoomOut" },
         { type: "separator" },
         { role: "togglefullscreen" },
