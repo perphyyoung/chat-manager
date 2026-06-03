@@ -41,6 +41,17 @@ const showEditDialog = ref(false);
 const editQuestionText = ref("");
 const isEditing = ref(false);
 
+// 编辑问题输入框 ref，用于弹窗打开时聚焦
+const editQuestionInput = ref<HTMLInputElement | null>(null);
+
+// 编辑弹窗打开时聚焦到输入框
+watch(showEditDialog, async (show) => {
+  if (show) {
+    await nextTick();
+    editQuestionInput.value?.focus();
+  }
+});
+
 // 拖拽状态
 const dragState = ref({
   draggingId: null as string | null,
@@ -449,6 +460,7 @@ onUnmounted(() => {
         <div class="dialog-field">
           <label>问题文本</label>
           <input
+            ref="editQuestionInput"
             v-model="editQuestionText"
             type="text"
             placeholder="请输入问题"

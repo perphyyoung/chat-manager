@@ -34,6 +34,16 @@ const showEditDialog = ref(false);
 const editDocumentTitle = ref("");
 const isEditing = ref(false);
 const editingDocumentId = ref<string | null>(null);
+const editTitleInputRef = ref<HTMLInputElement | null>(null);
+
+// 编辑弹窗打开时自动聚焦到输入框
+watch(showEditDialog, (newValue) => {
+  if (newValue) {
+    nextTick(() => {
+      editTitleInputRef.value?.focus();
+    });
+  }
+});
 
 // 回收站弹窗状态
 const showRecycleBin = ref(false);
@@ -307,6 +317,7 @@ onMounted(() => {
       <div class="dialog">
         <h3>编辑文档标题</h3>
         <input
+          ref="editTitleInputRef"
           v-model="editDocumentTitle"
           type="text"
           placeholder="请输入文档标题"
