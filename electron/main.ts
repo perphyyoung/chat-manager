@@ -176,7 +176,7 @@ ipcMain.handle("db:softDelete", (_, id: string) => {
   database
     .prepare("UPDATE documents SET is_deleted = 1, deleted_at = ? WHERE id = ?")
     .run(now, id);
-  SearchService.markDirty();
+  SearchService.deleteDocument(database, id);
 });
 
 ipcMain.handle("db:restore", (_, id: string) => {
@@ -187,7 +187,7 @@ ipcMain.handle("db:restore", (_, id: string) => {
       "UPDATE documents SET is_deleted = 0, deleted_at = NULL, updated_at = ? WHERE id = ?",
     )
     .run(now, id);
-  SearchService.markDirty();
+  SearchService.updateDocument(database, id);
 });
 
 ipcMain.handle("db:exists", (_, id: string) => {
@@ -230,7 +230,7 @@ ipcMain.handle("answer:save", (_, answerJson: string) => {
       answer.createdAt ?? now,
       answer.updatedAt ?? now,
     );
-  SearchService.markDirty();
+  SearchService.updateAnswer(database, answer.id);
 });
 
 ipcMain.handle("answer:delete", (_, id: string) => {
@@ -360,13 +360,13 @@ ipcMain.handle("tag:save", (_, tagJson: string) => {
       "INSERT INTO tags (id, name, created_at) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name",
     )
     .run(tag.id, tag.name, tag.createdAt ?? now);
-  SearchService.markDirty();
+  SearchService.updateTag(database, tag.id);
 });
 
 ipcMain.handle("tag:delete", (_, id: string) => {
   const database = getDatabase();
   database.prepare("DELETE FROM tags WHERE id = ?").run(id);
-  SearchService.markDirty();
+  SearchService.deleteTag(database, id);
 });
 
 ipcMain.handle("tag:exists", (_, name: string) => {
@@ -384,7 +384,8 @@ ipcMain.handle("tag:addToDocument", (_, documentId: string, tagId: string) => {
       "INSERT INTO document_tags (document_id, tag_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
     )
     .run(documentId, tagId);
-  SearchService.markDirty();
+  SearchService.updateTag(database, tagId);
+  SearchService.updateDocument(database, documentId);
 });
 
 ipcMain.handle(
@@ -394,7 +395,8 @@ ipcMain.handle(
     database
       .prepare("DELETE FROM document_tags WHERE document_id = ? AND tag_id = ?")
       .run(documentId, tagId);
-    SearchService.markDirty();
+    SearchService.updateTag(database, tagId);
+    SearchService.updateDocument(database, documentId);
   },
 );
 
@@ -531,11 +533,13 @@ ipcMain.handle("db:document:save", (_, doc: DocumentInput) => {
       0,
       null,
     );
-  SearchService.markDirty();
+  SearchService.updateDocument(database, doc.id);
 });
 
 ipcMain.handle("db:document:delete", (_, id: string) => {
   const database = getDatabase();
+  // 先删除搜索索引（需要关联数据）
+  SearchService.deleteDocument(database, id);
   // 删除文档关联的标签
   database.prepare("DELETE FROM document_tags WHERE document_id = ?").run(id);
   // 删除文档关联的问题和答案
@@ -547,7 +551,6 @@ ipcMain.handle("db:document:delete", (_, id: string) => {
   database.prepare("DELETE FROM questions WHERE document_id = ?").run(id);
   // 删除文档
   database.prepare("DELETE FROM documents WHERE id = ?").run(id);
-  SearchService.markDirty();
 });
 
 ipcMain.handle(
@@ -577,18 +580,18 @@ ipcMain.handle(
           q.isDeleted ? 1 : 0,
           q.deletedAt ?? null,
         );
+      SearchService.updateQuestion(database, q.id);
     }
-    SearchService.markDirty();
   },
 );
 
 ipcMain.handle("db:questions:delete", (_, ids: string[]) => {
   const database = getDatabase();
   for (const id of ids) {
+    SearchService.deleteQuestion(database, id);
     database.prepare("DELETE FROM answers WHERE question_id = ?").run(id);
     database.prepare("DELETE FROM questions WHERE id = ?").run(id);
   }
-  SearchService.markDirty();
 });
 
 ipcMain.handle(
@@ -628,17 +631,17 @@ ipcMain.handle(
           a.createdAt ?? now,
           a.updatedAt ?? now,
         );
+      SearchService.updateAnswer(database, a.id);
     }
-    SearchService.markDirty();
   },
 );
 
 ipcMain.handle("db:answers:delete", (_, ids: string[]) => {
   const database = getDatabase();
   for (const id of ids) {
+    SearchService.deleteAnswer(database, id);
     database.prepare("DELETE FROM answers WHERE id = ?").run(id);
   }
-  SearchService.markDirty();
 });
 
 function openSettings() {

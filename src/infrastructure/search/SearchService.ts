@@ -31,6 +31,167 @@ export class SearchService {
 
   constructor(private db: SqliteDB) {}
 
+  // 增量更新：更新单个文档的索引
+  static updateDocument(db: SqliteDB, docId: string): void {
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'document'").run(docId);
+
+    const doc = db.prepare(`
+      SELECT d.id, d.title,
+        (SELECT COUNT(*) FROM questions WHERE document_id = d.id) as questionCount,
+        (SELECT COUNT(*) FROM answers a JOIN questions q ON a.question_id = q.id WHERE q.document_id = d.id) as answerCount
+      FROM documents d
+      WHERE d.id = ? AND d.is_deleted = 0
+    `).get(docId) as {
+      id: string;
+      title: string;
+      questionCount: number;
+      answerCount: number;
+    } | undefined;
+
+    if (doc) {
+      db.prepare(
+        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
+      ).run(
+        doc.id,
+        "document",
+        segmentText(doc.title),
+        JSON.stringify({
+          title: doc.title,
+          questionCount: doc.questionCount,
+          answerCount: doc.answerCount,
+        }),
+      );
+    }
+  }
+
+  // 增量更新：删除文档的索引
+  static deleteDocument(db: SqliteDB, docId: string): void {
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'document'").run(docId);
+    // 同时删除关联的问题和答案索引
+    const questionIds = db.prepare("SELECT id FROM questions WHERE document_id = ?").all(docId) as Array<{ id: string }>;
+    for (const { id } of questionIds) {
+      SearchService.deleteQuestion(db, id);
+    }
+  }
+
+  // 增量更新：更新单个问题的索引
+  static updateQuestion(db: SqliteDB, questionId: string): void {
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'question'").run(questionId);
+
+    const q = db.prepare(`
+      SELECT q.id, q.text, q.document_id, d.title as documentTitle
+      FROM questions q
+      JOIN documents d ON q.document_id = d.id
+      WHERE q.id = ? AND q.is_deleted = 0 AND d.is_deleted = 0
+    `).get(questionId) as {
+      id: string;
+      text: string;
+      document_id: string;
+      documentTitle: string;
+    } | undefined;
+
+    if (q) {
+      db.prepare(
+        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
+      ).run(
+        q.id,
+        "question",
+        segmentText(q.text),
+        JSON.stringify({
+          questionId: q.id,
+          documentId: q.document_id,
+          documentTitle: q.documentTitle,
+        }),
+      );
+    }
+  }
+
+  // 增量更新：删除问题的索引
+  static deleteQuestion(db: SqliteDB, questionId: string): void {
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'question'").run(questionId);
+    // 同时删除关联的答案索引
+    const answerIds = db.prepare("SELECT id FROM answers WHERE question_id = ?").all(questionId) as Array<{ id: string }>;
+    for (const { id } of answerIds) {
+      SearchService.deleteAnswer(db, id);
+    }
+  }
+
+  // 增量更新：更新单个答案的索引
+  static updateAnswer(db: SqliteDB, answerId: string): void {
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'answer'").run(answerId);
+
+    const a = db.prepare(`
+      SELECT a.id, a.content, a.question_id, q.text as questionText, d.id as documentId, d.title as documentTitle
+      FROM answers a
+      JOIN questions q ON a.question_id = q.id
+      JOIN documents d ON q.document_id = d.id
+      WHERE a.id = ? AND q.is_deleted = 0 AND d.is_deleted = 0
+    `).get(answerId) as {
+      id: string;
+      content: string;
+      question_id: string;
+      questionText: string;
+      documentId: string;
+      documentTitle: string;
+    } | undefined;
+
+    if (a) {
+      db.prepare(
+        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
+      ).run(
+        a.id,
+        "answer",
+        segmentText(a.content),
+        JSON.stringify({
+          answerId: a.id,
+          questionId: a.question_id,
+          questionText: a.questionText,
+          documentId: a.documentId,
+          documentTitle: a.documentTitle,
+        }),
+      );
+    }
+  }
+
+  // 增量更新：删除答案的索引
+  static deleteAnswer(db: SqliteDB, answerId: string): void {
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'answer'").run(answerId);
+  }
+
+  // 增量更新：删除标签的索引
+  static deleteTag(db: SqliteDB, tagId: string): void {
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'tag'").run(tagId);
+  }
+
+  // 增量更新：更新单个标签的索引
+  static updateTag(db: SqliteDB, tagId: string): void {
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'tag'").run(tagId);
+
+    const t = db.prepare(`
+      SELECT t.id, t.name, (SELECT COUNT(*) FROM document_tags WHERE tag_id = t.id) as documentCount
+      FROM tags t
+      WHERE t.id = ?
+    `).get(tagId) as {
+      id: string;
+      name: string;
+      documentCount: number;
+    } | undefined;
+
+    if (t) {
+      db.prepare(
+        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
+      ).run(
+        t.id,
+        "tag",
+        segmentText(t.name),
+        JSON.stringify({
+          tagName: t.name,
+          documentCount: t.documentCount,
+        }),
+      );
+    }
+  }
+
   async query(searchText: string, limit = 10): Promise<SearchResults> {
     if (SearchService.dirty) {
       await this.rebuildIndex();
