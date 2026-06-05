@@ -24,7 +24,7 @@ export class TagApplicationService {
       throw new ValidationError("Tag name cannot be empty");
     }
 
-    const exists = await this.tagRepo.exists(trimmedName);
+    const exists = await this.tagRepo.existsTag(trimmedName);
     if (exists) {
       throw new ValidationError(`Tag "${trimmedName}" already exists`);
     }
@@ -61,7 +61,7 @@ export class TagApplicationService {
     }
 
     // 检查新名称是否已存在
-    const exists = await this.tagRepo.exists(trimmedName);
+    const exists = await this.tagRepo.existsTag(trimmedName);
     if (exists) {
       throw new ValidationError(`Tag "${trimmedName}" already exists`);
     }

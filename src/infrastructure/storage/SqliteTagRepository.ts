@@ -38,7 +38,7 @@ export class SqliteTagRepository implements TagRepository {
     await window.electronAPI.tag?.delete(id);
   }
 
-  async exists(name: string): Promise<boolean> {
-    return window.electronAPI.tag?.exists(name) ?? false;
+  async existsTag(name: string): Promise<boolean> {
+    return await window.electronAPI.tag.existsTag(name);
   }
 }

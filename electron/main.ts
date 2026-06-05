@@ -369,7 +369,7 @@ ipcMain.handle("tag:delete", (_, id: string) => {
   SearchService.deleteTag(database, id);
 });
 
-ipcMain.handle("tag:exists", (_, name: string) => {
+ipcMain.handle("tag:existsTag", (_, name: string) => {
   const database = getDatabase();
   const row = database
     .prepare("SELECT 1 FROM tags WHERE name = ?")

@@ -66,7 +66,7 @@ export interface ElectronAPI {
     findByName: (name: string) => Promise<TagDTO | null>;
     save: (tagJson: string) => Promise<void>;
     delete: (id: string) => Promise<void>;
-    exists: (name: string) => Promise<boolean>;
+    existsTag: (name: string) => Promise<boolean>;
     addTagToDocument: (documentId: string, tagId: string) => Promise<void>;
     removeTagFromDocument: (documentId: string, tagId: string) => Promise<void>;
     getDocumentTags: (documentId: string) => Promise<TagDTO[]>;

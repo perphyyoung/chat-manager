@@ -35,7 +35,7 @@ class MockTagRepository implements TagRepository {
     this.tags.delete(id);
   }
 
-  async exists(name: string): Promise<boolean> {
+  async existsTag(name: string): Promise<boolean> {
     for (const tag of this.tags.values()) {
       if (tag.name === name) return true;
     }
