@@ -148,7 +148,7 @@ export async function cleanupE2ETags(page: Page): Promise<void> {
       try {
         await page.evaluate(async (tagId: string) => {
           const win = window as unknown as WindowWithElectronAPI;
-          await win.electronAPI.tag.delete(tagId);
+          await win.electronAPI.tag.deleteTag(tagId);
         }, tag.id);
       } catch (e) {
         log.error(`清理标签失败: ${tag.name} - ${e}`);

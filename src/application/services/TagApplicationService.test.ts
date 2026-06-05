@@ -31,7 +31,7 @@ class MockTagRepository implements TagRepository {
     this.tags.set(tag.id, tag);
   }
 
-  async delete(id: string): Promise<void> {
+  async deleteTag(id: string): Promise<void> {
     this.tags.delete(id);
   }
 

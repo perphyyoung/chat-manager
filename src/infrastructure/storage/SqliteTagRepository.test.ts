@@ -11,7 +11,7 @@ interface MockElectronAPI {
     findById: MockFn;
     findByName: MockFn;
     save: MockFn;
-    delete: MockFn;
+    deleteTag: MockFn;
     existsTag: MockFn;
   };
 }
@@ -27,7 +27,7 @@ describe("SqliteTagRepository", () => {
         findById: vi.fn(),
         findByName: vi.fn(),
         save: vi.fn(),
-        delete: vi.fn(),
+        deleteTag: vi.fn(),
         existsTag: vi.fn(),
       },
     };
@@ -134,11 +134,11 @@ describe("SqliteTagRepository", () => {
 
   describe("delete", () => {
     it("should delete tag", async () => {
-      mockElectronAPI.tag.delete.mockResolvedValue(undefined);
+      mockElectronAPI.tag.deleteTag.mockResolvedValue(undefined);
 
-      await repository.delete("tag1");
+      await repository.deleteTag("tag1");
 
-      expect(mockElectronAPI.tag.delete).toHaveBeenCalledWith("tag1");
+      expect(mockElectronAPI.tag.deleteTag).toHaveBeenCalledWith("tag1");
     });
   });
 

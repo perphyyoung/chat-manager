@@ -75,7 +75,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     findById: (id: string) => ipcRenderer.invoke("tag:findById", id),
     findByName: (name: string) => ipcRenderer.invoke("tag:findByName", name),
     save: (tagJson: string) => ipcRenderer.invoke("tag:save", tagJson),
-    delete: (id: string) => ipcRenderer.invoke("tag:delete", id),
+    deleteTag: (id: string) => ipcRenderer.invoke("tag:deleteTag", id),
     existsTag: (name: string) => ipcRenderer.invoke("tag:existsTag", name),
     addTagToDocument: (documentId: string, tagId: string) =>
       ipcRenderer.invoke("tag:addTagToDocument", documentId, tagId),

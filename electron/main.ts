@@ -363,7 +363,7 @@ ipcMain.handle("tag:save", (_, tagJson: string) => {
   SearchService.updateTag(database, tag.id);
 });
 
-ipcMain.handle("tag:delete", (_, id: string) => {
+ipcMain.handle("tag:deleteTag", (_, id: string) => {
   const database = getDatabase();
   database.prepare("DELETE FROM tags WHERE id = ?").run(id);
   SearchService.deleteTag(database, id);

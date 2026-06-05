@@ -41,7 +41,7 @@ export class TagApplicationService {
       throw new NotFoundError("Tag", tagId);
     }
 
-    await this.tagRepo.delete(tagId);
+    await this.tagRepo.deleteTag(tagId);
   }
 
   async updateTagName(tagId: string, newName: string): Promise<Tag> {

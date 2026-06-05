@@ -34,8 +34,8 @@ export class SqliteTagRepository implements TagRepository {
     await window.electronAPI.tag?.save(JSON.stringify(tag.toJSON()));
   }
 
-  async delete(id: string): Promise<void> {
-    await window.electronAPI.tag?.delete(id);
+  async deleteTag(id: string): Promise<void> {
+    await window.electronAPI.tag.deleteTag(id);
   }
 
   async existsTag(name: string): Promise<boolean> {

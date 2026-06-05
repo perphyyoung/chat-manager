@@ -333,7 +333,7 @@ ipcMain.handle('answer:delete', (_, id: string) => {...})
 ipcMain.handle('tag:findAll', () => {...})
 ipcMain.handle('tag:findById', (_, id: string) => {...})
 ipcMain.handle('tag:save', (_, tagJson: string) => {...})
-ipcMain.handle('tag:delete', (_, id: string) => {...})
+ipcMain.handle('tag:deleteTag', (_, id: string) => {...})
 ipcMain.handle('tag:updateName', (_, id: string, newName: string) => {...})
 
 // 文档标签关联
@@ -347,7 +347,7 @@ electronAPI.tag = {
   findAll: () => ipcRenderer.invoke('tag:findAll'),
   findById: (id: string) => ipcRenderer.invoke('tag:findById', id),
   save: (json: string) => ipcRenderer.invoke('tag:save', json),
-  delete: (id: string) => ipcRenderer.invoke('tag:delete', id),
+  deleteTag: (id: string) => ipcRenderer.invoke('tag:deleteTag', id),
   updateName: (id: string, newName: string) => ipcRenderer.invoke('tag:updateName', id, newName),
   findByDocumentId: (documentId: string) => ipcRenderer.invoke('tag:findByDocumentId', documentId),
   findDocumentsByTagId: (tagId: string) => ipcRenderer.invoke('tag:findDocumentsByTagId', tagId),
