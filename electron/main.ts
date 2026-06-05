@@ -389,7 +389,7 @@ ipcMain.handle("tag:addToDocument", (_, documentId: string, tagId: string) => {
 });
 
 ipcMain.handle(
-  "tag:removeFromDocument",
+  "tag:removeTagFromDocument",
   (_, documentId: string, tagId: string) => {
     const database = getDatabase();
     database

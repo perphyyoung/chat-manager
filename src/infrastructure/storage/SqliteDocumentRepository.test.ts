@@ -45,7 +45,7 @@ interface MockElectronAPI {
   tag: {
     findDocumentsByTagId: MockFn;
     addToDocument: MockFn;
-    removeFromDocument: MockFn;
+    removeTagFromDocument: MockFn;
     getDocumentTags: MockFn;
   };
 }
@@ -85,7 +85,7 @@ describe("SqliteDocumentRepository", () => {
       tag: {
         findDocumentsByTagId: vi.fn(),
         addToDocument: vi.fn(),
-        removeFromDocument: vi.fn(),
+        removeTagFromDocument: vi.fn(),
         getDocumentTags: vi.fn(),
       },
     };

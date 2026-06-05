@@ -340,7 +340,7 @@ ipcMain.handle('tag:updateName', (_, id: string, newName: string) => {...})
 ipcMain.handle('tag:findByDocumentId', (_, documentId: string) => {...})
 ipcMain.handle('tag:findDocumentsByTagId', (_, tagId: string) => {...})
 ipcMain.handle('tag:addToDocument', (_, documentId: string, tagId: string) => {...})
-ipcMain.handle('tag:removeFromDocument', (_, documentId: string, tagId: string) => {...})
+ipcMain.handle('tag:removeTagFromDocument', (_, documentId: string, tagId: string) => {...})
 
 // 预加载脚本暴露
 electronAPI.tag = {
@@ -352,7 +352,7 @@ electronAPI.tag = {
   findByDocumentId: (documentId: string) => ipcRenderer.invoke('tag:findByDocumentId', documentId),
   findDocumentsByTagId: (tagId: string) => ipcRenderer.invoke('tag:findDocumentsByTagId', tagId),
   addToDocument: (documentId: string, tagId: string) => ipcRenderer.invoke('tag:addToDocument', documentId, tagId),
-  removeFromDocument: (documentId: string, tagId: string) => ipcRenderer.invoke('tag:removeFromDocument', documentId, tagId),
+  removeTagFromDocument: (documentId: string, tagId: string) => ipcRenderer.invoke('tag:removeTagFromDocument', documentId, tagId),
 }
 ```
 

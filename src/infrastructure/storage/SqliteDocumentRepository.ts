@@ -138,7 +138,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
     // 移除已删除的标签关联
     for (const tagId of currentTagIds) {
       if (!newTagIds.has(tagId)) {
-        await window.electronAPI.tag?.removeFromDocument(documentId, tagId);
+        await window.electronAPI.tag.removeTagFromDocument(documentId, tagId);
       }
     }
   }
@@ -217,7 +217,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
   }
 
   async removeTag(documentId: string, tagId: string): Promise<void> {
-    await window.electronAPI.tag?.removeFromDocument(documentId, tagId);
+    await window.electronAPI.tag?.removeTagFromDocument(documentId, tagId);
   }
 
   async getTags(
