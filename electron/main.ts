@@ -377,7 +377,7 @@ ipcMain.handle("tag:exists", (_, name: string) => {
   return !!row;
 });
 
-ipcMain.handle("tag:addToDocument", (_, documentId: string, tagId: string) => {
+ipcMain.handle("tag:addTagToDocument", (_, documentId: string, tagId: string) => {
   const database = getDatabase();
   database
     .prepare(

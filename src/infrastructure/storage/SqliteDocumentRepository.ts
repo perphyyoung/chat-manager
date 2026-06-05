@@ -131,7 +131,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
     // 添加新标签关联
     for (const tag of tags) {
       if (!currentTagIds.has(tag.id)) {
-        await window.electronAPI.tag?.addToDocument(documentId, tag.id);
+        await window.electronAPI.tag.addTagToDocument(documentId, tag.id);
       }
     }
 
@@ -213,7 +213,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
   }
 
   async addTag(documentId: string, tagId: string): Promise<void> {
-    await window.electronAPI.tag?.addToDocument(documentId, tagId);
+    await window.electronAPI.tag.addTagToDocument(documentId, tagId);
   }
 
   async removeTag(documentId: string, tagId: string): Promise<void> {

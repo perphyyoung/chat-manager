@@ -339,7 +339,7 @@ ipcMain.handle('tag:updateName', (_, id: string, newName: string) => {...})
 // 文档标签关联
 ipcMain.handle('tag:findByDocumentId', (_, documentId: string) => {...})
 ipcMain.handle('tag:findDocumentsByTagId', (_, tagId: string) => {...})
-ipcMain.handle('tag:addToDocument', (_, documentId: string, tagId: string) => {...})
+ipcMain.handle('tag:addTagToDocument', (_, documentId: string, tagId: string) => {...})
 ipcMain.handle('tag:removeTagFromDocument', (_, documentId: string, tagId: string) => {...})
 
 // 预加载脚本暴露
@@ -351,7 +351,7 @@ electronAPI.tag = {
   updateName: (id: string, newName: string) => ipcRenderer.invoke('tag:updateName', id, newName),
   findByDocumentId: (documentId: string) => ipcRenderer.invoke('tag:findByDocumentId', documentId),
   findDocumentsByTagId: (tagId: string) => ipcRenderer.invoke('tag:findDocumentsByTagId', tagId),
-  addToDocument: (documentId: string, tagId: string) => ipcRenderer.invoke('tag:addToDocument', documentId, tagId),
+  addTagToDocument: (documentId: string, tagId: string) => ipcRenderer.invoke('tag:addTagToDocument', documentId, tagId),
   removeTagFromDocument: (documentId: string, tagId: string) => ipcRenderer.invoke('tag:removeTagFromDocument', documentId, tagId),
 }
 ```
