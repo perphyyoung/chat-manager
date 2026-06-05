@@ -73,7 +73,7 @@ export interface ElectronAPI {
     findDocumentsByTagId: (tagId: string) => Promise<DocumentDTO[]>;
   };
   search: {
-    query: (query: string) => Promise<SearchResults>;
+    querySearch: (query: string) => Promise<SearchResults>;
     rebuild: () => Promise<void>;
   };
   onExportComplete: (callback: (result: ExportResult) => void) => void;

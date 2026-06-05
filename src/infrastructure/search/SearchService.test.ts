@@ -14,7 +14,7 @@ describe("SearchService", () => {
 
   describe("query", () => {
     it("should return empty results for empty search text", async () => {
-      const result = await service.query("");
+      const result = await service.querySearch("");
       expect(result).toEqual({
         documents: [],
         questions: [],
@@ -24,7 +24,7 @@ describe("SearchService", () => {
     });
 
     it("should return empty results for whitespace only", async () => {
-      const result = await service.query("   ");
+      const result = await service.querySearch("   ");
       expect(result).toEqual({
         documents: [],
         questions: [],
@@ -34,7 +34,7 @@ describe("SearchService", () => {
     });
 
     it("should return empty results for null-like input", async () => {
-      const result = await service.query("  \n\t  ");
+      const result = await service.querySearch("  \n\t  ");
       expect(result).toEqual({
         documents: [],
         questions: [],
@@ -82,7 +82,7 @@ describe("SearchService", () => {
     });
 
     it("should parse document results correctly", async () => {
-      const result = await service.query("Test");
+      const result = await service.querySearch("Test");
       expect(result.documents).toHaveLength(1);
       expect(result.documents[0]).toEqual({
         id: "doc-1",
@@ -93,7 +93,7 @@ describe("SearchService", () => {
     });
 
     it("should parse question results correctly", async () => {
-      const result = await service.query("What");
+      const result = await service.querySearch("What");
       expect(result.questions).toHaveLength(1);
       expect(result.questions[0]).toEqual({
         id: "q-1",
@@ -105,7 +105,7 @@ describe("SearchService", () => {
     });
 
     it("should parse answer results correctly", async () => {
-      const result = await service.query("test");
+      const result = await service.querySearch("test");
       expect(result.answers).toHaveLength(1);
       expect(result.answers[0]).toEqual({
         id: "a-1",
@@ -119,7 +119,7 @@ describe("SearchService", () => {
     });
 
     it("should parse tag results correctly", async () => {
-      const result = await service.query("testing");
+      const result = await service.querySearch("testing");
       expect(result.tags).toHaveLength(1);
       expect(result.tags[0]).toEqual({
         id: "tag-1",
@@ -141,7 +141,7 @@ describe("SearchService", () => {
     });
 
     it("should handle missing document metadata gracefully", async () => {
-      const result = await service.query("Test");
+      const result = await service.querySearch("Test");
       expect(result.documents[0]).toEqual({
         id: "doc-1",
         title: "Test",
@@ -151,7 +151,7 @@ describe("SearchService", () => {
     });
 
     it("should handle missing question metadata gracefully", async () => {
-      const result = await service.query("Question");
+      const result = await service.querySearch("Question");
       expect(result.questions[0]).toEqual({
         id: "q-1",
         text: "Question",
@@ -162,7 +162,7 @@ describe("SearchService", () => {
     });
 
     it("should handle missing answer metadata gracefully", async () => {
-      const result = await service.query("Answer");
+      const result = await service.querySearch("Answer");
       expect(result.answers[0]).toEqual({
         id: "a-1",
         content: "Answer",
@@ -175,7 +175,7 @@ describe("SearchService", () => {
     });
 
     it("should handle missing tag metadata gracefully", async () => {
-      const result = await service.query("Tag");
+      const result = await service.querySearch("Tag");
       expect(result.tags[0]).toEqual({
         id: "tag-1",
         name: "Tag",
@@ -199,14 +199,14 @@ describe("SearchService", () => {
     });
 
     it("should limit documents to 10 by default", async () => {
-      const result = await service.query("Document");
+      const result = await service.querySearch("Document");
       expect(result.documents).toHaveLength(10);
       expect(result.documents[0]?.id).toBe("doc-0");
       expect(result.documents[9]?.id).toBe("doc-9");
     });
 
     it("should respect custom limit", async () => {
-      const result = await service.query("Document", 5);
+      const result = await service.querySearch("Document", 5);
       expect(result.documents).toHaveLength(5);
     });
   });

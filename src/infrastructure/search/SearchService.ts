@@ -192,7 +192,7 @@ export class SearchService {
     }
   }
 
-  async query(searchText: string, limit = 10): Promise<SearchResults> {
+  async querySearch(searchText: string, limit = 10): Promise<SearchResults> {
     if (SearchService.dirty) {
       await this.rebuildIndex();
       SearchService.dirty = false;

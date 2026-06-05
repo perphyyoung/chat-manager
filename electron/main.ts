@@ -477,10 +477,10 @@ ipcMain.handle("tag:findDocumentsByTagId", (_, tagId: string) => {
 ipcMain.on("shortcut:open-search", (event) => {
   event.sender.send("shortcut:open-search");
 });
-ipcMain.handle("search:query", async (_, query: string) => {
+ipcMain.handle("search:querySearch", async (_, query: string) => {
   const database = getDatabase();
   const searchService = new SearchService(database);
-  return await searchService.query(query);
+  return await searchService.querySearch(query);
 });
 
 ipcMain.handle("search:rebuild", async () => {

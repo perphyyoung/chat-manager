@@ -87,7 +87,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("tag:findDocumentsByTagId", tagId),
   },
   search: {
-    query: (query: string) => ipcRenderer.invoke("search:query", query),
+    querySearch: (query: string) => ipcRenderer.invoke("search:querySearch", query),
     rebuild: () => ipcRenderer.invoke("search:rebuild"),
   },
   onExportComplete: (callback: (result: ExportResult) => void) => {

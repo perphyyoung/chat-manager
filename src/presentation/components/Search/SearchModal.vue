@@ -140,7 +140,7 @@ async function handleSearch(searchText: string) {
   debounceTimer = setTimeout(async () => {
     isLoading.value = true;
     try {
-      results.value = await window.electronAPI.search.query(searchText);
+      results.value = await window.electronAPI.search.querySearch(searchText);
       selectedIndex.value = flatResults.value.length > 0 ? 0 : -1;
     } catch (error) {
       console.error("Search failed:", error);
