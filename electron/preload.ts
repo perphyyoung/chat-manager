@@ -88,7 +88,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   search: {
     querySearch: (query: string) => ipcRenderer.invoke("search:querySearch", query),
-    rebuild: () => ipcRenderer.invoke("search:rebuild"),
   },
   onExportComplete: (callback: (result: ExportResult) => void) => {
     ipcRenderer.on("export-complete", (_, result) => callback(result));

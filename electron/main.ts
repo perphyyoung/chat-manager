@@ -483,12 +483,6 @@ ipcMain.handle("search:querySearch", async (_, query: string) => {
   return await searchService.querySearch(query);
 });
 
-ipcMain.handle("search:rebuild", async () => {
-  const database = getDatabase();
-  const searchService = new SearchService(database);
-  await searchService.rebuildIndex();
-});
-
 // Transaction IPC handlers for DDD repository pattern
 const activeTransactions = new Map<string, ReturnType<typeof getDatabase>>();
 

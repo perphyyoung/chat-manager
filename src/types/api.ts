@@ -74,7 +74,6 @@ export interface ElectronAPI {
   };
   search: {
     querySearch: (query: string) => Promise<SearchResults>;
-    rebuild: () => Promise<void>;
   };
   onExportComplete: (callback: (result: ExportResult) => void) => void;
   onImportComplete: (callback: (result: ImportResult) => void) => void;
