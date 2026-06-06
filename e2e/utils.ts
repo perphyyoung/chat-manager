@@ -112,7 +112,7 @@ export async function createDocumentWithAnswer(
     }
 
     if (answers.length > 0) {
-      await win.electronAPI.db.answers.save(
+      await win.electronAPI.answer.saveAllAnswers(
         id,
         answers.map((a) => ({
           id: a.id,

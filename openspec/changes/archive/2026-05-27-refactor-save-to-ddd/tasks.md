@@ -8,7 +8,7 @@
 - [x] 1.4 添加 `db:document:save` IPC 方法（仅文档元数据）
 - [x] 1.5 添加 `db:questions:save` IPC 方法（批量 UPSERT）
 - [x] 1.6 添加 `db:questions:delete` IPC 方法（批量删除）
-- [x] 1.7 添加 `db:answers:save` IPC 方法（批量 UPSERT）
+- [x] 1.7 添加 `answer:saveAllAnswers` IPC 方法（批量 UPSERT）
 - [x] 1.8 添加 `answer:deleteAllAnswers` IPC 方法（批量删除）
 - [x] 1.9 在 `electron/preload/index.ts` 暴露新的 IPC 接口
 

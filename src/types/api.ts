@@ -38,18 +38,19 @@ export interface ElectronAPI {
       save: (docId: string, questions: QuestionInput[]) => Promise<void>;
       delete: (ids: string[]) => Promise<void>;
     };
-    answers: {
-      save: (docId: string, answers: AnswerInput[]) => Promise<void>;
-    };
   };
   answer: {
     findAnswerByQuestionId: (questionId: string) => Promise<AnswerDTO | null>;
     saveAnswer: (answerJson: string) => Promise<void>;
     deleteAnswer: (id: string) => Promise<void>;
     deleteAllAnswers: (ids: string[]) => Promise<void>;
+    saveAllAnswers: (docId: string, answers: AnswerInput[]) => Promise<void>;
   };
   question: {
-    softDeleteQuestion: (documentId: string, questionId: string) => Promise<void>;
+    softDeleteQuestion: (
+      documentId: string,
+      questionId: string,
+    ) => Promise<void>;
     restoreQuestion: (documentId: string, questionId: string) => Promise<void>;
     getDeletedQuestions: (
       documentId: string,

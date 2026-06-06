@@ -100,7 +100,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
       await this.questionRepo.saveAll(document.id, [...document.questions]);
 
       // 3. 保存所有答案
-      await this.answerRepo.saveAll(document.id, [...document.answers]);
+      await this.answerRepo.saveAllAnswers(document.id, [...document.answers]);
 
       // 4. 保存标签关联（同步 document_tags 表）
       await this.syncDocumentTags(document.id, [...document.tags]);

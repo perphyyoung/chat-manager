@@ -54,7 +54,7 @@ describe("AnswerApplicationService", () => {
       findAnswerByQuestionId: vi.fn<() => Promise<Answer | null>>(),
       findByDocumentId: vi.fn<() => Promise<Answer[]>>(),
       saveAnswer: vi.fn<() => Promise<void>>(),
-      saveAll: vi.fn<() => Promise<void>>(),
+      saveAllAnswers: vi.fn<() => Promise<void>>(),
       deleteAnswer: vi.fn<() => Promise<void>>(),
       deleteAllAnswers: vi.fn<() => Promise<void>>(),
     };

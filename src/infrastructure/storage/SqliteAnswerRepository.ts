@@ -30,7 +30,7 @@ export class SqliteAnswerRepository implements AnswerRepository {
     await window.electronAPI.answer.saveAnswer(JSON.stringify(answer.toJSON()));
   }
 
-  async saveAll(documentId: string, answers: Answer[]): Promise<void> {
+  async saveAllAnswers(documentId: string, answers: Answer[]): Promise<void> {
     const answerJsons = answers.map((a) => ({
       id: a.id,
       questionId: a.questionId,
@@ -38,7 +38,7 @@ export class SqliteAnswerRepository implements AnswerRepository {
       createdAt: a.createdAt.toISOString(),
       updatedAt: a.updatedAt.toISOString(),
     }));
-    await window.electronAPI.db.answers.save(documentId, answerJsons);
+    await window.electronAPI.answer.saveAllAnswers(documentId, answerJsons);
   }
 
   async deleteAnswer(id: string): Promise<void> {

@@ -46,10 +46,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
         ipcRenderer.invoke("db:questions:save", docId, questions),
       delete: (ids: string[]) => ipcRenderer.invoke("db:questions:delete", ids),
     },
-    answers: {
-      save: (docId: string, answers: AnswerInput[]) =>
-        ipcRenderer.invoke("db:answers:save", docId, answers),
-    },
   },
   answer: {
     findAnswerByQuestionId: (questionId: string) =>
@@ -59,6 +55,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     deleteAnswer: (id: string) => ipcRenderer.invoke("answer:deleteAnswer", id),
     deleteAllAnswers: (ids: string[]) =>
       ipcRenderer.invoke("answer:deleteAllAnswers", ids),
+    saveAllAnswers: (docId: string, answers: AnswerInput[]) =>
+      ipcRenderer.invoke("answer:saveAllAnswers", docId, answers),
   },
   question: {
     softDeleteQuestion: (documentId: string, questionId: string) =>

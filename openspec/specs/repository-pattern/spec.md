@@ -24,7 +24,7 @@ TBD - created by archiving change refactor-save-to-ddd. Update Purpose after arc
 
 #### Scenario: 批量保存答案
 
-- **WHEN** 调用 `db:answers:save` 传入文档 ID 和答案数组
+- **WHEN** 调用 `answer:saveAllAnswers` 传入文档 ID 和答案数组
 - **THEN** 系统使用 UPSERT 方式保存所有答案
 - **AND THEN** 删除不再存在的答案
 

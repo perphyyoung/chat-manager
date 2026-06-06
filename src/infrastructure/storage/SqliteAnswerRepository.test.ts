@@ -8,15 +8,14 @@ type MockFn = Mock<(...args: unknown[]) => unknown>;
 interface MockElectronAPI {
   db: {
     findById: MockFn;
-    answers: {
-      save: MockFn;
-    };
+
   };
   answer: {
     findAnswerByQuestionId: MockFn;
     saveAnswer: MockFn;
     deleteAnswer: MockFn;
     deleteAllAnswers: MockFn;
+    saveAllAnswers: MockFn;
   };
 }
 
@@ -28,15 +27,14 @@ describe("SqliteAnswerRepository", () => {
     mockElectronAPI = {
       db: {
         findById: vi.fn(),
-        answers: {
-          save: vi.fn(),
-        },
+
       },
       answer: {
         findAnswerByQuestionId: vi.fn(),
         saveAnswer: vi.fn(),
         deleteAnswer: vi.fn(),
         deleteAllAnswers: vi.fn(),
+        saveAllAnswers: vi.fn(),
       },
     };
     (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =
@@ -133,9 +131,9 @@ describe("SqliteAnswerRepository", () => {
         new Answer("a2", "q2", "Answer 2", new Date("2024-01-01")),
       ];
 
-      await repository.saveAll("doc1", answers);
+      await repository.saveAllAnswers("doc1", answers);
 
-      expect(mockElectronAPI.db.answers.save).toHaveBeenCalledWith(
+      expect(mockElectronAPI.answer.saveAllAnswers).toHaveBeenCalledWith(
         "doc1",
         expect.arrayContaining([
           expect.objectContaining({

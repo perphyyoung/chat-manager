@@ -362,16 +362,19 @@ ipcMain.handle("tag:existsTag", (_, name: string) => {
   return !!row;
 });
 
-ipcMain.handle("tag:addTagToDocument", (_, documentId: string, tagId: string) => {
-  const database = getDatabase();
-  database
-    .prepare(
-      "INSERT INTO document_tags (document_id, tag_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
-    )
-    .run(documentId, tagId);
-  SearchService.updateTag(database, tagId);
-  SearchService.updateDocument(database, documentId);
-});
+ipcMain.handle(
+  "tag:addTagToDocument",
+  (_, documentId: string, tagId: string) => {
+    const database = getDatabase();
+    database
+      .prepare(
+        "INSERT INTO document_tags (document_id, tag_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+      )
+      .run(documentId, tagId);
+    SearchService.updateTag(database, tagId);
+    SearchService.updateDocument(database, documentId);
+  },
+);
 
 ipcMain.handle(
   "tag:removeTagFromDocument",
@@ -574,7 +577,7 @@ ipcMain.handle("db:questions:delete", (_, ids: string[]) => {
 });
 
 ipcMain.handle(
-  "db:answers:save",
+  "answer:saveAllAnswers",
   (_, docId: string, answers: AnswerInput[]) => {
     const database = getDatabase();
     const now = new Date().toISOString();
