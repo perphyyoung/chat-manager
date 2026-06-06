@@ -7,7 +7,7 @@ type MockFn = Mock<(...args: unknown[]) => unknown>;
 
 interface MockElectronAPI {
   tag: {
-    findAll: MockFn;
+    findAllTags: MockFn;
     findTagById: MockFn;
     findTagByName: MockFn;
     saveTag: MockFn;
@@ -23,7 +23,7 @@ describe("SqliteTagRepository", () => {
   beforeEach(() => {
     mockElectronAPI = {
       tag: {
-        findAll: vi.fn(),
+        findAllTags: vi.fn(),
         findTagById: vi.fn(),
         findTagByName: vi.fn(),
         saveTag: vi.fn(),
@@ -42,9 +42,9 @@ describe("SqliteTagRepository", () => {
         { id: "tag1", name: "Tag 1", createdAt: "2024-01-01T00:00:00Z" },
         { id: "tag2", name: "Tag 2", createdAt: "2024-01-02T00:00:00Z" },
       ];
-      mockElectronAPI.tag.findAll.mockResolvedValue(tagData);
+      mockElectronAPI.tag.findAllTags.mockResolvedValue(tagData);
 
-      const result = await repository.findAll();
+      const result = await repository.findAllTags();
 
       expect(result).toHaveLength(2);
       expect(result[0]?.id).toBe("tag1");
@@ -54,17 +54,17 @@ describe("SqliteTagRepository", () => {
     });
 
     it("should return empty array when no tags", async () => {
-      mockElectronAPI.tag.findAll.mockResolvedValue([]);
+      mockElectronAPI.tag.findAllTags.mockResolvedValue([]);
 
-      const result = await repository.findAll();
+      const result = await repository.findAllTags();
 
       expect(result).toEqual([]);
     });
 
     it("should return empty array when tag API is unavailable", async () => {
-      mockElectronAPI.tag.findAll.mockResolvedValue(undefined);
+      mockElectronAPI.tag.findAllTags.mockResolvedValue(undefined);
 
-      const result = await repository.findAll();
+      const result = await repository.findAllTags();
 
       expect(result).toEqual([]);
     });

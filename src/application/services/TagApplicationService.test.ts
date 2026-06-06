@@ -12,7 +12,7 @@ const mockDate = new Date("2025-01-01T00:00:00.000Z");
 class MockTagRepository implements TagRepository {
   private tags: Map<string, Tag> = new Map();
 
-  async findAll(): Promise<Tag[]> {
+  async findAllTags(): Promise<Tag[]> {
     return Array.from(this.tags.values());
   }
 

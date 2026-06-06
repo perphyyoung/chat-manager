@@ -1,7 +1,7 @@
 import type { Tag } from "../entities";
 
 export interface TagRepository {
-  findAll(): Promise<Tag[]>;
+  findAllTags(): Promise<Tag[]>;
   findTagById(id: string): Promise<Tag | null>;
   findTagByName(name: string): Promise<Tag | null>;
   saveTag(tag: Tag): Promise<void>;

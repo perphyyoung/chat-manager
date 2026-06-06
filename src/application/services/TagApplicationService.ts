@@ -15,7 +15,7 @@ export class TagApplicationService {
   ) {}
 
   async getAllTags(): Promise<Tag[]> {
-    return this.tagRepo.findAll();
+    return this.tagRepo.findAllTags();
   }
 
   async createTag(name: string): Promise<Tag> {

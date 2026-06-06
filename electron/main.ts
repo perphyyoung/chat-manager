@@ -313,7 +313,7 @@ ipcMain.handle("question:clearDeleted", (_, documentId: string) => {
 });
 
 // Tag IPC handlers
-ipcMain.handle("tag:findAll", () => {
+ipcMain.handle("tag:findAllTags", () => {
   const database = getDatabase();
   const tags = database
     .prepare("SELECT * FROM tags ORDER BY created_at DESC")

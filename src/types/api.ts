@@ -61,7 +61,7 @@ export interface ElectronAPI {
     clearDeleted: (documentId: string) => Promise<void>;
   };
   tag: {
-    findAll: () => Promise<TagDTO[]>;
+    findAllTags: () => Promise<TagDTO[]>;
     findTagById: (id: string) => Promise<TagDTO | null>;
     findTagByName: (name: string) => Promise<TagDTO | null>;
     saveTag: (tagJson: string) => Promise<void>;

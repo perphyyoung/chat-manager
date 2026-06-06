@@ -12,8 +12,8 @@ function toTag(dto: TagData): Tag {
 }
 
 export class SqliteTagRepository implements TagRepository {
-  async findAll(): Promise<Tag[]> {
-    const rows = await window.electronAPI.tag?.findAll();
+  async findAllTags(): Promise<Tag[]> {
+    const rows = await window.electronAPI.tag.findAllTags();
     if (!rows) return [];
     return rows.map((r: TagData) => toTag(r));
   }

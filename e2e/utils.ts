@@ -137,7 +137,7 @@ export async function cleanupE2ETags(page: Page): Promise<void> {
   try {
     const allTags = await page.evaluate(async () => {
       const win = window as unknown as WindowWithElectronAPI;
-      return win.electronAPI.tag.findAll();
+      return win.electronAPI.tag.findAllTags();
     });
 
     // 筛选出 e2e 开头的标签
