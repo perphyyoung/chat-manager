@@ -132,6 +132,13 @@ test.describe("添加问题功能", () => {
     await clearBtn.click();
     await window.waitForSelector(".confirm-dialog", { timeout: 2000 });
     await window.locator(".confirm-dialog .btn-danger").click();
+    // 清空后不自动关闭回收站，需要手动关闭
+    await window.waitForSelector(".deleted-questions-modal .deleted-item", {
+      state: "detached",
+      timeout: 2000,
+    });
+    const closeBtn = window.locator(".deleted-questions-modal .btn-close");
+    await closeBtn.click();
     await window.waitForSelector(".deleted-questions-modal", {
       state: "detached",
       timeout: 2000,
@@ -190,6 +197,39 @@ test.describe("添加问题功能", () => {
 
     const cancelledQuestion = questionList.filter({ hasText: "取消的问题" });
     await expect(cancelledQuestion).toHaveCount(0);
+  });
+
+  test("从回收站恢复问题", async ({ window }) => {
+    await deleteFirstQuestion(window);
+
+    const recycleBadge = window.locator(".recycle-badge");
+    await expect(recycleBadge).toBeVisible();
+    const badgeTextBefore = await recycleBadge.textContent();
+    expect(parseInt(badgeTextBefore ?? "0")).toBe(1);
+
+    const recycleBtn = window.locator(".fab--recycle");
+    await recycleBtn.click();
+    await window.waitForSelector(".deleted-questions-modal", { timeout: 2000 });
+
+    const restoreBtn = window.locator(".deleted-questions-modal .btn-restore");
+    await expect(restoreBtn).toBeVisible();
+    await restoreBtn.click();
+    // 恢复后不自动关闭回收站，需要手动关闭
+    await window.waitForSelector(".deleted-questions-modal .deleted-item", {
+      state: "detached",
+      timeout: 2000,
+    });
+    const closeBtn = window.locator(".deleted-questions-modal .btn-close");
+    await closeBtn.click();
+    await window.waitForSelector(".deleted-questions-modal", {
+      state: "detached",
+      timeout: 2000,
+    });
+
+    const questionList = window.locator(".question-item");
+    await expect(questionList).toHaveCount(1);
+
+    await expect(recycleBadge).toBeHidden();
   });
 
   test("弹窗打开时问题输入框自动聚焦", async ({ window }) => {

@@ -12,7 +12,7 @@
 ## 2. IPC 层扩展
 
 - [x] 2.1 在 `ipc/handlers.ts` 中添加 `question:softDelete` 处理器
-- [x] 2.2 在 `ipc/handlers.ts` 中添加 `question:restore` 处理器
+- [x] 2.2 在 `ipc/handlers.ts` 中添加 `question:restoreQuestion` 处理器
 - [x] 2.3 在 `ipc/handlers.ts` 中添加 `question:getDeletedQuestions` 处理器
 - [x] 2.4 在 `ipc/handlers.ts` 中添加 `question:permanentlyDelete` 处理器
 - [x] 2.5 在 `ipc/handlers.ts` 中添加 `question:clearDeletedQuestions` 处理器

@@ -383,7 +383,6 @@ onUnmounted(() => {
       @clear="
         () => {
           documentStore.clearDeletedQuestions();
-          showRecycleBin = false;
         }
       "
     />

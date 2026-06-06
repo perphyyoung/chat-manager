@@ -253,7 +253,7 @@ ipcMain.handle(
 );
 
 ipcMain.handle(
-  "question:restore",
+  "question:restoreQuestion",
   (_, documentId: string, questionId: string) => {
     const database = getDatabase();
     const now = new Date().toISOString();

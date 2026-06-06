@@ -168,7 +168,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
   }
 
   async restoreQuestion(documentId: string, questionId: string): Promise<void> {
-    await window.electronAPI.question?.restore(documentId, questionId);
+    await window.electronAPI.question.restoreQuestion(documentId, questionId);
   }
 
   async getDeletedQuestions(
