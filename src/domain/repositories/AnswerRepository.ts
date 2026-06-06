@@ -6,5 +6,5 @@ export interface AnswerRepository {
   saveAnswer(answer: Answer): Promise<void>;
   saveAll(documentId: string, answers: Answer[]): Promise<void>;
   deleteAnswer(id: string): Promise<void>;
-  deleteAll(ids: string[]): Promise<void>;
+  deleteAllAnswers(ids: string[]): Promise<void>;
 }

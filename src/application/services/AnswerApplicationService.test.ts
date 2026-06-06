@@ -56,7 +56,7 @@ describe("AnswerApplicationService", () => {
       saveAnswer: vi.fn<() => Promise<void>>(),
       saveAll: vi.fn<() => Promise<void>>(),
       deleteAnswer: vi.fn<() => Promise<void>>(),
-      deleteAll: vi.fn<() => Promise<void>>(),
+      deleteAllAnswers: vi.fn<() => Promise<void>>(),
     };
 
     eventBus = new SimpleEventBus();

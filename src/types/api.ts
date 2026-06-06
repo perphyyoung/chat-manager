@@ -40,13 +40,13 @@ export interface ElectronAPI {
     };
     answers: {
       save: (docId: string, answers: AnswerInput[]) => Promise<void>;
-      delete: (ids: string[]) => Promise<void>;
     };
   };
   answer: {
     findAnswerByQuestionId: (questionId: string) => Promise<AnswerDTO | null>;
     saveAnswer: (answerJson: string) => Promise<void>;
     deleteAnswer: (id: string) => Promise<void>;
+    deleteAllAnswers: (ids: string[]) => Promise<void>;
   };
   question: {
     softDeleteQuestion: (documentId: string, questionId: string) => Promise<void>;

@@ -102,7 +102,7 @@ describe("SqliteDocumentRepository", () => {
       saveAnswer: vi.fn(),
       saveAll: vi.fn(),
       deleteAnswer: vi.fn(),
-      deleteAll: vi.fn(),
+      deleteAllAnswers: vi.fn(),
     };
 
     (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =

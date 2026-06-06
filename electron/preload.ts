@@ -49,14 +49,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
     answers: {
       save: (docId: string, answers: AnswerInput[]) =>
         ipcRenderer.invoke("db:answers:save", docId, answers),
-      delete: (ids: string[]) => ipcRenderer.invoke("db:answers:delete", ids),
     },
   },
   answer: {
     findAnswerByQuestionId: (questionId: string) =>
       ipcRenderer.invoke("answer:findAnswerByQuestionId", questionId),
-    saveAnswer: (answerJson: string) => ipcRenderer.invoke("answer:saveAnswer", answerJson),
+    saveAnswer: (answerJson: string) =>
+      ipcRenderer.invoke("answer:saveAnswer", answerJson),
     deleteAnswer: (id: string) => ipcRenderer.invoke("answer:deleteAnswer", id),
+    deleteAllAnswers: (ids: string[]) =>
+      ipcRenderer.invoke("answer:deleteAllAnswers", ids),
   },
   question: {
     softDeleteQuestion: (documentId: string, questionId: string) =>
@@ -71,7 +73,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   tag: {
     findAllTags: () => ipcRenderer.invoke("tag:findAllTags"),
     findTagById: (id: string) => ipcRenderer.invoke("tag:findTagById", id),
-    findTagByName: (name: string) => ipcRenderer.invoke("tag:findTagByName", name),
+    findTagByName: (name: string) =>
+      ipcRenderer.invoke("tag:findTagByName", name),
     saveTag: (tagJson: string) => ipcRenderer.invoke("tag:saveTag", tagJson),
     deleteTag: (id: string) => ipcRenderer.invoke("tag:deleteTag", id),
     existsTag: (name: string) => ipcRenderer.invoke("tag:existsTag", name),
@@ -85,7 +88,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("tag:findDocumentsByTagId", tagId),
   },
   search: {
-    querySearch: (query: string) => ipcRenderer.invoke("search:querySearch", query),
+    querySearch: (query: string) =>
+      ipcRenderer.invoke("search:querySearch", query),
   },
   onExportComplete: (callback: (result: ExportResult) => void) => {
     ipcRenderer.on("export-complete", (_, result) => callback(result));

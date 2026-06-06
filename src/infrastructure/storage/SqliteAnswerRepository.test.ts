@@ -10,13 +10,13 @@ interface MockElectronAPI {
     findById: MockFn;
     answers: {
       save: MockFn;
-      delete: MockFn;
     };
   };
   answer: {
     findAnswerByQuestionId: MockFn;
     saveAnswer: MockFn;
     deleteAnswer: MockFn;
+    deleteAllAnswers: MockFn;
   };
 }
 
@@ -30,13 +30,13 @@ describe("SqliteAnswerRepository", () => {
         findById: vi.fn(),
         answers: {
           save: vi.fn(),
-          delete: vi.fn(),
         },
       },
       answer: {
         findAnswerByQuestionId: vi.fn(),
         saveAnswer: vi.fn(),
         deleteAnswer: vi.fn(),
+        deleteAllAnswers: vi.fn(),
       },
     };
     (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =
@@ -163,18 +163,18 @@ describe("SqliteAnswerRepository", () => {
 
   describe("deleteAll", () => {
     it("should delete answers by ids", async () => {
-      await repository.deleteAll(["a1", "a2"]);
+      await repository.deleteAllAnswers(["a1", "a2"]);
 
-      expect(mockElectronAPI.db.answers.delete).toHaveBeenCalledWith([
+      expect(mockElectronAPI.answer.deleteAllAnswers).toHaveBeenCalledWith([
         "a1",
         "a2",
       ]);
     });
 
     it("should not call delete when ids array is empty", async () => {
-      await repository.deleteAll([]);
+      await repository.deleteAllAnswers([]);
 
-      expect(mockElectronAPI.db.answers.delete).not.toHaveBeenCalled();
+      expect(mockElectronAPI.answer.deleteAllAnswers).not.toHaveBeenCalled();
     });
   });
 });

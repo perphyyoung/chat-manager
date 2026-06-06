@@ -70,7 +70,7 @@ ipcMain.handle("db:questions:delete", (_, ids: string[]) => {...})
 
 // 答案（批量操作）
 ipcMain.handle("db:answers:save", (_, docId: string, answers: AnswerJson[]) => {...})
-ipcMain.handle("db:answers:delete", (_, ids: string[]) => {...})
+ipcMain.handle("answer:deleteAllAnswers", (_, ids: string[]) => {...})
 
 // 事务
 ipcMain.handle("db:transaction:begin", () => {...})
