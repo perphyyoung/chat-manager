@@ -14,7 +14,7 @@ interface MockElectronAPI {
     };
   };
   answer: {
-    findByQuestionId: MockFn;
+    findAnswerByQuestionId: MockFn;
     saveAnswer: MockFn;
     deleteAnswer: MockFn;
   };
@@ -34,7 +34,7 @@ describe("SqliteAnswerRepository", () => {
         },
       },
       answer: {
-        findByQuestionId: vi.fn(),
+        findAnswerByQuestionId: vi.fn(),
         saveAnswer: vi.fn(),
         deleteAnswer: vi.fn(),
       },
@@ -46,15 +46,15 @@ describe("SqliteAnswerRepository", () => {
 
   describe("findByQuestionId", () => {
     it("should return null when answer not found", async () => {
-      mockElectronAPI.answer.findByQuestionId.mockResolvedValue(null);
+      mockElectronAPI.answer.findAnswerByQuestionId.mockResolvedValue(null);
 
-      const result = await repository.findByQuestionId("q1");
+      const result = await repository.findAnswerByQuestionId("q1");
 
       expect(result).toBeNull();
     });
 
     it("should return answer when found", async () => {
-      mockElectronAPI.answer.findByQuestionId.mockResolvedValue({
+      mockElectronAPI.answer.findAnswerByQuestionId.mockResolvedValue({
         id: "a1",
         questionId: "q1",
         content: "Answer content",
@@ -62,7 +62,7 @@ describe("SqliteAnswerRepository", () => {
         updatedAt: "2024-01-01T00:00:00Z",
       });
 
-      const result = await repository.findByQuestionId("q1");
+      const result = await repository.findAnswerByQuestionId("q1");
 
       expect(result).toBeInstanceOf(Answer);
       expect(result?.content).toBe("Answer content");

@@ -199,7 +199,7 @@ ipcMain.handle("db:exists", (_, id: string) => {
 });
 
 // Answer IPC handlers
-ipcMain.handle("answer:findByQuestionId", (_, questionId: string) => {
+ipcMain.handle("answer:findAnswerByQuestionId", (_, questionId: string) => {
   const database = getDatabase();
   const answer = database
     .prepare("SELECT * FROM answers WHERE question_id = ?")

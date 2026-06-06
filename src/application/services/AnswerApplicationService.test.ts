@@ -51,7 +51,7 @@ describe("AnswerApplicationService", () => {
     };
 
     mockAnswerRepo = {
-      findByQuestionId: vi.fn<() => Promise<Answer | null>>(),
+      findAnswerByQuestionId: vi.fn<() => Promise<Answer | null>>(),
       findByDocumentId: vi.fn<() => Promise<Answer[]>>(),
       saveAnswer: vi.fn<() => Promise<void>>(),
       saveAll: vi.fn<() => Promise<void>>(),
@@ -287,7 +287,7 @@ describe("AnswerApplicationService", () => {
   describe("getAnswerByQuestionId", () => {
     it("should return answer when found", async () => {
       const answer = new Answer("a1", "q1", "Content", mockDate);
-      vi.mocked(mockAnswerRepo.findByQuestionId).mockResolvedValue(answer);
+      vi.mocked(mockAnswerRepo.findAnswerByQuestionId).mockResolvedValue(answer);
 
       const result = await service.getAnswerByQuestionId("q1");
 
@@ -295,7 +295,7 @@ describe("AnswerApplicationService", () => {
     });
 
     it("should return null when answer not found", async () => {
-      vi.mocked(mockAnswerRepo.findByQuestionId).mockResolvedValue(null);
+      vi.mocked(mockAnswerRepo.findAnswerByQuestionId).mockResolvedValue(null);
 
       const result = await service.getAnswerByQuestionId("q1");
 

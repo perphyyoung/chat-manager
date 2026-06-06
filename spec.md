@@ -320,7 +320,7 @@ ipcMain.handle('question:reorder', (_, documentId: string, orderedIds: string[])
 ### 6.3 回答相关
 
 ```typescript
-ipcMain.handle('answer:findByQuestionId', (_, questionId: string) => {...})
+ipcMain.handle('answer:findAnswerByQuestionId', (_, questionId: string) => {...})
 ipcMain.handle('answer:findByDocumentId', (_, documentId: string) => {...})
 ipcMain.handle('answer:saveAnswer', (_, answerJson: string) => {...})
 ipcMain.handle('answer:deleteAnswer', (_, id: string) => {...})

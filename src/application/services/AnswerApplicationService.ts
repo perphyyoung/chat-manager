@@ -89,6 +89,6 @@ export class AnswerApplicationService {
   }
 
   async getAnswerByQuestionId(questionId: string): Promise<Answer | null> {
-    return this.answerRepo.findByQuestionId(questionId);
+    return this.answerRepo.findAnswerByQuestionId(questionId);
   }
 }

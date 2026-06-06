@@ -12,8 +12,8 @@ function toAnswer(dto: AnswerDTO): Answer {
 }
 
 export class SqliteAnswerRepository implements AnswerRepository {
-  async findByQuestionId(questionId: string): Promise<Answer | null> {
-    const dto = await window.electronAPI.answer.findByQuestionId(questionId);
+  async findAnswerByQuestionId(questionId: string): Promise<Answer | null> {
+    const dto = await window.electronAPI.answer.findAnswerByQuestionId(questionId);
     if (!dto) return null;
     return toAnswer(dto);
   }

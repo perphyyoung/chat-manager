@@ -44,7 +44,7 @@ export interface ElectronAPI {
     };
   };
   answer: {
-    findByQuestionId: (questionId: string) => Promise<AnswerDTO | null>;
+    findAnswerByQuestionId: (questionId: string) => Promise<AnswerDTO | null>;
     saveAnswer: (answerJson: string) => Promise<void>;
     deleteAnswer: (id: string) => Promise<void>;
   };
