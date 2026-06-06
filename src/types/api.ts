@@ -51,7 +51,7 @@ export interface ElectronAPI {
   question: {
     softDelete: (documentId: string, questionId: string) => Promise<void>;
     restore: (documentId: string, questionId: string) => Promise<void>;
-    getDeleted: (
+    getDeletedQuestions: (
       documentId: string,
     ) => Promise<Array<{ id: string; text: string; deletedAt: string }>>;
     clearDeletedQuestions: (documentId: string) => Promise<void>;

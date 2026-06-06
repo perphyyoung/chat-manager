@@ -265,7 +265,7 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle("question:getDeleted", (_, documentId: string) => {
+ipcMain.handle("question:getDeletedQuestions", (_, documentId: string) => {
   const database = getDatabase();
   const questions = database
     .prepare(

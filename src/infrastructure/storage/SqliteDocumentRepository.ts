@@ -175,7 +175,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
     documentId: string,
   ): Promise<Array<{ id: string; text: string; deletedAt: Date }>> {
     const questions =
-      (await window.electronAPI.question?.getDeleted(documentId)) || [];
+      (await window.electronAPI.question.getDeletedQuestions(documentId)) || [];
     return questions.map(
       (q: { id: string; text: string; deletedAt: string }) => ({
         id: q.id,
