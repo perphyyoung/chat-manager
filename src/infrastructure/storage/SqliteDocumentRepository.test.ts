@@ -99,7 +99,7 @@ describe("SqliteDocumentRepository", () => {
     mockAnswerRepo = {
       findByQuestionId: vi.fn(),
       findByDocumentId: vi.fn(),
-      save: vi.fn(),
+      saveAnswer: vi.fn(),
       saveAll: vi.fn(),
       deleteAnswer: vi.fn(),
       deleteAll: vi.fn(),

@@ -15,7 +15,7 @@ interface MockElectronAPI {
   };
   answer: {
     findByQuestionId: MockFn;
-    save: MockFn;
+    saveAnswer: MockFn;
     deleteAnswer: MockFn;
   };
 }
@@ -35,7 +35,7 @@ describe("SqliteAnswerRepository", () => {
       },
       answer: {
         findByQuestionId: vi.fn(),
-        save: vi.fn(),
+        saveAnswer: vi.fn(),
         deleteAnswer: vi.fn(),
       },
     };
@@ -118,9 +118,9 @@ describe("SqliteAnswerRepository", () => {
         new Date("2024-01-01"),
       );
 
-      await repository.save(answer);
+      await repository.saveAnswer(answer);
 
-      expect(mockElectronAPI.answer.save).toHaveBeenCalledWith(
+      expect(mockElectronAPI.answer.saveAnswer).toHaveBeenCalledWith(
         JSON.stringify(answer.toJSON()),
       );
     });

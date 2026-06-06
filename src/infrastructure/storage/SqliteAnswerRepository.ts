@@ -26,8 +26,8 @@ export class SqliteAnswerRepository implements AnswerRepository {
     return doc.answers.map((a: AnswerDTO) => toAnswer(a));
   }
 
-  async save(answer: Answer): Promise<void> {
-    await window.electronAPI.answer.save(JSON.stringify(answer.toJSON()));
+  async saveAnswer(answer: Answer): Promise<void> {
+    await window.electronAPI.answer.saveAnswer(JSON.stringify(answer.toJSON()));
   }
 
   async saveAll(documentId: string, answers: Answer[]): Promise<void> {

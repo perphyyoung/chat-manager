@@ -53,7 +53,7 @@ describe("AnswerApplicationService", () => {
     mockAnswerRepo = {
       findByQuestionId: vi.fn<() => Promise<Answer | null>>(),
       findByDocumentId: vi.fn<() => Promise<Answer[]>>(),
-      save: vi.fn<() => Promise<void>>(),
+      saveAnswer: vi.fn<() => Promise<void>>(),
       saveAll: vi.fn<() => Promise<void>>(),
       deleteAnswer: vi.fn<() => Promise<void>>(),
       deleteAll: vi.fn<() => Promise<void>>(),
@@ -89,7 +89,7 @@ describe("AnswerApplicationService", () => {
       expect(answer.questionId).toBe("q1");
       expect(answer.content).toBe("This is the answer");
       expect(mockDocumentRepo.save).toHaveBeenCalled();
-      expect(mockAnswerRepo.save).toHaveBeenCalled();
+      expect(mockAnswerRepo.saveAnswer).toHaveBeenCalled();
     });
 
     it("should throw NotFoundError when document not found", async () => {
@@ -175,7 +175,7 @@ describe("AnswerApplicationService", () => {
 
       expect(answer.content).toBe("Updated content");
       expect(mockDocumentRepo.save).toHaveBeenCalled();
-      expect(mockAnswerRepo.save).toHaveBeenCalled();
+      expect(mockAnswerRepo.saveAnswer).toHaveBeenCalled();
     });
 
     it("should throw NotFoundError when document not found", async () => {

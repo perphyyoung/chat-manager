@@ -43,7 +43,7 @@ export class AnswerApplicationService {
     const answer = new Answer(answerId, questionId, content);
 
     document.addAnswer(answer);
-    await this.answerRepo.save(answer);
+    await this.answerRepo.saveAnswer(answer);
     await this.documentRepo.save(document);
 
     this.eventBus.emit(
@@ -69,7 +69,7 @@ export class AnswerApplicationService {
     }
 
     answer.editContent(newContent);
-    await this.answerRepo.save(answer);
+    await this.answerRepo.saveAnswer(answer);
     await this.documentRepo.save(document);
 
     this.eventBus.emit(new AnswerUpdatedEvent(documentId, answerId));

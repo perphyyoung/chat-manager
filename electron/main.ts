@@ -214,7 +214,7 @@ ipcMain.handle("answer:findByQuestionId", (_, questionId: string) => {
   };
 });
 
-ipcMain.handle("answer:save", (_, answerJson: string) => {
+ipcMain.handle("answer:saveAnswer", (_, answerJson: string) => {
   const database = getDatabase();
   const answer = JSON.parse(answerJson);
   const now = new Date().toISOString();

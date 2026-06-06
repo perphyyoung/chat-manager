@@ -322,7 +322,7 @@ ipcMain.handle('question:reorder', (_, documentId: string, orderedIds: string[])
 ```typescript
 ipcMain.handle('answer:findByQuestionId', (_, questionId: string) => {...})
 ipcMain.handle('answer:findByDocumentId', (_, documentId: string) => {...})
-ipcMain.handle('answer:save', (_, answerJson: string) => {...})
+ipcMain.handle('answer:saveAnswer', (_, answerJson: string) => {...})
 ipcMain.handle('answer:deleteAnswer', (_, id: string) => {...})
 ```
 

@@ -22,7 +22,7 @@
   - [x] 修改 `documents` 表添加 `created_at`, `updated_at`
 - [x] 2.2 更新 IPC handlers：
   - [x] 移除消息相关 handlers
-  - [x] 添加回答相关 handlers（answer:findByQuestionId, answer:save, answer:deleteAnswer）
+  - [x] 添加回答相关 handlers（answer:findByQuestionId, answer:saveAnswer, answer:deleteAnswer）
 
 ## 3. 基础设施层重构
 

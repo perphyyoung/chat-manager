@@ -55,7 +55,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   answer: {
     findByQuestionId: (questionId: string) =>
       ipcRenderer.invoke("answer:findByQuestionId", questionId),
-    save: (answerJson: string) => ipcRenderer.invoke("answer:save", answerJson),
+    saveAnswer: (answerJson: string) => ipcRenderer.invoke("answer:saveAnswer", answerJson),
     deleteAnswer: (id: string) => ipcRenderer.invoke("answer:deleteAnswer", id),
   },
   question: {
