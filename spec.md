@@ -330,8 +330,8 @@ ipcMain.handle('answer:delete', (_, id: string) => {...})
 
 ```typescript
 // 标签管理
-ipcMain.handle('tag:findAll', () => {...})
-ipcMain.handle('tag:findById', (_, id: string) => {...})
+ipcMain.handle('tag:findAllTags', () => {...})
+ipcMain.handle('tag:findTagById', (_, id: string) => {...})
 ipcMain.handle('tag:saveTag', (_, tagJson: string) => {...})
 ipcMain.handle('tag:deleteTag', (_, id: string) => {...})
 ipcMain.handle('tag:updateName', (_, id: string, newName: string) => {...})
@@ -344,8 +344,8 @@ ipcMain.handle('tag:removeTagFromDocument', (_, documentId: string, tagId: strin
 
 // 预加载脚本暴露
 electronAPI.tag = {
-  findAll: () => ipcRenderer.invoke('tag:findAll'),
-  findById: (id: string) => ipcRenderer.invoke('tag:findById', id),
+  findAll: () => ipcRenderer.invoke('tag:findAllTags'),
+  findById: (id: string) => ipcRenderer.invoke('tag:findTagById', id),
   save: (json: string) => ipcRenderer.invoke('tag:saveTag', json),
   deleteTag: (id: string) => ipcRenderer.invoke('tag:deleteTag', id),
   updateName: (id: string, newName: string) => ipcRenderer.invoke('tag:updateName', id, newName),

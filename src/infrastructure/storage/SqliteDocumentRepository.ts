@@ -202,7 +202,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
   }
 
   async clearDeletedQuestions(documentId: string): Promise<void> {
-    await window.electronAPI.question?.clearDeleted(documentId);
+    await window.electronAPI.question.clearDeletedQuestions(documentId);
   }
 
   // 标签相关方法

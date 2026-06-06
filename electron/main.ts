@@ -294,7 +294,7 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle("question:clearDeleted", (_, documentId: string) => {
+ipcMain.handle("question:clearDeletedQuestions", (_, documentId: string) => {
   const database = getDatabase();
   // 获取所有已删除的问题ID
   const deletedQuestions = database

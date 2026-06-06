@@ -40,7 +40,7 @@ interface MockElectronAPI {
     restore: MockFn;
     getDeleted: MockFn;
     permanentlyDelete: MockFn;
-    clearDeleted: MockFn;
+    clearDeletedQuestions: MockFn;
   };
   tag: {
     findDocumentsByTagId: MockFn;
@@ -80,7 +80,7 @@ describe("SqliteDocumentRepository", () => {
         restore: vi.fn(),
         getDeleted: vi.fn(),
         permanentlyDelete: vi.fn(),
-        clearDeleted: vi.fn(),
+        clearDeletedQuestions: vi.fn(),
       },
       tag: {
         findDocumentsByTagId: vi.fn(),

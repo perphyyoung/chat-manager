@@ -58,7 +58,7 @@ export interface ElectronAPI {
       documentId: string,
       questionId: string,
     ) => Promise<void>;
-    clearDeleted: (documentId: string) => Promise<void>;
+    clearDeletedQuestions: (documentId: string) => Promise<void>;
   };
   tag: {
     findAllTags: () => Promise<TagDTO[]>;
