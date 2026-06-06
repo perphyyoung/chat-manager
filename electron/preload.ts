@@ -65,8 +65,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("question:restore", documentId, questionId),
     getDeleted: (documentId: string) =>
       ipcRenderer.invoke("question:getDeleted", documentId),
-    permanentlyDelete: (documentId: string, questionId: string) =>
-      ipcRenderer.invoke("question:permanentlyDelete", documentId, questionId),
     clearDeletedQuestions: (documentId: string) =>
       ipcRenderer.invoke("question:clearDeletedQuestions", documentId),
   },

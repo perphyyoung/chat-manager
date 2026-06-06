@@ -54,10 +54,6 @@ export interface ElectronAPI {
     getDeleted: (
       documentId: string,
     ) => Promise<Array<{ id: string; text: string; deletedAt: string }>>;
-    permanentlyDelete: (
-      documentId: string,
-      questionId: string,
-    ) => Promise<void>;
     clearDeletedQuestions: (documentId: string) => Promise<void>;
   };
   tag: {

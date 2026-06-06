@@ -279,21 +279,6 @@ ipcMain.handle("question:getDeleted", (_, documentId: string) => {
   }));
 });
 
-ipcMain.handle(
-  "question:permanentlyDelete",
-  (_, documentId: string, questionId: string) => {
-    const database = getDatabase();
-    // 先删除关联的回答（级联删除）
-    database
-      .prepare("DELETE FROM answers WHERE question_id = ?")
-      .run(questionId);
-    // 再删除问题
-    database
-      .prepare("DELETE FROM questions WHERE id = ? AND document_id = ?")
-      .run(questionId, documentId);
-  },
-);
-
 ipcMain.handle("question:clearDeletedQuestions", (_, documentId: string) => {
   const database = getDatabase();
   // 获取所有已删除的问题ID
