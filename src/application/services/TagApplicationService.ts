@@ -31,7 +31,7 @@ export class TagApplicationService {
 
     const id = generateTagId();
     const tag = new Tag(id, trimmedName);
-    await this.tagRepo.save(tag);
+    await this.tagRepo.saveTag(tag);
     return tag;
   }
 
@@ -68,7 +68,7 @@ export class TagApplicationService {
 
     // 更新标签名
     tag.updateName(trimmedName);
-    await this.tagRepo.save(tag);
+    await this.tagRepo.saveTag(tag);
 
     // 更新所有关联文档中的标签名
     const documents = await this.documentRepo.findByTagId(tagId);

@@ -30,8 +30,8 @@ export class SqliteTagRepository implements TagRepository {
     return toTag(row);
   }
 
-  async save(tag: Tag): Promise<void> {
-    await window.electronAPI.tag?.save(JSON.stringify(tag.toJSON()));
+  async saveTag(tag: Tag): Promise<void> {
+    await window.electronAPI.tag.saveTag(JSON.stringify(tag.toJSON()));
   }
 
   async deleteTag(id: string): Promise<void> {

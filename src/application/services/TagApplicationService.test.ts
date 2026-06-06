@@ -27,7 +27,7 @@ class MockTagRepository implements TagRepository {
     return null;
   }
 
-  async save(tag: Tag): Promise<void> {
+  async saveTag(tag: Tag): Promise<void> {
     this.tags.set(tag.id, tag);
   }
 

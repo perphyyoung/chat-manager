@@ -10,7 +10,7 @@ interface MockElectronAPI {
     findAll: MockFn;
     findById: MockFn;
     findByName: MockFn;
-    save: MockFn;
+    saveTag: MockFn;
     deleteTag: MockFn;
     existsTag: MockFn;
   };
@@ -26,7 +26,7 @@ describe("SqliteTagRepository", () => {
         findAll: vi.fn(),
         findById: vi.fn(),
         findByName: vi.fn(),
-        save: vi.fn(),
+        saveTag: vi.fn(),
         deleteTag: vi.fn(),
         existsTag: vi.fn(),
       },
@@ -122,11 +122,11 @@ describe("SqliteTagRepository", () => {
   describe("save", () => {
     it("should save tag", async () => {
       const tag = new Tag("tag1", "Tag 1");
-      mockElectronAPI.tag.save.mockResolvedValue(undefined);
+      mockElectronAPI.tag.saveTag.mockResolvedValue(undefined);
 
-      await repository.save(tag);
+      await repository.saveTag(tag);
 
-      expect(mockElectronAPI.tag.save).toHaveBeenCalledWith(
+      expect(mockElectronAPI.tag.saveTag).toHaveBeenCalledWith(
         JSON.stringify(tag.toJSON()),
       );
     });

@@ -351,7 +351,7 @@ ipcMain.handle("tag:findByName", (_, name: string) => {
   };
 });
 
-ipcMain.handle("tag:save", (_, tagJson: string) => {
+ipcMain.handle("tag:saveTag", (_, tagJson: string) => {
   const database = getDatabase();
   const tag = JSON.parse(tagJson);
   const now = new Date().toISOString();
