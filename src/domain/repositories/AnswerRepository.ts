@@ -5,6 +5,6 @@ export interface AnswerRepository {
   findByDocumentId(documentId: string): Promise<Answer[]>;
   save(answer: Answer): Promise<void>;
   saveAll(documentId: string, answers: Answer[]): Promise<void>;
-  delete(id: string): Promise<void>;
+  deleteAnswer(id: string): Promise<void>;
   deleteAll(ids: string[]): Promise<void>;
 }

@@ -233,7 +233,7 @@ ipcMain.handle("answer:save", (_, answerJson: string) => {
   SearchService.updateAnswer(database, answer.id);
 });
 
-ipcMain.handle("answer:delete", (_, id: string) => {
+ipcMain.handle("answer:deleteAnswer", (_, id: string) => {
   const database = getDatabase();
   database.prepare("DELETE FROM answers WHERE id = ?").run(id);
 });

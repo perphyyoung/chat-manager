@@ -55,7 +55,7 @@ describe("AnswerApplicationService", () => {
       findByDocumentId: vi.fn<() => Promise<Answer[]>>(),
       save: vi.fn<() => Promise<void>>(),
       saveAll: vi.fn<() => Promise<void>>(),
-      delete: vi.fn<() => Promise<void>>(),
+      deleteAnswer: vi.fn<() => Promise<void>>(),
       deleteAll: vi.fn<() => Promise<void>>(),
     };
 
@@ -238,7 +238,7 @@ describe("AnswerApplicationService", () => {
 
       expect(document.answers).toHaveLength(0);
       expect(mockDocumentRepo.save).toHaveBeenCalled();
-      expect(mockAnswerRepo.delete).toHaveBeenCalledWith("a1");
+      expect(mockAnswerRepo.deleteAnswer).toHaveBeenCalledWith("a1");
     });
 
     it("should throw NotFoundError when document not found", async () => {

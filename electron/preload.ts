@@ -56,7 +56,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     findByQuestionId: (questionId: string) =>
       ipcRenderer.invoke("answer:findByQuestionId", questionId),
     save: (answerJson: string) => ipcRenderer.invoke("answer:save", answerJson),
-    delete: (id: string) => ipcRenderer.invoke("answer:delete", id),
+    deleteAnswer: (id: string) => ipcRenderer.invoke("answer:deleteAnswer", id),
   },
   question: {
     softDeleteQuestion: (documentId: string, questionId: string) =>

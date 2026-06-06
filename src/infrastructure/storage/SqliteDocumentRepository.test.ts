@@ -101,7 +101,7 @@ describe("SqliteDocumentRepository", () => {
       findByDocumentId: vi.fn(),
       save: vi.fn(),
       saveAll: vi.fn(),
-      delete: vi.fn(),
+      deleteAnswer: vi.fn(),
       deleteAll: vi.fn(),
     };
 

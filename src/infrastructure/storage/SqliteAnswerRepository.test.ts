@@ -16,7 +16,7 @@ interface MockElectronAPI {
   answer: {
     findByQuestionId: MockFn;
     save: MockFn;
-    delete: MockFn;
+    deleteAnswer: MockFn;
   };
 }
 
@@ -36,7 +36,7 @@ describe("SqliteAnswerRepository", () => {
       answer: {
         findByQuestionId: vi.fn(),
         save: vi.fn(),
-        delete: vi.fn(),
+        deleteAnswer: vi.fn(),
       },
     };
     (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =
@@ -155,9 +155,9 @@ describe("SqliteAnswerRepository", () => {
 
   describe("delete", () => {
     it("should delete answer by id", async () => {
-      await repository.delete("a1");
+      await repository.deleteAnswer("a1");
 
-      expect(mockElectronAPI.answer.delete).toHaveBeenCalledWith("a1");
+      expect(mockElectronAPI.answer.deleteAnswer).toHaveBeenCalledWith("a1");
     });
   });
 

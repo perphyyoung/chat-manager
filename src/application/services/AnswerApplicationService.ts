@@ -82,7 +82,7 @@ export class AnswerApplicationService {
     }
 
     document.removeAnswer(answerId);
-    await this.answerRepo.delete(answerId);
+    await this.answerRepo.deleteAnswer(answerId);
     await this.documentRepo.save(document);
 
     this.eventBus.emit(new AnswerDeletedEvent(documentId, answerId));

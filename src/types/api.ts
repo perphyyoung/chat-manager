@@ -46,7 +46,7 @@ export interface ElectronAPI {
   answer: {
     findByQuestionId: (questionId: string) => Promise<AnswerDTO | null>;
     save: (answerJson: string) => Promise<void>;
-    delete: (id: string) => Promise<void>;
+    deleteAnswer: (id: string) => Promise<void>;
   };
   question: {
     softDeleteQuestion: (documentId: string, questionId: string) => Promise<void>;

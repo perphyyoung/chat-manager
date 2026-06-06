@@ -41,8 +41,8 @@ export class SqliteAnswerRepository implements AnswerRepository {
     await window.electronAPI.db.answers.save(documentId, answerJsons);
   }
 
-  async delete(id: string): Promise<void> {
-    await window.electronAPI.answer.delete(id);
+  async deleteAnswer(id: string): Promise<void> {
+    await window.electronAPI.answer.deleteAnswer(id);
   }
 
   async deleteAll(ids: string[]): Promise<void> {

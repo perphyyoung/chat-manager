@@ -323,7 +323,7 @@ ipcMain.handle('question:reorder', (_, documentId: string, orderedIds: string[])
 ipcMain.handle('answer:findByQuestionId', (_, questionId: string) => {...})
 ipcMain.handle('answer:findByDocumentId', (_, documentId: string) => {...})
 ipcMain.handle('answer:save', (_, answerJson: string) => {...})
-ipcMain.handle('answer:delete', (_, id: string) => {...})
+ipcMain.handle('answer:deleteAnswer', (_, id: string) => {...})
 ```
 
 ### 6.4 标签相关
