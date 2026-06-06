@@ -325,7 +325,7 @@ ipcMain.handle("tag:findAll", () => {
   }));
 });
 
-ipcMain.handle("tag:findById", (_, id: string) => {
+ipcMain.handle("tag:findTagById", (_, id: string) => {
   const database = getDatabase();
   const tag = database.prepare("SELECT * FROM tags WHERE id = ?").get(id) as
     | TagRow

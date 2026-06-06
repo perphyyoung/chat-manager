@@ -36,7 +36,7 @@ export class TagApplicationService {
   }
 
   async deleteTag(tagId: string): Promise<void> {
-    const tag = await this.tagRepo.findById(tagId);
+    const tag = await this.tagRepo.findTagById(tagId);
     if (!tag) {
       throw new NotFoundError("Tag", tagId);
     }
@@ -50,7 +50,7 @@ export class TagApplicationService {
       throw new ValidationError("Tag name cannot be empty");
     }
 
-    const tag = await this.tagRepo.findById(tagId);
+    const tag = await this.tagRepo.findTagById(tagId);
     if (!tag) {
       throw new NotFoundError("Tag", tagId);
     }
@@ -86,7 +86,7 @@ export class TagApplicationService {
       throw new NotFoundError("Document", documentId);
     }
 
-    const tag = await this.tagRepo.findById(tagId);
+    const tag = await this.tagRepo.findTagById(tagId);
     if (!tag) {
       throw new NotFoundError("Tag", tagId);
     }
@@ -122,7 +122,7 @@ export class TagApplicationService {
   async getDocumentsByTag(
     tagId: string,
   ): Promise<import("../../domain/entities").Document[]> {
-    const tag = await this.tagRepo.findById(tagId);
+    const tag = await this.tagRepo.findTagById(tagId);
     if (!tag) {
       throw new NotFoundError("Tag", tagId);
     }

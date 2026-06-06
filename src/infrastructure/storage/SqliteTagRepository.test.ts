@@ -8,7 +8,7 @@ type MockFn = Mock<(...args: unknown[]) => unknown>;
 interface MockElectronAPI {
   tag: {
     findAll: MockFn;
-    findById: MockFn;
+    findTagById: MockFn;
     findTagByName: MockFn;
     saveTag: MockFn;
     deleteTag: MockFn;
@@ -24,7 +24,7 @@ describe("SqliteTagRepository", () => {
     mockElectronAPI = {
       tag: {
         findAll: vi.fn(),
-        findById: vi.fn(),
+        findTagById: vi.fn(),
         findTagByName: vi.fn(),
         saveTag: vi.fn(),
         deleteTag: vi.fn(),
@@ -77,9 +77,9 @@ describe("SqliteTagRepository", () => {
         name: "Tag 1",
         createdAt: "2024-01-01T00:00:00Z",
       };
-      mockElectronAPI.tag.findById.mockResolvedValue(tagData);
+      mockElectronAPI.tag.findTagById.mockResolvedValue(tagData);
 
-      const result = await repository.findById("tag1");
+      const result = await repository.findTagById("tag1");
 
       expect(result).not.toBeNull();
       expect(result?.id).toBe("tag1");
@@ -87,9 +87,9 @@ describe("SqliteTagRepository", () => {
     });
 
     it("should return null when not found", async () => {
-      mockElectronAPI.tag.findById.mockResolvedValue(null);
+      mockElectronAPI.tag.findTagById.mockResolvedValue(null);
 
-      const result = await repository.findById("tag1");
+      const result = await repository.findTagById("tag1");
 
       expect(result).toBeNull();
     });

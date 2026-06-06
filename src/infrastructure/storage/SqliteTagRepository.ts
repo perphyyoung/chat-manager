@@ -18,8 +18,8 @@ export class SqliteTagRepository implements TagRepository {
     return rows.map((r: TagData) => toTag(r));
   }
 
-  async findById(id: string): Promise<Tag | null> {
-    const row = await window.electronAPI.tag?.findById(id);
+  async findTagById(id: string): Promise<Tag | null> {
+    const row = await window.electronAPI.tag.findTagById(id);
     if (!row) return null;
     return toTag(row);
   }
