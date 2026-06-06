@@ -77,7 +77,7 @@ function closeContextMenu() {
 
 function formatCode() {
   // 格式化：为代码块添加语言标记注释
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  const codeBlockRegex = /```([^\s`]+)?\n([\s\S]*?)```/g;
   let formatted = props.content;
   let match;
 

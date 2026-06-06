@@ -21,6 +21,8 @@ import "prismjs/components/prism-tsx";
 import "prismjs/components/prism-scss";
 import "prismjs/components/prism-docker";
 import "prismjs/components/prism-nginx";
+import "prismjs/components/prism-c";
+import "prismjs/components/prism-cpp";
 
 // 注册 Vue 语言支持（基于 HTML）
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,17 +31,44 @@ import "prismjs/components/prism-nginx";
   {},
 );
 
+// 语言别名映射：将常见的非标准语言标识符映射到 Prism 支持的语言名
+const LANGUAGE_ALIASES: Record<string, string> = {
+  "c++": "cpp",
+  "c#": "csharp",
+  "js": "javascript",
+  "ts": "typescript",
+  "py": "python",
+  "sh": "bash",
+  "shell": "bash",
+  "yml": "yaml",
+  "dockerfile": "docker",
+};
+
 // 创建带语法高亮的 marked 实例
 export const marked = new Marked(
   markedHighlight({
     emptyLangClass: "language-plaintext",
     langPrefix: "language-",
     highlight(code, lang) {
-      const language = Prism.languages[lang] ? lang : "plaintext";
+      const mappedLang = LANGUAGE_ALIASES[lang] || lang;
+      const language = Prism.languages[mappedLang] ? mappedLang : "plaintext";
       return Prism.highlight(code, Prism.languages[language]!, language);
     },
   }),
 );
+
+// 自定义代码块渲染，使用映射后的语言名作为 class，避免特殊字符（如 c++）导致 CSS 选择器问题
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const renderer = new (marked as any).Renderer();
+const originalCode = renderer.code.bind(renderer);
+renderer.code = function({ text, lang, escaped }: { text: string; lang?: string; escaped?: boolean }) {
+  const mappedLang = LANGUAGE_ALIASES[lang || ""] || lang || "plaintext";
+  const rawHtml = originalCode({ text, lang: mappedLang, escaped });
+  // 将 class="language-xxx" 中的语言名替换为映射后的名称
+  return rawHtml.replace(/class="language-[^"]*"/g, `class="language-${mappedLang}"`);
+};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+marked.setOptions({ renderer } as any);
 
 marked.setOptions({
   breaks: true, // 支持换行符转换为 <br>
