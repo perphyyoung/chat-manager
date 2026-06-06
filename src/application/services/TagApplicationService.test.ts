@@ -20,7 +20,7 @@ class MockTagRepository implements TagRepository {
     return this.tags.get(id) ?? null;
   }
 
-  async findByName(name: string): Promise<Tag | null> {
+  async findTagByName(name: string): Promise<Tag | null> {
     for (const tag of this.tags.values()) {
       if (tag.name === name) return tag;
     }

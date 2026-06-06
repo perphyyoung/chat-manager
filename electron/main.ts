@@ -338,7 +338,7 @@ ipcMain.handle("tag:findById", (_, id: string) => {
   };
 });
 
-ipcMain.handle("tag:findByName", (_, name: string) => {
+ipcMain.handle("tag:findTagByName", (_, name: string) => {
   const database = getDatabase();
   const tag = database
     .prepare("SELECT * FROM tags WHERE name = ?")
