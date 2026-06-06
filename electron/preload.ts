@@ -59,8 +59,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     delete: (id: string) => ipcRenderer.invoke("answer:delete", id),
   },
   question: {
-    softDelete: (documentId: string, questionId: string) =>
-      ipcRenderer.invoke("question:softDelete", documentId, questionId),
+    softDeleteQuestion: (documentId: string, questionId: string) =>
+      ipcRenderer.invoke("question:softDeleteQuestion", documentId, questionId),
     restoreQuestion: (documentId: string, questionId: string) =>
       ipcRenderer.invoke("question:restoreQuestion", documentId, questionId),
     getDeletedQuestions: (documentId: string) =>

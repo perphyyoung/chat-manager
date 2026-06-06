@@ -49,7 +49,7 @@ export interface ElectronAPI {
     delete: (id: string) => Promise<void>;
   };
   question: {
-    softDelete: (documentId: string, questionId: string) => Promise<void>;
+    softDeleteQuestion: (documentId: string, questionId: string) => Promise<void>;
     restoreQuestion: (documentId: string, questionId: string) => Promise<void>;
     getDeletedQuestions: (
       documentId: string,

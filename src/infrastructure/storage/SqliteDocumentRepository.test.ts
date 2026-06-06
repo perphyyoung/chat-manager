@@ -36,8 +36,8 @@ interface MockElectronAPI {
     };
   };
   question: {
-    softDelete: MockFn;
-    restore: MockFn;
+    softDeleteQuestion: MockFn;
+    restoreQuestion: MockFn;
     getDeletedQuestions: MockFn;
     clearDeletedQuestions: MockFn;
   };
@@ -75,8 +75,8 @@ describe("SqliteDocumentRepository", () => {
         },
       },
       question: {
-        softDelete: vi.fn(),
-        restore: vi.fn(),
+        softDeleteQuestion: vi.fn(),
+        restoreQuestion: vi.fn(),
         getDeletedQuestions: vi.fn(),
         clearDeletedQuestions: vi.fn(),
       },

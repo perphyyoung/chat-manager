@@ -240,7 +240,7 @@ ipcMain.handle("answer:delete", (_, id: string) => {
 
 // Question IPC handlers (soft delete)
 ipcMain.handle(
-  "question:softDelete",
+  "question:softDeleteQuestion",
   (_, documentId: string, questionId: string) => {
     const database = getDatabase();
     const now = new Date().toISOString();

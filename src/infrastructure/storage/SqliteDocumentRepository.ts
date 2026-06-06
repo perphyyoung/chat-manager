@@ -164,7 +164,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
     documentId: string,
     questionId: string,
   ): Promise<void> {
-    await window.electronAPI.question?.softDelete(documentId, questionId);
+    await window.electronAPI.question.softDeleteQuestion(documentId, questionId);
   }
 
   async restoreQuestion(documentId: string, questionId: string): Promise<void> {

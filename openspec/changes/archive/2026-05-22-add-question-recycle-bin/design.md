@@ -33,7 +33,7 @@
 - 软删除问题实际上是更新文档的 questions 数组
 - 避免重复代码，保持接口简洁
 
-**替代方案**: 创建独立的 `question:softDelete` IPC 接口（过于复杂，不必要）
+**替代方案**: 创建独立的 `question:softDeleteQuestion` IPC 接口（过于复杂，不必要）
 
 ### 2. 在 DocumentRepository 中扩展问题软删除方法
 
