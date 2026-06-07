@@ -91,7 +91,11 @@ function formatCode() {
     // 找到第一个非空行
     const firstNonEmptyLine = lines.find((line) => line.trim());
     if (!firstNonEmptyLine || !firstNonEmptyLine.startsWith("// language:")) {
-      const newCode = `// language: ${lang}\n${code}`;
+      // 获取第一行的缩进，给注释添加相同缩进
+      const firstLine = lines[0] ?? "";
+      const indentMatch = firstLine.match(/^(\s*)/);
+      const indent = indentMatch ? indentMatch[1] : "";
+      const newCode = `${indent}// language: ${lang}\n${code}`;
       formatted = formatted.replace(
         match[0],
         `\`\`\`${lang}\n${newCode}\`\`\``,
