@@ -99,6 +99,28 @@ const renderedContent = computed(() => {
   margin: 12px 0;
 }
 
+/* 表格样式 */
+.markdown-renderer :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+}
+
+.markdown-renderer :deep(th),
+.markdown-renderer :deep(td) {
+  border: 1px solid var(--color-border);
+  padding: 8px 12px;
+}
+
+.markdown-renderer :deep(th) {
+  background-color: var(--color-border);
+  font-weight: 600;
+}
+
+.markdown-renderer :deep(tr:nth-child(even)) {
+  background-color: var(--color-background-alt, rgba(0, 0, 0, 0.02));
+}
+
 /* 搜索高亮样式 */
 .markdown-renderer :deep(.search-highlight) {
   background-color: var(--color-highlight-bg, #ffeb3b);
