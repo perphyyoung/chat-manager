@@ -90,7 +90,7 @@ function formatCode() {
     const lines = code.split("\n");
     // 找到第一个非空行
     const firstNonEmptyLine = lines.find((line) => line.trim());
-    if (!firstNonEmptyLine || !firstNonEmptyLine.startsWith("// language:")) {
+    if (!firstNonEmptyLine || !firstNonEmptyLine.trim().startsWith("// language:")) {
       // 获取第一行的缩进，给注释添加相同缩进
       const firstLine = lines[0] ?? "";
       const indentMatch = firstLine.match(/^(\s*)/);
