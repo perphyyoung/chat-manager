@@ -55,6 +55,16 @@ ipcMain.handle("render-log", (_, level: string, message: string) => {
   logMethod(message);
 });
 
+// 版本信息 IPC handler
+ipcMain.handle("get-versions", () => {
+  return {
+    app: app.getVersion(),
+    electron: process.versions.electron,
+    node: process.versions.node,
+    chrome: process.versions.chrome,
+  };
+});
+
 // Document IPC handlers
 ipcMain.handle("db:findAll", (_, options?: { isDeleted?: boolean }) => {
   const database = getDatabase();
@@ -715,6 +725,19 @@ function createMenu() {
     {
       label: "Window",
       submenu: [{ role: "minimize" }, { role: "close" }],
+    },
+    {
+      label: "Help",
+      submenu: [
+        {
+          label: "About",
+          click: () => {
+            if (win) {
+              win.webContents.send("open-about");
+            }
+          },
+        },
+      ],
     },
   ];
 

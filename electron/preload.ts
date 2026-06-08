@@ -12,6 +12,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
       callback();
     });
   },
+  onOpenAbout: (callback: () => void) => {
+    ipcRenderer.on("open-about", () => {
+      callback();
+    });
+  },
+  getVersions: () => ipcRenderer.invoke("get-versions"),
   onOpenSearch: (callback: () => void) => {
     ipcRenderer.on("shortcut:open-search", () => {
       callback();
