@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { useDocumentStore } from "../../stores/document";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
+import ContextMenu, { type MenuItem } from "../Conversation/ContextMenu.vue";
 
 const documentStore = useDocumentStore();
 const showNewTagInput = ref(false);
@@ -24,6 +25,23 @@ const contextMenu = ref({
   show: false,
   x: 0,
   y: 0,
+});
+
+// 右键菜单项
+const contextMenuItems = computed<MenuItem[]>(() => [
+  {
+    text: "编辑标签",
+    action: requestEditTag,
+  },
+  {
+    text: "删除标签",
+    action: requestDeleteTag,
+    danger: true,
+  },
+]);
+
+// 当前右键选中的标签信息
+const currentTag = ref({
   tagId: "",
   tagName: "",
 });
@@ -38,8 +56,8 @@ const editingTagId = ref("");
 
 // 确认弹窗消息
 const confirmMessage = computed(() => {
-  if (!contextMenu.value.tagName) return "";
-  return `确定要删除标签 "${contextMenu.value.tagName}" 吗？这将从所有文档中移除该标签。`;
+  if (!currentTag.value.tagName) return "";
+  return `确定要删除标签 "${currentTag.value.tagName}" 吗？这将从所有文档中移除该标签。`;
 });
 
 function handleTagClick(tagId: string | null) {
@@ -70,9 +88,8 @@ function showContextMenu(event: MouseEvent, tagId: string, tagName: string) {
     show: true,
     x: event.clientX,
     y: event.clientY,
-    tagId,
-    tagName,
   };
+  currentTag.value = { tagId, tagName };
 }
 
 // 隐藏右键菜单
@@ -89,8 +106,8 @@ function requestDeleteTag() {
 // 请求编辑标签
 function requestEditTag() {
   hideContextMenu();
-  editingTagId.value = contextMenu.value.tagId;
-  editTagName.value = contextMenu.value.tagName;
+  editingTagId.value = currentTag.value.tagId;
+  editTagName.value = currentTag.value.tagName;
   showEditInput.value = true;
 }
 
@@ -114,14 +131,14 @@ function handleEditCancel() {
 }
 
 function resetDeleteState() {
-  contextMenu.value.tagId = "";
-  contextMenu.value.tagName = "";
+  currentTag.value.tagId = "";
+  currentTag.value.tagName = "";
 }
 
 // 确认删除标签
 async function confirmDeleteTag() {
-  if (!contextMenu.value.tagId) return;
-  await documentStore.deleteTag(contextMenu.value.tagId);
+  if (!currentTag.value.tagId) return;
+  await documentStore.deleteTag(currentTag.value.tagId);
   showConfirmDialog.value = false;
   resetDeleteState();
 }
@@ -131,22 +148,6 @@ function cancelDeleteTag() {
   showConfirmDialog.value = false;
   resetDeleteState();
 }
-
-// 点击外部隐藏菜单
-function handleClickOutside(event: MouseEvent) {
-  const target = event.target as HTMLElement;
-  if (!target.closest(".context-menu")) {
-    hideContextMenu();
-  }
-}
-
-onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside);
-});
 </script>
 
 <template>
@@ -228,7 +229,7 @@ onUnmounted(() => {
           'tag-filter__item--active': documentStore.selectedTagId === tag.id,
         }"
         @click="handleTagClick(tag.id)"
-        @contextmenu.prevent="showContextMenu($event, tag.id, tag.name)"
+        @contextmenu="showContextMenu($event, tag.id, tag.name)"
       >
         <span class="tag-filter__name">{{ tag.name }}</span>
         <span
@@ -241,24 +242,13 @@ onUnmounted(() => {
     </div>
 
     <!-- 右键菜单 -->
-    <div
-      v-if="contextMenu.show"
-      class="context-menu"
-      :style="{
-        left: contextMenu.x + 'px',
-        top: contextMenu.y + 'px',
-      }"
-    >
-      <button class="context-menu__item" @click="requestEditTag">
-        编辑标签
-      </button>
-      <button
-        class="context-menu__item context-menu__item--danger"
-        @click="requestDeleteTag"
-      >
-        删除标签
-      </button>
-    </div>
+    <ContextMenu
+      :show="contextMenu.show"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      :items="contextMenuItems"
+      @close="hideContextMenu"
+    />
 
     <!-- 删除确认弹窗 -->
     <ConfirmDialog
@@ -465,41 +455,5 @@ onUnmounted(() => {
 .tag-filter__item--active .tag-filter__count {
   background-color: rgba(255, 255, 255, 0.9);
   color: var(--color-primary, #3b82f6);
-}
-
-/* 右键菜单样式 */
-.context-menu {
-  position: fixed;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 4px 0;
-  z-index: 1000;
-  min-width: 100px;
-}
-
-.context-menu__item {
-  width: 100%;
-  padding: 8px 16px;
-  border: none;
-  background: transparent;
-  color: var(--color-text);
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.context-menu__item:hover {
-  background-color: var(--color-hover);
-}
-
-.context-menu__item--danger {
-  color: #ef4444;
-}
-
-.context-menu__item--danger:hover {
-  background-color: rgba(239, 68, 68, 0.1);
 }
 </style>

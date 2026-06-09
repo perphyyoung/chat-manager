@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted } from "vue";
+import { ref, computed, watch, nextTick, onMounted } from "vue";
 import { useDocumentStore, type SortField } from "../../stores/document";
 import { Document } from "../../../domain/entities";
 import DocumentItem from "./DocumentItem.vue";
-import DocumentContextMenu from "./DocumentContextMenu.vue";
 import TagFilter from "./TagFilter.vue";
 import RecycleBinButton from "../common/RecycleBinButton.vue";
 import RecycleBinModal from "../common/RecycleBinModal.vue";
+import ContextMenu, { type MenuItem } from "../Conversation/ContextMenu.vue";
 
 const documentStore = useDocumentStore();
 
@@ -17,17 +17,24 @@ const showSortMenu = ref(false);
 const titleInputRef = ref<HTMLInputElement | null>(null);
 
 // 右键菜单状态
-const contextMenu = ref<{
-  show: boolean;
-  x: number;
-  y: number;
-  documentId: string | null;
-}>({
+const contextMenu = ref({
   show: false,
   x: 0,
   y: 0,
-  documentId: null,
 });
+
+// 右键菜单项
+const contextMenuItems = computed<MenuItem[]>(() => [
+  {
+    text: "编辑标题",
+    action: handleEditDocument,
+  },
+  {
+    text: "删除文档",
+    action: handleDeleteDocument,
+    danger: true,
+  },
+]);
 
 // 编辑对话框状态
 const showEditDialog = ref(false);
@@ -92,21 +99,21 @@ function handleContextMenu(event: MouseEvent, documentId: string) {
     show: true,
     x: event.clientX,
     y: event.clientY,
-    documentId,
   };
+  // 存储当前右键点击的文档 ID
+  (contextMenu as { currentDocId?: string }).currentDocId = documentId;
 }
 
 function closeContextMenu() {
   contextMenu.value.show = false;
-  contextMenu.value.documentId = null;
+  (contextMenu as { currentDocId?: string }).currentDocId = undefined;
 }
 
 // 编辑文档
 function handleEditDocument() {
-  if (!contextMenu.value.documentId) return;
-  const doc = documentStore.documents.find(
-    (d) => d.id === contextMenu.value.documentId,
-  );
+  const docId = (contextMenu as { currentDocId?: string }).currentDocId;
+  if (!docId) return;
+  const doc = documentStore.documents.find((d) => d.id === docId);
   if (doc) {
     editingDocumentId.value = doc.id;
     editDocumentTitle.value = doc.title;
@@ -140,8 +147,9 @@ function handleCancelEdit() {
 
 // 删除文档 - 移入回收站
 async function handleDeleteDocument() {
-  if (!contextMenu.value.documentId) return;
-  await documentStore.softDeleteDocument(contextMenu.value.documentId);
+  const docId = (contextMenu as { currentDocId?: string }).currentDocId;
+  if (!docId) return;
+  await documentStore.softDeleteDocument(docId);
   await loadDeletedDocuments(); // 立即更新回收站计数
   closeContextMenu();
 }
@@ -261,12 +269,11 @@ onMounted(() => {
     </div>
 
     <!-- 右键菜单 -->
-    <DocumentContextMenu
-      v-if="contextMenu.show"
+    <ContextMenu
+      :show="contextMenu.show"
       :x="contextMenu.x"
       :y="contextMenu.y"
-      @edit="handleEditDocument"
-      @delete="handleDeleteDocument"
+      :items="contextMenuItems"
       @close="closeContextMenu"
     />
 

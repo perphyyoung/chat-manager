@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, watch, nextTick } from "vue";
 import {
   useDocumentStore,
   type QuestionSortField,
 } from "../../stores/document";
 import QuestionItem from "./QuestionItem.vue";
 import RecycleBinModal from "../common/RecycleBinModal.vue";
+import ContextMenu, { type MenuItem } from "../Conversation/ContextMenu.vue";
 
 const documentStore = useDocumentStore();
 
@@ -32,6 +33,27 @@ const contextMenu = ref({
   show: false,
   x: 0,
   y: 0,
+});
+
+// 右键菜单项
+const contextMenuItems = computed<MenuItem[]>(() => [
+  {
+    text: "编辑问题",
+    action: handleEditClick,
+  },
+  {
+    text: "重新排序",
+    action: handleReorderClick,
+  },
+  {
+    text: "删除问题",
+    action: handleDeleteClick,
+    danger: true,
+  },
+]);
+
+// 当前右键选中的问题信息
+const currentQuestion = ref({
   questionId: "",
   questionText: "",
 });
@@ -114,6 +136,8 @@ function handleContextMenu(event: MouseEvent, questionId: string) {
     show: true,
     x: event.clientX,
     y: event.clientY,
+  };
+  currentQuestion.value = {
     questionId,
     questionText: question.text,
   };
@@ -121,34 +145,34 @@ function handleContextMenu(event: MouseEvent, questionId: string) {
 
 // 删除问题 - 软删除到回收站
 async function handleDeleteClick() {
-  if (!contextMenu.value.questionId) return;
-  await documentStore.softDeleteQuestion(contextMenu.value.questionId);
+  if (!currentQuestion.value.questionId) return;
+  await documentStore.softDeleteQuestion(currentQuestion.value.questionId);
   await documentStore.loadDeletedQuestions(); // 立即更新回收站计数
   contextMenu.value.show = false;
-  contextMenu.value.questionId = "";
-  contextMenu.value.questionText = "";
+  currentQuestion.value.questionId = "";
+  currentQuestion.value.questionText = "";
 }
 
 // 编辑功能
 function handleEditClick() {
   contextMenu.value.show = false;
-  editQuestionText.value = contextMenu.value.questionText;
+  editQuestionText.value = currentQuestion.value.questionText;
   showEditDialog.value = true;
 }
 
 async function confirmEdit() {
-  if (!contextMenu.value.questionId || !editQuestionText.value.trim()) return;
+  if (!currentQuestion.value.questionId || !editQuestionText.value.trim()) return;
 
   isEditing.value = true;
   try {
     await documentStore.updateQuestionText(
-      contextMenu.value.questionId,
+      currentQuestion.value.questionId,
       editQuestionText.value.trim(),
     );
     showEditDialog.value = false;
     editQuestionText.value = "";
-    contextMenu.value.questionId = "";
-    contextMenu.value.questionText = "";
+    currentQuestion.value.questionId = "";
+    currentQuestion.value.questionText = "";
   } finally {
     isEditing.value = false;
   }
@@ -157,8 +181,8 @@ async function confirmEdit() {
 function cancelEdit() {
   showEditDialog.value = false;
   editQuestionText.value = "";
-  contextMenu.value.questionId = "";
-  contextMenu.value.questionText = "";
+  currentQuestion.value.questionId = "";
+  currentQuestion.value.questionText = "";
 }
 
 // 重新排序问题
@@ -172,14 +196,6 @@ async function handleReorderClick() {
       "error",
       `[QuestionList] 重新排序失败: ${errorMsg}`,
     );
-  }
-}
-
-// 点击外部关闭右键菜单
-function handleClickOutside(event: MouseEvent) {
-  const target = event.target as HTMLElement;
-  if (!target.closest(".context-menu")) {
-    contextMenu.value.show = false;
   }
 }
 
@@ -228,12 +244,7 @@ async function handleDrop(targetId: string) {
 }
 
 onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
   documentStore.loadDeletedQuestions();
-});
-
-onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside);
 });
 </script>
 
@@ -430,23 +441,13 @@ onUnmounted(() => {
     </div>
 
     <!-- 右键菜单 -->
-    <Teleport to="body">
-      <div
-        v-if="contextMenu.show"
-        class="context-menu"
-        :style="{
-          left: `${contextMenu.x}px`,
-          top: `${contextMenu.y}px`,
-        }"
-        @click.stop
-      >
-        <button class="menu-item" @click="handleEditClick">编辑问题</button>
-        <button class="menu-item" @click="handleReorderClick">重新排序</button>
-        <button class="menu-item menu-item--danger" @click="handleDeleteClick">
-          删除问题
-        </button>
-      </div>
-    </Teleport>
+    <ContextMenu
+      :show="contextMenu.show"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      :items="contextMenuItems"
+      @close="contextMenu.show = false"
+    />
 
     <!-- 编辑问题对话框 -->
     <div
@@ -836,51 +837,5 @@ onUnmounted(() => {
 
 .confirm-message strong {
   color: var(--color-primary);
-}
-
-/* 右键菜单 */
-.context-menu-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-}
-
-.context-menu {
-  position: fixed;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 140px;
-  z-index: 1000;
-  overflow: hidden;
-}
-
-.menu-item {
-  display: block;
-  width: 100%;
-  padding: 10px 12px;
-  border: none;
-  background-color: transparent;
-  color: var(--color-text);
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.menu-item:hover {
-  background-color: var(--color-hover);
-}
-
-.menu-item--danger {
-  color: #ef4444;
-}
-
-.menu-item--danger:hover {
-  background-color: rgba(239, 68, 68, 0.1);
 }
 </style>

@@ -4,6 +4,7 @@ export interface MenuItem {
   text: string;
   action: () => void;
   visible?: boolean;
+  danger?: boolean;
 }
 
 interface Props {
@@ -36,7 +37,7 @@ const handleClose = () => {
       v-if="show"
       class="context-menu-overlay"
       @click="handleClose"
-      @contextmenu.prevent
+      @contextmenu.prevent="handleClose"
     >
       <div
         class="context-menu"
@@ -47,6 +48,7 @@ const handleClose = () => {
           v-for="item in items.filter((i) => i.visible !== false)"
           :key="item.text"
           class="context-menu-item"
+          :class="{ 'context-menu-item--danger': item.danger }"
           @click="handleItemClick(item)"
         >
           <span class="context-menu-icon">{{ item.icon }}</span>
@@ -99,5 +101,13 @@ const handleClose = () => {
 .context-menu-text {
   font-size: 13px;
   color: var(--color-text);
+}
+
+.context-menu-item--danger .context-menu-text {
+  color: #ef4444;
+}
+
+.context-menu-item--danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
 }
 </style>
