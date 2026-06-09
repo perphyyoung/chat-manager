@@ -40,7 +40,7 @@ test("删除文档后可以重新创建同名文档", async ({ window }) => {
   await expect(contextMenu).toBeVisible();
 
   // 点击删除按钮（直接删除，无确认对话框）
-  const deleteButton = contextMenu.locator(".menu-item--danger");
+  const deleteButton = contextMenu.locator(".context-menu-item--danger");
   await deleteButton.click();
 
   // 等待文档从列表消失

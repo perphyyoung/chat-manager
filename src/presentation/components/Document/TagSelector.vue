@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useDocumentStore } from "../../stores/document";
 import TagBadge from "../common/TagBadge.vue";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
+import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
 
 const documentStore = useDocumentStore();
 const isOpen = ref(false);
@@ -26,6 +27,19 @@ const contextMenu = ref({
   show: false,
   x: 0,
   y: 0,
+});
+
+// 右键菜单项
+const contextMenuItems = computed<MenuItem[]>(() => [
+  {
+    text: "删除标签",
+    action: requestDeleteTag,
+    danger: true,
+  },
+]);
+
+// 当前右键选中的标签信息
+const currentTag = ref({
   tagId: "",
   tagName: "",
 });
@@ -35,8 +49,8 @@ const showConfirmDialog = ref(false);
 
 // 确认弹窗消息
 const confirmMessage = computed(() => {
-  if (!contextMenu.value.tagId) return "";
-  return `确定要删除标签 "${contextMenu.value.tagName}" 吗？`;
+  if (!currentTag.value.tagId) return "";
+  return `确定要删除标签 "${currentTag.value.tagName}" 吗？`;
 });
 
 const availableTags = computed(() => {
@@ -78,9 +92,8 @@ function showContextMenu(event: MouseEvent, tagId: string, tagName: string) {
     show: true,
     x: event.clientX,
     y: event.clientY,
-    tagId,
-    tagName,
   };
+  currentTag.value = { tagId, tagName };
 }
 
 // 关闭右键菜单
@@ -96,21 +109,21 @@ function requestDeleteTag() {
 
 // 确认删除标签
 async function confirmDeleteTag() {
-  if (!contextMenu.value.tagId || !documentStore.selectedDocument) return;
+  if (!currentTag.value.tagId || !documentStore.selectedDocument) return;
   await documentStore.removeTagFromDocument(
     documentStore.selectedDocument.id,
-    contextMenu.value.tagId,
+    currentTag.value.tagId,
   );
   showConfirmDialog.value = false;
-  contextMenu.value.tagId = "";
-  contextMenu.value.tagName = "";
+  currentTag.value.tagId = "";
+  currentTag.value.tagName = "";
 }
 
 // 取消删除
 function cancelDeleteTag() {
   showConfirmDialog.value = false;
-  contextMenu.value.tagId = "";
-  contextMenu.value.tagName = "";
+  currentTag.value.tagId = "";
+  currentTag.value.tagName = "";
 }
 
 async function createAndAddTag() {
@@ -129,15 +142,9 @@ async function createAndAddTag() {
 
 function handleClickOutside(event: MouseEvent) {
   const target = event.target as HTMLElement;
-  // 如果点击的是右键菜单，不关闭
-  if (target.closest(".tag-context-menu")) {
-    return;
-  }
   if (selectorRef.value && !selectorRef.value.contains(target)) {
     close();
   }
-  // 点击外部关闭右键菜单
-  closeContextMenu();
 }
 
 onMounted(() => {
@@ -223,23 +230,13 @@ onUnmounted(() => {
     </div>
 
     <!-- 右键菜单 -->
-    <Teleport to="body">
-      <div
-        v-if="contextMenu.show"
-        class="tag-context-menu"
-        :style="{
-          left: contextMenu.x + 'px',
-          top: contextMenu.y + 'px',
-        }"
-      >
-        <div
-          class="tag-context-menu__item tag-context-menu__item--danger"
-          @click="requestDeleteTag"
-        >
-          删除标签
-        </div>
-      </div>
-    </Teleport>
+    <ContextMenu
+      :show="contextMenu.show"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      :items="contextMenuItems"
+      @close="closeContextMenu"
+    />
 
     <!-- 删除标签确认弹窗 -->
     <ConfirmDialog
@@ -411,37 +408,5 @@ onUnmounted(() => {
 .tag-selector__create-btn:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
-}
-
-/* 右键菜单样式 */
-.tag-context-menu {
-  position: fixed;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 4px 0;
-  z-index: 10001;
-  min-width: 120px;
-}
-
-.tag-context-menu__item {
-  padding: 8px 16px;
-  font-size: 13px;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.tag-context-menu__item:hover {
-  background-color: var(--color-hover);
-}
-
-.tag-context-menu__item--danger {
-  color: #ef4444;
-}
-
-.tag-context-menu__item--danger:hover {
-  background-color: rgba(239, 68, 68, 0.1);
 }
 </style>

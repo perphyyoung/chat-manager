@@ -175,10 +175,10 @@ test("remove tag from document via conversation view", async ({ window }) => {
   await tagToRemove.click({ button: "right" });
 
   // 等待右键菜单出现
-  await window.waitForSelector(".tag-context-menu", { timeout: 2000 });
+  await window.waitForSelector(".context-menu", { timeout: 2000 });
 
   // 点击右键菜单中的删除标签
-  await window.locator(".tag-context-menu__item--danger").click();
+  await window.locator(".context-menu-item--danger").click();
 
   // 等待确认弹窗出现
   await window.waitForSelector(".confirm-dialog", { timeout: 2000 });
@@ -314,7 +314,7 @@ test("update tag name via tag filter", async ({ window }) => {
   await window.waitForSelector(".context-menu", { timeout: 2000 });
 
   // 点击编辑标签菜单（使用 hasText 精确定位）
-  await window.locator(".context-menu__item", { hasText: "编辑标签" }).click();
+  await window.locator(".context-menu-item", { hasText: "编辑标签" }).click();
 
   // 等待编辑输入框出现
   await window.waitForSelector(".tag-filter__input-wrapper", { timeout: 2000 });

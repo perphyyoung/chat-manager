@@ -254,7 +254,7 @@ export async function deleteFirstQuestion(page: Page): Promise<void> {
   const firstQuestion = page.locator(".question-item").first();
   await firstQuestion.click({ button: "right" });
   await page.waitForSelector(".context-menu", { timeout: 2000 });
-  await page.locator(".menu-item--danger").click();
+  await page.locator(".context-menu-item--danger").click();
   // 等待回收站按钮出现
   await page.waitForSelector(".fab--recycle", { timeout: 2000 });
 }
