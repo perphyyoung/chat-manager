@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, nextTick } from "vue";
+import { onMounted, onUnmounted, ref, nextTick, provide } from "vue";
 import ThreeColumnLayout from "./components/Layout/ThreeColumnLayout.vue";
 import SettingsModal from "./components/Settings/SettingsModal.vue";
 import SearchModal from "./components/Search/SearchModal.vue";
 import NotificationModal from "./components/common/NotificationModal.vue";
+import ToastModal from "./components/common/ToastModal.vue";
 import AboutDialog from "./components/common/AboutDialog.vue";
 import { useDocumentStore } from "./stores/document";
 import { useSettingsStore } from "./stores/settings";
@@ -33,6 +34,17 @@ function showNotification(
     details,
   };
 }
+
+// Toast 状态
+const toastMessage = ref("");
+
+function showToast(message: string) {
+  toastMessage.value = message;
+}
+
+// 暴露给子组件使用
+provide("showNotification", showNotification);
+provide("showToast", showToast);
 
 function hideNotification() {
   notification.value.show = false;
@@ -187,6 +199,7 @@ function handleGlobalKeydown(e: KeyboardEvent) {
     :details="notification.details"
     @confirm="hideNotification"
   />
+  <ToastModal :message="toastMessage" @close="toastMessage = ''" />
 </template>
 
 <style scoped></style>

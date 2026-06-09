@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, inject } from "vue";
 import MarkdownRenderer from "./MarkdownRenderer.vue";
 import AnswerEditor from "./AnswerEditor.vue";
 import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
+
+const showToast = inject("showToast") as (message: string) => void;
 
 interface Props {
   content: string;
@@ -31,6 +33,11 @@ const editorRef = ref<InstanceType<typeof AnswerEditor>>();
 // 右键菜单项配置
 const contextMenuItems = computed<MenuItem[]>(() => [
   {
+    text: "复制",
+    action: copyContent,
+    visible: !contextMenu.value.isEditing,
+  },
+  {
     text: "编辑",
     action: startEdit,
     visible: !contextMenu.value.isEditing,
@@ -53,6 +60,12 @@ const contextMenuItems = computed<MenuItem[]>(() => [
     visible: contextMenu.value.isEditing,
   },
 ]);
+
+async function copyContent() {
+  await navigator.clipboard.writeText(props.content);
+  showToast("回答已复制");
+  closeContextMenu();
+}
 
 function startEdit() {
   // 通过右键菜单编辑
