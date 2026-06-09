@@ -31,9 +31,8 @@ const editorRef = ref<InstanceType<typeof AnswerEditor>>();
 // 右键菜单项配置
 const contextMenuItems = computed<MenuItem[]>(() => [
   {
-    icon: "✨",
-    text: "格式化",
-    action: formatCode,
+    text: "添加语言标识",
+    action: addLanguageIdentifiers,
     visible: !contextMenu.value.isEditing,
   },
   {
@@ -75,10 +74,10 @@ function closeContextMenu() {
   contextMenu.value.show = false;
 }
 
-function formatCode() {
-  // 格式化：为代码块添加语言标记注释
+function addLanguageIdentifiers() {
+  // 为代码块添加语言标识
   const codeBlockRegex = /```([^\s`]+)?\n([\s\S]*?)```/g;
-  let formatted = props.content;
+  let result = props.content;
   let match;
 
   while ((match = codeBlockRegex.exec(props.content)) !== null) {
@@ -86,7 +85,7 @@ function formatCode() {
     const code = match[2] ?? "";
     if (!code) continue;
 
-    // 检查是否已格式化（第一行是否包含 // language:）
+    // 检查是否已添加语言标识（第一行是否包含 // language:）
     const lines = code.split("\n");
     // 找到第一个非空行
     const firstNonEmptyLine = lines.find((line) => line.trim());
@@ -96,16 +95,16 @@ function formatCode() {
       const indentMatch = firstLine.match(/^(\s*)/);
       const indent = indentMatch ? indentMatch[1] : "";
       const newCode = `${indent}// language: ${lang}\n${code}`;
-      formatted = formatted.replace(
+      result = result.replace(
         match[0],
         `\`\`\`${lang}\n${newCode}\`\`\``,
       );
     }
   }
 
-  if (formatted !== props.content) {
+  if (result !== props.content) {
     emit("beforeUpdate");
-    emit("update", props.answerId, formatted);
+    emit("update", props.answerId, result);
   }
   closeContextMenu();
 }

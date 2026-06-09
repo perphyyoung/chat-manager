@@ -1,6 +1,6 @@
 <script setup lang="ts">
 export interface MenuItem {
-  icon: string;
+  icon?: string;
   text: string;
   action: () => void;
   visible?: boolean;
