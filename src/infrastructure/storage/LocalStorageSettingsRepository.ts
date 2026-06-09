@@ -3,7 +3,7 @@ import type { SettingsRepository, Settings } from "../../domain/repositories";
 const STORAGE_KEY = "chat-manager-settings";
 
 const DEFAULT_SETTINGS: Settings = {
-  darkMode: false,
+  darkMode: true,
 };
 
 export class LocalStorageSettingsRepository implements SettingsRepository {

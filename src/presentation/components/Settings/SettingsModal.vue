@@ -25,7 +25,7 @@ function handleClose() {
       </div>
       <div class="modal-body">
         <div class="setting-item">
-          <span>黑暗主题</span>
+          <span>深色主题</span>
           <label class="switch">
             <input
               type="checkbox"

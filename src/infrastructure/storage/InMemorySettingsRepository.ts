@@ -1,7 +1,7 @@
 import type { SettingsRepository, Settings } from "../../domain/repositories";
 
 const DEFAULT_SETTINGS: Settings = {
-  darkMode: false,
+  darkMode: true,
 };
 
 export class InMemorySettingsRepository implements SettingsRepository {

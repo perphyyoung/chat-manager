@@ -98,7 +98,7 @@ TBD - created by archiving change ddd-architecture-refactor. Update Purpose afte
 
 #### Scenario: 主题切换事件
 
-- **WHEN** 用户切换黑暗/明亮主题时
+- **WHEN** 用户切换深色/浅色主题时
 - **THEN** ThemeToggledEvent 被发布，包含 isDarkMode 状态
 
 #### Scenario: 设置变更事件

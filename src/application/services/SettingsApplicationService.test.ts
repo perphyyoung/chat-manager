@@ -17,23 +17,23 @@ describe("SettingsApplicationService", () => {
   it("should load default settings", async () => {
     const settings = await service.loadSettings();
 
-    expect(settings.darkMode).toBe(false);
+    expect(settings.darkMode).toBe(true);
   });
 
   it("should toggle dark mode", async () => {
     const result = await service.toggleTheme();
 
-    expect(result).toBe(true);
+    expect(result).toBe(false);
 
     const settings = await service.loadSettings();
-    expect(settings.darkMode).toBe(true);
+    expect(settings.darkMode).toBe(false);
   });
 
   it("should toggle dark mode back", async () => {
     await service.toggleTheme();
     const result = await service.toggleTheme();
 
-    expect(result).toBe(false);
+    expect(result).toBe(true);
   });
 
   it("should set dark mode explicitly", async () => {
@@ -51,7 +51,7 @@ describe("SettingsApplicationService", () => {
 
     await service.toggleTheme();
 
-    expect(firedDarkMode).toBe(true);
+    expect(firedDarkMode).toBe(false);
   });
 
   it("should update a setting", async () => {

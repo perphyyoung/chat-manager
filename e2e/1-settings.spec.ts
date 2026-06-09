@@ -33,7 +33,7 @@ test("settings menu opens settings modal", async () => {
 
   const modalText = await settingsModal.textContent();
   expect(modalText).toContain("设置");
-  expect(modalText).toContain("黑暗主题");
+  expect(modalText).toContain("深色主题");
 
   await electronApp.close();
 });
