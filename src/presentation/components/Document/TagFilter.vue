@@ -2,7 +2,7 @@
 import { ref, computed, watch, nextTick } from "vue";
 import { useDocumentStore } from "../../stores/document";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
-import ContextMenu, { type MenuItem } from "../Conversation/ContextMenu.vue";
+import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
 
 const documentStore = useDocumentStore();
 const showNewTagInput = ref(false);

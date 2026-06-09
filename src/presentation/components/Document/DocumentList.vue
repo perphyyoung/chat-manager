@@ -6,7 +6,7 @@ import DocumentItem from "./DocumentItem.vue";
 import TagFilter from "./TagFilter.vue";
 import RecycleBinButton from "../common/RecycleBinButton.vue";
 import RecycleBinModal from "../common/RecycleBinModal.vue";
-import ContextMenu, { type MenuItem } from "../Conversation/ContextMenu.vue";
+import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
 
 const documentStore = useDocumentStore();
 

@@ -6,7 +6,7 @@ import {
 } from "../../stores/document";
 import QuestionItem from "./QuestionItem.vue";
 import RecycleBinModal from "../common/RecycleBinModal.vue";
-import ContextMenu, { type MenuItem } from "../Conversation/ContextMenu.vue";
+import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
 
 const documentStore = useDocumentStore();
 

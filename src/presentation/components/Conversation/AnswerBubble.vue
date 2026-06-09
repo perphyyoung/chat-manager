@@ -2,7 +2,7 @@
 import { ref, computed } from "vue";
 import MarkdownRenderer from "./MarkdownRenderer.vue";
 import AnswerEditor from "./AnswerEditor.vue";
-import ContextMenu, { type MenuItem } from "./ContextMenu.vue";
+import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
 
 interface Props {
   content: string;
