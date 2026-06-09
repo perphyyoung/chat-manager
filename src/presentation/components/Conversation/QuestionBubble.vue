@@ -1,14 +1,64 @@
 <script setup lang="ts">
+import { ref, inject, computed } from "vue";
+import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
+
 interface Props {
   text: string;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
+
+const showToast = inject("showToast") as (message: string) => void;
+
+const contextMenu = ref({
+  show: false,
+  x: 0,
+  y: 0,
+});
+
+const contextMenuItems = computed<MenuItem[]>(() => [
+  {
+    text: "复制",
+    action: copyText,
+  },
+]);
+
+function handleContextMenu(e: MouseEvent) {
+  e.preventDefault();
+  contextMenu.value = {
+    show: true,
+    x: e.clientX,
+    y: e.clientY,
+  };
+}
+
+function closeContextMenu() {
+  contextMenu.value.show = false;
+}
+
+async function copyText() {
+  await navigator.clipboard.writeText(props.text);
+  showToast("问题已复制");
+  closeContextMenu();
+}
 </script>
 
 <template>
   <div class="question-bubble">
-    <div class="question-bubble__content">{{ text }}</div>
+    <div
+      class="question-bubble__content"
+      @contextmenu="handleContextMenu"
+    >
+      {{ text }}
+    </div>
+    <!-- 右键菜单 -->
+    <ContextMenu
+      :show="contextMenu.show"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      :items="contextMenuItems"
+      @close="closeContextMenu"
+    />
   </div>
 </template>
 
