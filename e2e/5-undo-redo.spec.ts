@@ -4,7 +4,7 @@ import {
   generateUniqueDocTitle,
   createDocumentWithAnswer,
   clickFirstDocument,
-  doubleClickAnswerToEdit,
+  rightClickAnswerToEdit,
 } from "./utils";
 
 test.describe("撤销和重做功能", () => {
@@ -13,7 +13,7 @@ test.describe("撤销和重做功能", () => {
     const title = generateUniqueDocTitle("undo");
     await createDocumentWithAnswer(window, title);
     await clickFirstDocument(window);
-    await doubleClickAnswerToEdit(window);
+    await rightClickAnswerToEdit(window);
   });
 
   test("撤销按钮撤销输入", async ({ window }) => {

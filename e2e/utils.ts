@@ -200,12 +200,14 @@ export async function clickFirstDocument(page: Page): Promise<void> {
 }
 
 /**
- * 双击答案进入编辑模式
+ * 右键答案进入编辑模式
  * @param page Playwright Page 对象
  */
-export async function doubleClickAnswerToEdit(page: Page): Promise<void> {
+export async function rightClickAnswerToEdit(page: Page): Promise<void> {
   const answer = page.locator(".answer-bubble__content").first();
-  await answer.dblclick();
+  await answer.click({ button: "right" });
+  await page.waitForSelector(".context-menu", { timeout: 2000 });
+  await page.locator(".context-menu-item", { hasText: "编辑" }).click();
   await page.waitForSelector(".fullscreen-edit-overlay", { timeout: 2000 });
 }
 

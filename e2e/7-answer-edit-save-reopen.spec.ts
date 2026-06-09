@@ -4,11 +4,11 @@ import {
   generateUniqueDocTitle,
   createDocumentWithAnswer,
   clickFirstDocument,
-  doubleClickAnswerToEdit,
+  rightClickAnswerToEdit,
 } from "./utils";
 
 test.describe("回答编辑保存后重新打开", () => {
-  test("修改回答保存后，重新双击打开显示最新内容", async ({ window }) => {
+  test("修改回答保存后，重新右键打开显示最新内容", async ({ window }) => {
     await window.waitForSelector(".document-list", { timeout: 2000 });
 
     // 创建测试文档
@@ -17,7 +17,7 @@ test.describe("回答编辑保存后重新打开", () => {
     await clickFirstDocument(window);
 
     // 第一次编辑：修改内容
-    await doubleClickAnswerToEdit(window);
+    await rightClickAnswerToEdit(window);
 
     const editor = window.locator(".fullscreen-edit-editor .cm-editor");
     await expect(editor).toBeVisible({ timeout: 2000 });
@@ -43,8 +43,8 @@ test.describe("回答编辑保存后重新打开", () => {
     const answerBubble = window.locator(".answer-bubble__content").first();
     await expect(answerBubble).toContainText(newContent, { timeout: 2000 });
 
-    // 重新双击打开编辑器
-    await doubleClickAnswerToEdit(window);
+    // 重新右键打开编辑器
+    await rightClickAnswerToEdit(window);
 
     const editorReopened = window.locator(".fullscreen-edit-editor .cm-editor");
     await expect(editorReopened).toBeVisible({ timeout: 2000 });
@@ -75,7 +75,7 @@ test.describe("回答编辑保存后重新打开", () => {
     await clickFirstDocument(window);
 
     // 第一次编辑
-    await doubleClickAnswerToEdit(window);
+    await rightClickAnswerToEdit(window);
     let editor = window.locator(".fullscreen-edit-editor .cm-editor");
     await expect(editor).toBeVisible({ timeout: 2000 });
     await editor.click();
@@ -92,7 +92,7 @@ test.describe("回答编辑保存后重新打开", () => {
     });
 
     // 第二次编辑
-    await doubleClickAnswerToEdit(window);
+    await rightClickAnswerToEdit(window);
     editor = window.locator(".fullscreen-edit-editor .cm-editor");
     await expect(editor).toBeVisible({ timeout: 2000 });
     await editor.click();
@@ -114,7 +114,7 @@ test.describe("回答编辑保存后重新打开", () => {
     });
 
     // 第三次打开验证
-    await doubleClickAnswerToEdit(window);
+    await rightClickAnswerToEdit(window);
     editor = window.locator(".fullscreen-edit-editor .cm-editor");
     await expect(editor).toBeVisible({ timeout: 2000 });
 
