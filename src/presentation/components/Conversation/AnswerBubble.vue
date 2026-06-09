@@ -31,6 +31,11 @@ const editorRef = ref<InstanceType<typeof AnswerEditor>>();
 // 右键菜单项配置
 const contextMenuItems = computed<MenuItem[]>(() => [
   {
+    text: "编辑",
+    action: startEdit,
+    visible: !contextMenu.value.isEditing,
+  },
+  {
     text: "添加语言标识",
     action: addLanguageIdentifiers,
     visible: !contextMenu.value.isEditing,
@@ -49,9 +54,10 @@ const contextMenuItems = computed<MenuItem[]>(() => [
   },
 ]);
 
-// 简化的方法
 function startEdit() {
+  // 通过右键菜单编辑
   isEditing.value = true;
+  closeContextMenu();
 }
 
 function handleSave(content: string) {
@@ -116,7 +122,6 @@ function addLanguageIdentifiers() {
     <div
       v-if="!isEditing"
       class="answer-bubble__content"
-      @dblclick="startEdit"
       @contextmenu="handleContextMenu"
     >
       <MarkdownRenderer :content="content" />
@@ -163,6 +168,5 @@ function addLanguageIdentifiers() {
   font-size: 14px;
   line-height: 1.6;
   word-wrap: break-word;
-  cursor: pointer;
 }
 </style>
