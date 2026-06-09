@@ -15,21 +15,33 @@ const emit = defineEmits<{
 }>();
 
 const visible = ref(false);
+let timer: ReturnType<typeof setTimeout> | null = null;
+
+function startTimer() {
+  if (timer) {
+    clearTimeout(timer);
+  }
+  timer = setTimeout(() => {
+    visible.value = false;
+    emit("close");
+  }, props.duration);
+}
 
 watch(
   () => props.message,
   (newMessage, oldMessage) => {
     if (newMessage && newMessage !== oldMessage) {
       visible.value = true;
-      setTimeout(() => {
-        visible.value = false;
-        emit("close");
-      }, props.duration);
+      startTimer();
     }
   },
 );
 
 function handleClose() {
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+  }
   visible.value = false;
   emit("close");
 }
