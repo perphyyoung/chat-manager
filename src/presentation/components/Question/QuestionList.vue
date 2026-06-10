@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, watch, nextTick, inject } from "vue";
 import {
   useDocumentStore,
   type QuestionSortField,
@@ -7,6 +7,8 @@ import {
 import QuestionItem from "./QuestionItem.vue";
 import RecycleBinModal from "../common/RecycleBinModal.vue";
 import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
+
+const showToast = inject<(message: string) => void>("showToast");
 
 const documentStore = useDocumentStore();
 
@@ -37,6 +39,10 @@ const contextMenu = ref({
 
 // 右键菜单项
 const contextMenuItems = computed<MenuItem[]>(() => [
+  {
+    text: "复制",
+    action: handleCopyClick,
+  },
   {
     text: "编辑问题",
     action: handleEditClick,
@@ -141,6 +147,20 @@ function handleContextMenu(event: MouseEvent, questionId: string) {
     questionId,
     questionText: question.text,
   };
+}
+
+// 复制问题
+async function handleCopyClick() {
+  const text = currentQuestion.value.questionText;
+  if (!text) return;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast?.("问题已复制");
+  } catch {
+    showToast?.("复制失败");
+  }
+  contextMenu.value.show = false;
 }
 
 // 删除问题 - 软删除到回收站
