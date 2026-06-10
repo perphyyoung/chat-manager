@@ -18,6 +18,10 @@ const isCreating = ref(false);
 const showSortMenu = ref(false);
 const titleInputRef = ref<HTMLInputElement | null>(null);
 
+// 拖拽状态
+const dragOverDocId = ref<string | null>(null);
+const isDraggingQuestion = ref(false);
+
 // 右键菜单状态
 const contextMenu = ref({
   show: false,
@@ -129,6 +133,40 @@ function handleContextMenu(event: MouseEvent, documentId: string) {
 function closeContextMenu() {
   contextMenu.value.show = false;
   (contextMenu as { currentDocId?: string }).currentDocId = undefined;
+}
+
+// 拖拽问题到文档的处理
+function handleDragOver(documentId: string) {
+  dragOverDocId.value = documentId;
+}
+
+function handleDragLeave() {
+  dragOverDocId.value = null;
+}
+
+async function handleDrop(targetDocumentId: string) {
+  dragOverDocId.value = null;
+  isDraggingQuestion.value = false;
+
+  // 从 dataTransfer 获取 questionId
+  const questionId = await getDraggedQuestionId();
+  if (!questionId) return;
+
+  // 获取当前选中的文档
+  const currentDocId = documentStore.selectedDocumentId;
+  if (!currentDocId || currentDocId === targetDocumentId) return;
+
+  try {
+    await documentStore.moveQuestionToDocument(questionId, targetDocumentId);
+    showToast?.("问题已移动");
+  } catch {
+    showToast?.("移动失败");
+  }
+}
+
+function getDraggedQuestionId(): string | null {
+  // 从剪贴板数据获取（通过全局事件）
+  return (window as unknown as { __draggedQuestionId?: string }).__draggedQuestionId || null;
 }
 
 // 编辑文档
@@ -285,8 +323,12 @@ onMounted(() => {
         :key="doc.id"
         :document="doc"
         :is-active="doc.id === documentStore.selectedDocumentId"
+        :is-drag-over="dragOverDocId === doc.id"
         @click="documentStore.selectDocument(doc.id)"
         @contextmenu="handleContextMenu"
+        @drag-over="handleDragOver"
+        @drag-leave="handleDragLeave"
+        @drop="handleDrop"
       />
     </div>
 

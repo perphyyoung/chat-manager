@@ -222,12 +222,16 @@ async function handleReorderClick() {
 // 拖拽开始
 function handleDragStart(questionId: string) {
   dragState.value.draggingId = questionId;
+  // 保存到全局，供 DocumentList 获取
+  (window as unknown as { __draggedQuestionId?: string }).__draggedQuestionId = questionId;
 }
 
 // 拖拽结束
 function handleDragEnd() {
   dragState.value.draggingId = null;
   dragState.value.dropTargetId = null;
+  // 清除全局
+  delete (window as unknown as { __draggedQuestionId?: string }).__draggedQuestionId;
 }
 
 // 拖拽进入目标

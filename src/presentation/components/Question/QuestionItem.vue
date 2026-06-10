@@ -35,9 +35,10 @@ function handleContextMenu(event: MouseEvent) {
 
 function handleDragStart(event: DragEvent) {
   emit("dragStart", props.question.id);
-  // 设置拖拽效果
+  // 设置拖拽效果和数据
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", props.question.id);
   }
 }
 

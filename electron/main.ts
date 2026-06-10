@@ -307,6 +307,28 @@ ipcMain.handle("question:clearDeletedQuestions", (_, documentId: string) => {
     .run(documentId);
 });
 
+ipcMain.handle(
+  "question:moveQuestionToDocument",
+  (_, questionId: string, targetDocumentId: string) => {
+    const database = getDatabase();
+
+    // 获取目标文档的问题数量，用于设置新问题的 order
+    const result = database
+      .prepare(
+        "SELECT COUNT(*) as count FROM questions WHERE document_id = ? AND is_deleted = 0",
+      )
+      .get(targetDocumentId) as { count: number };
+    const newOrder = result.count;
+
+    // 更新问题的 document_id 和 order
+    database
+      .prepare(
+        "UPDATE questions SET document_id = ?, sort_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      )
+      .run(targetDocumentId, newOrder, questionId);
+  },
+);
+
 // Tag IPC handlers
 ipcMain.handle("tag:findAllTags", () => {
   const database = getDatabase();

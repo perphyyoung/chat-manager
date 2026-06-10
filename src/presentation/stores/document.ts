@@ -750,6 +750,47 @@ export const useDocumentStore = defineStore("document", () => {
     }
   }
 
+  // 移动问题到另一个文档
+  async function moveQuestionToDocument(
+    questionId: string,
+    targetDocumentId: string,
+  ): Promise<void> {
+    if (!selectedDocumentId.value) {
+      throw new Error("No document selected");
+    }
+    const sourceDocId = selectedDocumentId.value;
+
+    if (sourceDocId === targetDocumentId) {
+      return;
+    }
+
+    // 更新数据库中的 document_id
+    await documentRepo.moveQuestionToDocument(questionId, targetDocumentId);
+
+    // 刷新源文档（问题已移除）
+    const sourceDoc = await documentService.getDocument(sourceDocId);
+    if (sourceDoc) {
+      const sourceIndex = documents.value.findIndex((d) => d.id === sourceDocId);
+      if (sourceIndex !== -1) {
+        documents.value.splice(sourceIndex, 1, sourceDoc);
+      }
+    }
+
+    // 刷新目标文档（问题已添加）
+    const targetDoc = await documentService.getDocument(targetDocumentId);
+    if (targetDoc) {
+      const targetIndex = documents.value.findIndex((d) => d.id === targetDocumentId);
+      if (targetIndex !== -1) {
+        documents.value.splice(targetIndex, 1, targetDoc);
+      }
+    }
+
+    // 如果当前选中的问题被移走，清空选中状态
+    if (activeQuestionId.value === questionId) {
+      activeQuestionId.value = null;
+    }
+  }
+
   return {
     documents,
     sortedDocuments,
@@ -806,6 +847,7 @@ export const useDocumentStore = defineStore("document", () => {
     clearDeletedQuestions,
     reorderQuestions,
     moveQuestion,
+    moveQuestionToDocument,
   };
 });
 

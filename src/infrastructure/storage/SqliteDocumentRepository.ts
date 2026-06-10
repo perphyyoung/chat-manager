@@ -205,6 +205,16 @@ export class SqliteDocumentRepository implements DocumentRepository {
     await window.electronAPI.question.clearDeletedQuestions(documentId);
   }
 
+  async moveQuestionToDocument(
+    questionId: string,
+    targetDocumentId: string,
+  ): Promise<void> {
+    await window.electronAPI.question.moveQuestionToDocument(
+      questionId,
+      targetDocumentId,
+    );
+  }
+
   // 标签相关方法
   async findByTagId(tagId: string): Promise<Document[]> {
     const stored = await window.electronAPI.tag?.findDocumentsByTagId(tagId);

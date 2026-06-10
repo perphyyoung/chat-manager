@@ -25,25 +25,57 @@ interface DocumentProp {
 interface Props {
   document: DocumentProp;
   isActive: boolean;
+  isDragOver?: boolean;
 }
 
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
   contextmenu: [event: MouseEvent, documentId: string];
+  dragOver: [documentId: string];
+  dragLeave: [];
+  drop: [documentId: string];
 }>();
 
 function handleContextMenu(event: MouseEvent) {
   event.preventDefault();
   emit("contextmenu", event, props.document.id);
 }
+
+function handleDragOver(event: DragEvent) {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "move";
+  }
+  emit("dragOver", props.document.id);
+}
+
+function handleDragLeave(event: DragEvent) {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  const x = event.clientX;
+  const y = event.clientY;
+  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    emit("dragLeave");
+  }
+}
+
+function handleDrop(event: DragEvent) {
+  event.preventDefault();
+  emit("drop", props.document.id);
+}
 </script>
 
 <template>
   <div
     class="document-item"
-    :class="{ 'document-item--active': isActive }"
+    :class="{
+      'document-item--active': isActive,
+      'document-item--drag-over': isDragOver,
+    }"
     @contextmenu="handleContextMenu"
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
   >
     <div class="document-item__icon">📄</div>
     <div class="document-item__content">
@@ -87,6 +119,12 @@ function handleContextMenu(event: MouseEvent) {
 .document-item--active {
   background-color: var(--color-active);
   border-left: 3px solid var(--color-primary);
+}
+
+.document-item--drag-over {
+  background-color: var(--color-primary-light, rgba(59, 130, 246, 0.15));
+  outline: 2px dashed var(--color-primary);
+  outline-offset: -2px;
 }
 
 .document-item__icon {

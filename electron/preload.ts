@@ -73,6 +73,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("question:getDeletedQuestions", documentId),
     clearDeletedQuestions: (documentId: string) =>
       ipcRenderer.invoke("question:clearDeletedQuestions", documentId),
+    moveQuestionToDocument: (
+      questionId: string,
+      targetDocumentId: string,
+    ) =>
+      ipcRenderer.invoke(
+        "question:moveQuestionToDocument",
+        questionId,
+        targetDocumentId,
+      ),
   },
   tag: {
     findAllTags: () => ipcRenderer.invoke("tag:findAllTags"),

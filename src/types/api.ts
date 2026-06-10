@@ -63,6 +63,10 @@ export interface ElectronAPI {
       documentId: string,
     ) => Promise<Array<{ id: string; text: string; deletedAt: string }>>;
     clearDeletedQuestions: (documentId: string) => Promise<void>;
+    moveQuestionToDocument: (
+      questionId: string,
+      targetDocumentId: string,
+    ) => Promise<void>;
   };
   tag: {
     findAllTags: () => Promise<TagDTO[]>;

@@ -40,6 +40,7 @@ interface MockElectronAPI {
     restoreQuestion: MockFn;
     getDeletedQuestions: MockFn;
     clearDeletedQuestions: MockFn;
+    moveQuestionToDocument: MockFn;
   };
   tag: {
     findDocumentsByTagId: MockFn;
@@ -79,6 +80,7 @@ describe("SqliteDocumentRepository", () => {
         restoreQuestion: vi.fn(),
         getDeletedQuestions: vi.fn(),
         clearDeletedQuestions: vi.fn(),
+        moveQuestionToDocument: vi.fn(),
       },
       tag: {
         findDocumentsByTagId: vi.fn(),
@@ -328,6 +330,15 @@ describe("SqliteDocumentRepository", () => {
       await repository.delete("doc1");
 
       expect(mockElectronAPI.db.document.delete).toHaveBeenCalledWith("doc1");
+    });
+
+    it("should move question to another document", async () => {
+      await repository.moveQuestionToDocument("q1", "doc2");
+
+      expect(mockElectronAPI.question.moveQuestionToDocument).toHaveBeenCalledWith(
+        "q1",
+        "doc2",
+      );
     });
   });
 });
