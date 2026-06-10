@@ -29,6 +29,7 @@ const {
   redo,
 } = useCodeMirror({
   initialContent: props.content,
+  showLineNumbers: true,
   onContentChange: () => {
     // 可以在这里添加内容变化处理
   },
