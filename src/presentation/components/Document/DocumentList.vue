@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted } from "vue";
+import { ref, computed, watch, nextTick, onMounted, inject } from "vue";
 import { useDocumentStore, type SortField } from "../../stores/document";
 import { Document } from "../../../domain/entities";
 import DocumentItem from "./DocumentItem.vue";
@@ -7,6 +7,8 @@ import TagFilter from "./TagFilter.vue";
 import RecycleBinButton from "../common/RecycleBinButton.vue";
 import RecycleBinModal from "../common/RecycleBinModal.vue";
 import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
+
+const showToast = inject<(message: string) => void>("showToast");
 
 const documentStore = useDocumentStore();
 
@@ -25,6 +27,10 @@ const contextMenu = ref({
 
 // 右键菜单项
 const contextMenuItems = computed<MenuItem[]>(() => [
+  {
+    text: "复制标题",
+    action: handleCopyDocument,
+  },
   {
     text: "编辑标题",
     action: handleEditDocument,
@@ -91,6 +97,22 @@ watch(showAddDialog, (newValue) => {
 function handleSortFieldChange(field: SortField) {
   documentStore.setDocumentSortField(field);
   showSortMenu.value = false;
+}
+
+// 复制文档标题
+async function handleCopyDocument() {
+  const docId = (contextMenu as { currentDocId?: string }).currentDocId;
+  if (!docId) return;
+  const doc = documentStore.documents.find((d) => d.id === docId);
+  if (!doc) return;
+
+  try {
+    await navigator.clipboard.writeText(doc.title);
+    showToast?.("文档标题已复制");
+  } catch {
+    showToast?.("复制失败");
+  }
+  closeContextMenu();
 }
 
 // 右键菜单处理
