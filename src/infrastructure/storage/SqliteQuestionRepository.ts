@@ -18,7 +18,7 @@ export class SqliteQuestionRepository implements QuestionRepository {
     return this.toQuestion(question as unknown as QuestionDTO);
   }
 
-  async saveAll(documentId: string, questions: Question[]): Promise<void> {
+  async saveAllQuestions(documentId: string, questions: Question[]): Promise<void> {
     const questionJsons = questions.map((q) => ({
       id: q.id,
       text: q.text,
@@ -28,7 +28,7 @@ export class SqliteQuestionRepository implements QuestionRepository {
       isDeleted: q.isDeleted,
       deletedAt: q.deletedAt?.toISOString(),
     }));
-    await window.electronAPI.db.questions.save(documentId, questionJsons);
+    await window.electronAPI.question.saveAllQuestions(documentId, questionJsons);
   }
 
   async delete(id: string): Promise<void> {

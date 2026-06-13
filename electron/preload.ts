@@ -48,8 +48,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
       delete: (id: string) => ipcRenderer.invoke("db:document:delete", id),
     },
     questions: {
-      save: (docId: string, questions: QuestionInput[]) =>
-        ipcRenderer.invoke("db:questions:save", docId, questions),
       delete: (ids: string[]) => ipcRenderer.invoke("db:questions:delete", ids),
     },
   },
@@ -69,14 +67,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("question:softDeleteQuestion", documentId, questionId),
     restoreQuestion: (documentId: string, questionId: string) =>
       ipcRenderer.invoke("question:restoreQuestion", documentId, questionId),
+    saveAllQuestions: (docId: string, questions: QuestionInput[]) =>
+      ipcRenderer.invoke("question:saveAllQuestions", docId, questions),
     getDeletedQuestions: (documentId: string) =>
       ipcRenderer.invoke("question:getDeletedQuestions", documentId),
     clearDeletedQuestions: (documentId: string) =>
       ipcRenderer.invoke("question:clearDeletedQuestions", documentId),
-    moveQuestionToDocument: (
-      questionId: string,
-      targetDocumentId: string,
-    ) =>
+    moveQuestionToDocument: (questionId: string, targetDocumentId: string) =>
       ipcRenderer.invoke(
         "question:moveQuestionToDocument",
         questionId,

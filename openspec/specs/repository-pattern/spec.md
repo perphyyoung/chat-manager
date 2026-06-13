@@ -18,7 +18,7 @@ TBD - created by archiving change refactor-save-to-ddd. Update Purpose after arc
 
 #### Scenario: 批量保存问题
 
-- **WHEN** 调用 `db:questions:save` 传入文档 ID 和问题数组
+- **WHEN** 调用 `question:saveAllQuestions` 传入文档 ID 和问题数组
 - **THEN** 系统使用 UPSERT 方式保存所有问题
 - **AND THEN** 更新 is_deleted 和 deleted_at 字段
 

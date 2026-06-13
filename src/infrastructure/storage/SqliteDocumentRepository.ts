@@ -97,7 +97,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
       });
 
       // 2. 保存所有问题（包括已删除的）
-      await this.questionRepo.saveAll(document.id, [...document.questions]);
+      await this.questionRepo.saveAllQuestions(document.id, [...document.questions]);
 
       // 3. 保存所有答案
       await this.answerRepo.saveAllAnswers(document.id, [...document.answers]);

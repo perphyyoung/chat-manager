@@ -93,7 +93,7 @@ describe("SqliteDocumentRepository", () => {
     mockQuestionRepo = {
       findByDocumentId: vi.fn(),
       findById: vi.fn(),
-      saveAll: vi.fn(),
+      saveAllQuestions: vi.fn(),
       delete: vi.fn(),
       deleteAll: vi.fn(),
     };
@@ -171,7 +171,7 @@ describe("SqliteDocumentRepository", () => {
 
       await repository.save(document);
 
-      expect(mockQuestionRepo.saveAll).toHaveBeenCalledWith(
+      expect(mockQuestionRepo.saveAllQuestions).toHaveBeenCalledWith(
         "doc1",
         expect.any(Array),
       );

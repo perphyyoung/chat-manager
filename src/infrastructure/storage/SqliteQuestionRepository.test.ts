@@ -10,9 +10,15 @@ interface MockElectronAPI {
   db: {
     findById: MockFn;
     questions: {
-      save: MockFn;
       delete: MockFn;
     };
+  };
+  question: {
+    saveAllQuestions: MockFn;
+    softDeleteQuestion: MockFn;
+    restoreQuestion: MockFn;
+    getDeletedQuestions: MockFn;
+    clearDeletedQuestions: MockFn;
   };
 }
 
@@ -38,9 +44,15 @@ describe("SqliteQuestionRepository", () => {
       db: {
         findById: vi.fn(),
         questions: {
-          save: vi.fn(),
           delete: vi.fn(),
         },
+      },
+      question: {
+        saveAllQuestions: vi.fn(),
+        softDeleteQuestion: vi.fn(),
+        restoreQuestion: vi.fn(),
+        getDeletedQuestions: vi.fn(),
+        clearDeletedQuestions: vi.fn(),
       },
     };
     (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =
@@ -133,9 +145,9 @@ describe("SqliteQuestionRepository", () => {
         new Question("q2", "Question 2", 1, new Date("2024-01-01")),
       ];
 
-      await repository.saveAll("doc1", questions);
+      await repository.saveAllQuestions("doc1", questions);
 
-      expect(mockElectronAPI.db.questions.save).toHaveBeenCalledWith(
+      expect(mockElectronAPI.question.saveAllQuestions).toHaveBeenCalledWith(
         "doc1",
         expect.arrayContaining([
           expect.objectContaining({
@@ -163,9 +175,9 @@ describe("SqliteQuestionRepository", () => {
       );
       question.softDelete();
 
-      await repository.saveAll("doc1", [question]);
+      await repository.saveAllQuestions("doc1", [question]);
 
-      const savedQuestions = mockElectronAPI.db.questions.save.mock
+      const savedQuestions = mockElectronAPI.question.saveAllQuestions.mock
         .calls[0]?.[1] as Array<{
         isDeleted: boolean;
         deletedAt: string;

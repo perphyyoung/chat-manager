@@ -568,7 +568,7 @@ ipcMain.handle("db:document:delete", (_, id: string) => {
 });
 
 ipcMain.handle(
-  "db:questions:save",
+  "question:saveAllQuestions",
   (_, docId: string, questions: QuestionInput[]) => {
     const database = getDatabase();
     const now = new Date().toISOString();

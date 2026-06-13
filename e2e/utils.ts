@@ -97,7 +97,7 @@ export async function createDocumentWithAnswer(
     await win.electronAPI.db.document.save({ id, title, createdAt, updatedAt });
 
     if (questions.length > 0) {
-      await win.electronAPI.db.questions.save(
+      await win.electronAPI.question.saveAllQuestions(
         id,
         questions.map((q) => ({
           id: q.id,

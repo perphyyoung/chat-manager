@@ -42,7 +42,6 @@ export interface ElectronAPI {
       delete: (id: string) => Promise<void>;
     };
     questions: {
-      save: (docId: string, questions: QuestionInput[]) => Promise<void>;
       delete: (ids: string[]) => Promise<void>;
     };
   };
@@ -59,6 +58,7 @@ export interface ElectronAPI {
       questionId: string,
     ) => Promise<void>;
     restoreQuestion: (documentId: string, questionId: string) => Promise<void>;
+    saveAllQuestions: (docId: string, questions: QuestionInput[]) => Promise<void>;
     getDeletedQuestions: (
       documentId: string,
     ) => Promise<Array<{ id: string; text: string; deletedAt: string }>>;
