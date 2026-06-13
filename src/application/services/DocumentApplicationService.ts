@@ -24,7 +24,7 @@ export class DocumentApplicationService {
   ) {}
 
   async loadAllDocuments(): Promise<Document[]> {
-    const documents = await this.documentRepo.findAll();
+    const documents = await this.documentRepo.findAllDocuments();
     this.eventBus.emit(
       new DocumentsLoadedEvent(
         documents.map((d) => ({
@@ -37,7 +37,7 @@ export class DocumentApplicationService {
   }
 
   async selectDocument(documentId: string): Promise<void> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
@@ -55,7 +55,7 @@ export class DocumentApplicationService {
       document.addQuestion(text);
     }
 
-    await this.documentRepo.save(document);
+    await this.documentRepo.saveDocument(document);
     this.eventBus.emit(new DocumentCreatedEvent(id, title));
     return document;
   }
@@ -64,13 +64,13 @@ export class DocumentApplicationService {
     documentId: string,
     newTitle: string,
   ): Promise<void> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
 
     document.updateTitle(newTitle);
-    await this.documentRepo.save(document);
+    await this.documentRepo.saveDocument(document);
     this.eventBus.emit(
       new DocumentUpdatedEvent(documentId, {
         title: newTitle,
@@ -79,23 +79,23 @@ export class DocumentApplicationService {
   }
 
   async deleteDocument(documentId: string): Promise<void> {
-    const exists = await this.documentRepo.exists(documentId);
+    const exists = await this.documentRepo.existsDocument(documentId);
     if (!exists) {
       throw new NotFoundError("Document", documentId);
     }
 
-    await this.documentRepo.delete(documentId);
+    await this.documentRepo.deleteDocument(documentId);
     this.eventBus.emit(new DocumentDeletedEvent(documentId));
   }
 
   async addQuestion(documentId: string, questionText: string): Promise<void> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
 
     const question = document.addQuestion(questionText);
-    await this.documentRepo.save(document);
+    await this.documentRepo.saveDocument(document);
     this.eventBus.emit(
       new QuestionAddedEvent(documentId, {
         id: question.id,
@@ -106,7 +106,7 @@ export class DocumentApplicationService {
   }
 
   async selectQuestion(documentId: string, questionId: string): Promise<void> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
@@ -119,17 +119,17 @@ export class DocumentApplicationService {
   }
 
   async getDocument(documentId: string): Promise<Document | null> {
-    return this.documentRepo.findById(documentId);
+    return this.documentRepo.findDocumentById(documentId);
   }
 
   async deleteQuestion(documentId: string, questionId: string): Promise<void> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
 
     document.softDeleteQuestion(questionId);
-    await this.documentRepo.save(document);
+    await this.documentRepo.saveDocument(document);
     this.eventBus.emit(new QuestionDeletedEvent(documentId, questionId));
   }
 
@@ -138,7 +138,7 @@ export class DocumentApplicationService {
     questionId: string,
     newText: string,
   ): Promise<void> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
@@ -149,7 +149,7 @@ export class DocumentApplicationService {
     }
 
     question.updateText(newText);
-    await this.documentRepo.save(document);
+    await this.documentRepo.saveDocument(document);
     this.eventBus.emit(
       new QuestionUpdatedEvent(documentId, questionId, {
         text: newText,
@@ -162,7 +162,7 @@ export class DocumentApplicationService {
     questionId: string,
     newOrder: number,
   ): Promise<void> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
@@ -173,7 +173,7 @@ export class DocumentApplicationService {
     }
 
     question.changeOrder(newOrder);
-    await this.documentRepo.save(document);
+    await this.documentRepo.saveDocument(document);
     this.eventBus.emit(
       new QuestionUpdatedEvent(documentId, questionId, {
         order: newOrder,

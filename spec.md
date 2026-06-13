@@ -294,17 +294,17 @@ class TagApplicationService {
 
 ```typescript
 // 主进程暴露
-ipcMain.handle('document:findAll', () => {...})
-ipcMain.handle('document:findById', (_, id: string) => {...})
-ipcMain.handle('document:save', (_, documentJson: string) => {...})
-ipcMain.handle('document:delete', (_, id: string) => {...})
+ipcMain.handle('document:findAllDocuments', () => {...})
+ipcMain.handle('document:findDocumentById', (_, id: string) => {...})
+ipcMain.handle('document:saveDocument', (_, documentJson: string) => {...})
+ipcMain.handle('document:deleteDocument', (_, id: string) => {...})
 
 // 预加载脚本暴露
 electronAPI.document = {
-  findAll: () => ipcRenderer.invoke('document:findAll'),
-  findById: (id: string) => ipcRenderer.invoke('document:findById', id),
-  save: (json: string) => ipcRenderer.invoke('document:save', json),
-  delete: (id: string) => ipcRenderer.invoke('document:delete', id),
+  findAllDocuments: () => ipcRenderer.invoke('document:findAllDocuments'),
+  findDocumentById: (id: string) => ipcRenderer.invoke('document:findDocumentById', id),
+  saveDocument: (json: string) => ipcRenderer.invoke('document:saveDocument', json),
+  deleteDocument: (id: string) => ipcRenderer.invoke('document:deleteDocument', id),
 }
 ```
 

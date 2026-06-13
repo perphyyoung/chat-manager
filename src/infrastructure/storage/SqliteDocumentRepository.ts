@@ -62,34 +62,34 @@ export class SqliteDocumentRepository implements DocumentRepository {
     this.answerRepo = answerRepo;
   }
 
-  async findAll(): Promise<Document[]> {
-    const stored = await window.electronAPI.db.findAll({
+  async findAllDocuments(): Promise<Document[]> {
+    const stored = await window.electronAPI.document.findAllDocuments({
       isDeleted: false,
     });
     return stored.map((d: DocumentDTO) => toDocument(d));
   }
 
-  async findAllDeleted(): Promise<Document[]> {
-    const stored = await window.electronAPI.db.findAll({
+  async findAllDeletedDocuments(): Promise<Document[]> {
+    const stored = await window.electronAPI.document.findAllDocuments({
       isDeleted: true,
     });
     return stored.map((d: DocumentDTO) => toDocument(d));
   }
 
-  async findById(id: string): Promise<Document | null> {
-    const stored = await window.electronAPI.db.findById(id);
+  async findDocumentById(id: string): Promise<Document | null> {
+    const stored = await window.electronAPI.document.findDocumentById(id);
     if (!stored) {
       return null;
     }
     return toDocument(stored as DocumentDTO);
   }
 
-  async save(document: Document): Promise<void> {
+  async saveDocument(document: Document): Promise<void> {
     // 使用新的事务和实体级 IPC 方法
     const txId = await window.electronAPI.db.transaction.begin();
     try {
       // 1. 保存文档元数据
-      await window.electronAPI.db.document.save({
+      await window.electronAPI.document.saveDocument({
         id: document.id,
         title: document.title,
         createdAt: document.createdAt.toISOString(),
@@ -143,54 +143,29 @@ export class SqliteDocumentRepository implements DocumentRepository {
     }
   }
 
-  async softDelete(id: string): Promise<void> {
-    await window.electronAPI.db.softDelete(id);
+  async softDeleteDocument(id: string): Promise<void> {
+    await window.electronAPI.document.softDeleteDocument(id);
   }
 
-  async restore(id: string): Promise<void> {
-    await window.electronAPI.db.restore(id);
+  async restoreDocument(id: string): Promise<void> {
+    await window.electronAPI.document.restoreDocument(id);
   }
 
-  async delete(id: string): Promise<void> {
-    await window.electronAPI.db.document.delete(id);
+  async deleteDocument(id: string): Promise<void> {
+    await window.electronAPI.document.deleteDocument(id);
   }
 
-  async exists(id: string): Promise<boolean> {
-    return window.electronAPI.db.exists(id);
+  async existsDocument(id: string): Promise<boolean> {
+    return window.electronAPI.document.existsDocument(id);
   }
 
-  // 问题软删除相关方法
-  async softDeleteQuestion(
-    documentId: string,
-    questionId: string,
-  ): Promise<void> {
-    await window.electronAPI.question.softDeleteQuestion(documentId, questionId);
-  }
-
-  async restoreQuestion(documentId: string, questionId: string): Promise<void> {
-    await window.electronAPI.question.restoreQuestion(documentId, questionId);
-  }
-
-  async getDeletedQuestions(
-    documentId: string,
-  ): Promise<Array<{ id: string; text: string; deletedAt: Date }>> {
-    const questions =
-      (await window.electronAPI.question.getDeletedQuestions(documentId)) || [];
-    return questions.map(
-      (q: { id: string; text: string; deletedAt: string }) => ({
-        id: q.id,
-        text: q.text,
-        deletedAt: new Date(q.deletedAt),
-      }),
-    );
-  }
-
+  // 问题的永久删除需要从找到对应文档开始
   async permanentlyDeleteQuestion(
     documentId: string,
     questionId: string,
   ): Promise<void> {
     // DDD 规范：先加载实体，调用领域方法删除，再删除数据库记录
-    const document = await this.findById(documentId);
+    const document = await this.findDocumentById(documentId);
     if (!document) {
       throw new Error(`Document ${documentId} not found`);
     }
@@ -198,11 +173,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
     // 直接删除数据库记录，不通过 save 方法
     await this.questionRepo.delete(questionId);
     // 保存文档（不含已删除的问题）
-    await this.save(document);
-  }
-
-  async clearDeletedQuestions(documentId: string): Promise<void> {
-    await window.electronAPI.question.clearDeletedQuestions(documentId);
+    await this.saveDocument(document);
   }
 
   async moveQuestionToDocument(

@@ -11,20 +11,10 @@ type MockFn = Mock<(...args: unknown[]) => unknown>;
 
 interface MockElectronAPI {
   db: {
-    findAll: MockFn;
-    findById: MockFn;
-    softDelete: MockFn;
-    restore: MockFn;
-    delete: MockFn;
-    exists: MockFn;
     transaction: {
       begin: MockFn;
       commit: MockFn;
       rollback: MockFn;
-    };
-    document: {
-      save: MockFn;
-      delete: MockFn;
     };
     questions?: {
       save: MockFn;
@@ -35,11 +25,16 @@ interface MockElectronAPI {
       delete: MockFn;
     };
   };
+  document: {
+    findAllDocuments: MockFn;
+    findDocumentById: MockFn;
+    saveDocument: MockFn;
+    deleteDocument: MockFn;
+    softDeleteDocument: MockFn;
+    restoreDocument: MockFn;
+    existsDocument: MockFn;
+  };
   question: {
-    softDeleteQuestion: MockFn;
-    restoreQuestion: MockFn;
-    getDeletedQuestions: MockFn;
-    clearDeletedQuestions: MockFn;
     moveQuestionToDocument: MockFn;
   };
   tag: {
@@ -59,27 +54,22 @@ describe("SqliteDocumentRepository", () => {
   beforeEach(() => {
     mockElectronAPI = {
       db: {
-        findAll: vi.fn(),
-        findById: vi.fn(),
-        softDelete: vi.fn(),
-        restore: vi.fn(),
-        delete: vi.fn(),
-        exists: vi.fn(),
         transaction: {
           begin: vi.fn(),
           commit: vi.fn(),
           rollback: vi.fn(),
         },
-        document: {
-          save: vi.fn(),
-          delete: vi.fn(),
-        },
+      },
+      document: {
+        findAllDocuments: vi.fn(),
+        findDocumentById: vi.fn(),
+        saveDocument: vi.fn(),
+        deleteDocument: vi.fn(),
+        softDeleteDocument: vi.fn(),
+        restoreDocument: vi.fn(),
+        existsDocument: vi.fn(),
       },
       question: {
-        softDeleteQuestion: vi.fn(),
-        restoreQuestion: vi.fn(),
-        getDeletedQuestions: vi.fn(),
-        clearDeletedQuestions: vi.fn(),
         moveQuestionToDocument: vi.fn(),
       },
       tag: {
@@ -91,16 +81,19 @@ describe("SqliteDocumentRepository", () => {
     };
 
     mockQuestionRepo = {
-      findByDocumentId: vi.fn(),
-      findById: vi.fn(),
+      findQuestionByDocumentId: vi.fn(),
       saveAllQuestions: vi.fn(),
+      softDeleteQuestion: vi.fn(),
+      restoreQuestion: vi.fn(),
+      getDeletedQuestions: vi.fn(),
+      clearDeletedQuestions: vi.fn(),
       delete: vi.fn(),
       deleteAll: vi.fn(),
     };
 
     mockAnswerRepo = {
       findAnswerByQuestionId: vi.fn(),
-      findByDocumentId: vi.fn(),
+      findAnswerByDocumentId: vi.fn(),
       saveAnswer: vi.fn(),
       saveAllAnswers: vi.fn(),
       deleteAnswer: vi.fn(),
@@ -126,7 +119,7 @@ describe("SqliteDocumentRepository", () => {
         new Date("2024-01-01"),
       );
 
-      await repository.save(document);
+      await repository.saveDocument(document);
 
       expect(mockElectronAPI.db.transaction.begin).toHaveBeenCalled();
     });
@@ -143,9 +136,9 @@ describe("SqliteDocumentRepository", () => {
         new Date("2024-01-01"),
       );
 
-      await repository.save(document);
+      await repository.saveDocument(document);
 
-      expect(mockElectronAPI.db.document.save).toHaveBeenCalledWith({
+      expect(mockElectronAPI.document.saveDocument).toHaveBeenCalledWith({
         id: "doc1",
         title: "Test Doc",
         createdAt: expect.any(String),
@@ -169,7 +162,7 @@ describe("SqliteDocumentRepository", () => {
         new Date("2024-01-01"),
       );
 
-      await repository.save(document);
+      await repository.saveDocument(document);
 
       expect(mockQuestionRepo.saveAllQuestions).toHaveBeenCalledWith(
         "doc1",
@@ -192,7 +185,7 @@ describe("SqliteDocumentRepository", () => {
         new Date("2024-01-01"),
       );
 
-      await repository.save(document);
+      await repository.saveDocument(document);
 
       expect(mockAnswerRepo.saveAllAnswers).toHaveBeenCalledWith(
         "doc1",
@@ -212,7 +205,7 @@ describe("SqliteDocumentRepository", () => {
         new Date("2024-01-01"),
       );
 
-      await repository.save(document);
+      await repository.saveDocument(document);
 
       expect(mockElectronAPI.db.transaction.commit).toHaveBeenCalledWith(
         "tx-123",
@@ -221,7 +214,7 @@ describe("SqliteDocumentRepository", () => {
 
     it("should rollback transaction on error", async () => {
       mockElectronAPI.db.transaction.begin.mockResolvedValue("tx-123");
-      mockElectronAPI.db.document.save.mockRejectedValue(new Error("DB Error"));
+      mockElectronAPI.document.saveDocument.mockRejectedValue(new Error("DB Error"));
 
       const document = new Document(
         "doc1",
@@ -232,7 +225,7 @@ describe("SqliteDocumentRepository", () => {
         new Date("2024-01-01"),
       );
 
-      await expect(repository.save(document)).rejects.toThrow("DB Error");
+      await expect(repository.saveDocument(document)).rejects.toThrow("DB Error");
       expect(mockElectronAPI.db.transaction.rollback).toHaveBeenCalledWith(
         "tx-123",
       );
@@ -240,7 +233,7 @@ describe("SqliteDocumentRepository", () => {
 
     it("should not commit if rollback was called", async () => {
       mockElectronAPI.db.transaction.begin.mockResolvedValue("tx-123");
-      mockElectronAPI.db.document.save.mockRejectedValue(new Error("DB Error"));
+      mockElectronAPI.document.saveDocument.mockRejectedValue(new Error("DB Error"));
 
       const document = new Document(
         "doc1",
@@ -252,7 +245,7 @@ describe("SqliteDocumentRepository", () => {
       );
 
       try {
-        await repository.save(document);
+        await repository.saveDocument(document);
       } catch {
         // expected
       }
@@ -263,7 +256,7 @@ describe("SqliteDocumentRepository", () => {
 
   describe("other methods", () => {
     it("should find all documents", async () => {
-      mockElectronAPI.db.findAll.mockResolvedValue([
+      mockElectronAPI.document.findAllDocuments.mockResolvedValue([
         {
           id: "doc1",
           title: "Doc 1",
@@ -275,14 +268,14 @@ describe("SqliteDocumentRepository", () => {
         },
       ]);
 
-      const result = await repository.findAll();
+      const result = await repository.findAllDocuments();
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBeInstanceOf(Document);
     });
 
     it("should find document by id", async () => {
-      mockElectronAPI.db.findById.mockResolvedValue({
+      mockElectronAPI.document.findDocumentById.mockResolvedValue({
         id: "doc1",
         title: "Doc 1",
         createdAt: "2024-01-01T00:00:00Z",
@@ -292,44 +285,44 @@ describe("SqliteDocumentRepository", () => {
         tags: [],
       });
 
-      const result = await repository.findById("doc1");
+      const result = await repository.findDocumentById("doc1");
 
       expect(result).toBeInstanceOf(Document);
       expect(result?.title).toBe("Doc 1");
     });
 
     it("should return null when document not found", async () => {
-      mockElectronAPI.db.findById.mockResolvedValue(null);
+      mockElectronAPI.document.findDocumentById.mockResolvedValue(null);
 
-      const result = await repository.findById("nonexistent");
+      const result = await repository.findDocumentById("nonexistent");
 
       expect(result).toBeNull();
     });
 
     it("should check if document exists", async () => {
-      mockElectronAPI.db.exists.mockResolvedValue(true);
+      mockElectronAPI.document.existsDocument.mockResolvedValue(true);
 
-      const result = await repository.exists("doc1");
+      const result = await repository.existsDocument("doc1");
 
       expect(result).toBe(true);
     });
 
     it("should soft delete document", async () => {
-      await repository.softDelete("doc1");
+      await repository.softDeleteDocument("doc1");
 
-      expect(mockElectronAPI.db.softDelete).toHaveBeenCalledWith("doc1");
+      expect(mockElectronAPI.document.softDeleteDocument).toHaveBeenCalledWith("doc1");
     });
 
     it("should restore document", async () => {
-      await repository.restore("doc1");
+      await repository.restoreDocument("doc1");
 
-      expect(mockElectronAPI.db.restore).toHaveBeenCalledWith("doc1");
+      expect(mockElectronAPI.document.restoreDocument).toHaveBeenCalledWith("doc1");
     });
 
     it("should permanently delete document", async () => {
-      await repository.delete("doc1");
+      await repository.deleteDocument("doc1");
 
-      expect(mockElectronAPI.db.document.delete).toHaveBeenCalledWith("doc1");
+      expect(mockElectronAPI.document.deleteDocument).toHaveBeenCalledWith("doc1");
     });
 
     it("should move question to another document", async () => {

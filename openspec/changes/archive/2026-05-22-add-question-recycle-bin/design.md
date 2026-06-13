@@ -25,7 +25,7 @@
 
 ### 1. 复用文档回收站的 IPC 接口
 
-**决策**: 复用现有的 `db:softDelete` 和 `db:restore` IPC 接口，通过 DocumentRepository 操作问题。
+**决策**: 复用现有的 `document:softDeleteDocument` 和 `document:restoreDocument` IPC 接口，通过 DocumentRepository 操作问题。
 
 **理由**:
 

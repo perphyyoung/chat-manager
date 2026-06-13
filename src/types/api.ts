@@ -27,23 +27,25 @@ export interface ElectronAPI {
     chrome: string;
   }>;
   db: {
-    findAll: (options?: { isDeleted?: boolean }) => Promise<DocumentDTO[]>;
-    findById: (id: string) => Promise<DocumentDTO | null>;
-    softDelete: (id: string) => Promise<void>;
-    restore: (id: string) => Promise<void>;
-    exists: (id: string) => Promise<boolean>;
     transaction: {
       begin: () => Promise<string>;
       commit: (txId: string) => Promise<void>;
       rollback: (txId: string) => Promise<void>;
     };
-    document: {
-      save: (doc: DocumentInput) => Promise<void>;
-      delete: (id: string) => Promise<void>;
-    };
     questions: {
       delete: (ids: string[]) => Promise<void>;
     };
+  };
+  document: {
+    findAllDocuments: (options?: {
+      isDeleted?: boolean;
+    }) => Promise<DocumentDTO[]>;
+    findDocumentById: (id: string) => Promise<DocumentDTO | null>;
+    saveDocument: (doc: DocumentInput) => Promise<void>;
+    deleteDocument: (id: string) => Promise<void>;
+    softDeleteDocument: (id: string) => Promise<void>;
+    restoreDocument: (id: string) => Promise<void>;
+    existsDocument: (id: string) => Promise<boolean>;
   };
   answer: {
     findAnswerByQuestionId: (questionId: string) => Promise<AnswerDTO | null>;
@@ -58,7 +60,10 @@ export interface ElectronAPI {
       questionId: string,
     ) => Promise<void>;
     restoreQuestion: (documentId: string, questionId: string) => Promise<void>;
-    saveAllQuestions: (docId: string, questions: QuestionInput[]) => Promise<void>;
+    saveAllQuestions: (
+      docId: string,
+      questions: QuestionInput[],
+    ) => Promise<void>;
     getDeletedQuestions: (
       documentId: string,
     ) => Promise<Array<{ id: string; text: string; deletedAt: string }>>;

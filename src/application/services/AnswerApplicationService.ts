@@ -24,7 +24,7 @@ export class AnswerApplicationService {
     questionId: string,
     content: string,
   ): Promise<Answer> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
@@ -44,7 +44,7 @@ export class AnswerApplicationService {
 
     document.addAnswer(answer);
     await this.answerRepo.saveAnswer(answer);
-    await this.documentRepo.save(document);
+    await this.documentRepo.saveDocument(document);
 
     this.eventBus.emit(
       new AnswerCreatedEvent(documentId, questionId, answerId),
@@ -57,7 +57,7 @@ export class AnswerApplicationService {
     answerId: string,
     newContent: string,
   ): Promise<void> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
@@ -70,20 +70,20 @@ export class AnswerApplicationService {
 
     answer.editContent(newContent);
     await this.answerRepo.saveAnswer(answer);
-    await this.documentRepo.save(document);
+    await this.documentRepo.saveDocument(document);
 
     this.eventBus.emit(new AnswerUpdatedEvent(documentId, answerId));
   }
 
   async deleteAnswer(documentId: string, answerId: string): Promise<void> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
 
     document.removeAnswer(answerId);
     await this.answerRepo.deleteAnswer(answerId);
-    await this.documentRepo.save(document);
+    await this.documentRepo.saveDocument(document);
 
     this.eventBus.emit(new AnswerDeletedEvent(documentId, answerId));
   }

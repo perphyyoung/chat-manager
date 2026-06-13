@@ -61,8 +61,8 @@ interface DocumentRepository {
 
 ```typescript
 // 文档
-ipcMain.handle("db:document:save", (_, doc: DocumentJson) => {...})
-ipcMain.handle("db:document:delete", (_, id: string) => {...})
+ipcMain.handle("document:saveDocument", (_, doc: DocumentJson) => {...})
+ipcMain.handle("document:deleteDocument", (_, id: string) => {...})
 
 // 问题（批量操作）
 ipcMain.handle("question:saveAllQuestions", (_, docId: string, questions: QuestionJson[]) => {...})

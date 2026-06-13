@@ -6,9 +6,8 @@ import { Answer } from "@/domain/entities";
 type MockFn = Mock<(...args: unknown[]) => unknown>;
 
 interface MockElectronAPI {
-  db: {
-    findById: MockFn;
-
+  document: {
+    findDocumentById: MockFn;
   };
   answer: {
     findAnswerByQuestionId: MockFn;
@@ -25,9 +24,8 @@ describe("SqliteAnswerRepository", () => {
 
   beforeEach(() => {
     mockElectronAPI = {
-      db: {
-        findById: vi.fn(),
-
+      document: {
+        findDocumentById: vi.fn(),
       },
       answer: {
         findAnswerByQuestionId: vi.fn(),
@@ -70,9 +68,9 @@ describe("SqliteAnswerRepository", () => {
 
   describe("findByDocumentId", () => {
     it("should return empty array when document not found", async () => {
-      mockElectronAPI.db.findById.mockResolvedValue(null);
+      mockElectronAPI.document.findDocumentById.mockResolvedValue(null);
 
-      const result = await repository.findByDocumentId("doc1");
+      const result = await repository.findAnswerByDocumentId("doc1");
 
       expect(result).toEqual([]);
     });
@@ -96,9 +94,9 @@ describe("SqliteAnswerRepository", () => {
           },
         ],
       };
-      mockElectronAPI.db.findById.mockResolvedValue(mockDoc);
+      mockElectronAPI.document.findDocumentById.mockResolvedValue(mockDoc);
 
-      const result = await repository.findByDocumentId("doc1");
+      const result = await repository.findAnswerByDocumentId("doc1");
 
       expect(result).toHaveLength(2);
       expect(result[0]).toBeInstanceOf(Answer);

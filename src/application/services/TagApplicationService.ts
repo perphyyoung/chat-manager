@@ -74,14 +74,14 @@ export class TagApplicationService {
     const documents = await this.documentRepo.findByTagId(tagId);
     for (const doc of documents) {
       doc.updateTagName(tagId, trimmedName);
-      await this.documentRepo.save(doc);
+      await this.documentRepo.saveDocument(doc);
     }
 
     return tag;
   }
 
   async addTagToDocument(documentId: string, tagId: string): Promise<void> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
@@ -94,24 +94,24 @@ export class TagApplicationService {
     if (document.hasTag(tagId)) return;
 
     document.addTag(tag);
-    await this.documentRepo.save(document);
+    await this.documentRepo.saveDocument(document);
   }
 
   async removeTagFromDocument(
     documentId: string,
     tagId: string,
   ): Promise<void> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }
 
     document.removeTag(tagId);
-    await this.documentRepo.save(document);
+    await this.documentRepo.saveDocument(document);
   }
 
   async getDocumentTags(documentId: string): Promise<Tag[]> {
-    const document = await this.documentRepo.findById(documentId);
+    const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
     }

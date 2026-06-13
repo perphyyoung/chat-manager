@@ -5,15 +5,15 @@ export class MockDocumentRepository implements DocumentRepository {
   private documents: Map<string, Document> = new Map();
   private documentTags: Map<string, Set<string>> = new Map();
 
-  async findAll(): Promise<Document[]> {
+  async findAllDocuments(): Promise<Document[]> {
     return Array.from(this.documents.values());
   }
 
-  async findAllDeleted(): Promise<Document[]> {
+  async findAllDeletedDocuments(): Promise<Document[]> {
     return [];
   }
 
-  async findById(id: string): Promise<Document | null> {
+  async findDocumentById(id: string): Promise<Document | null> {
     return this.documents.get(id) ?? null;
   }
 
@@ -21,19 +21,19 @@ export class MockDocumentRepository implements DocumentRepository {
     return [];
   }
 
-  async save(document: Document): Promise<void> {
+  async saveDocument(document: Document): Promise<void> {
     this.documents.set(document.id, document);
   }
 
-  async softDelete(_id: string): Promise<void> {}
-  async restore(_id: string): Promise<void> {}
+  async softDeleteDocument(_id: string): Promise<void> {}
+  async restoreDocument(_id: string): Promise<void> {}
 
-  async delete(id: string): Promise<void> {
+  async deleteDocument(id: string): Promise<void> {
     this.documents.delete(id);
     this.documentTags.delete(id);
   }
 
-  async exists(id: string): Promise<boolean> {
+  async existsDocument(id: string): Promise<boolean> {
     return this.documents.has(id);
   }
 
@@ -58,24 +58,10 @@ export class MockDocumentRepository implements DocumentRepository {
     }));
   }
 
-  async softDeleteQuestion(
-    _documentId: string,
-    _questionId: string,
-  ): Promise<void> {}
-  async restoreQuestion(
-    _documentId: string,
-    _questionId: string,
-  ): Promise<void> {}
-  async getDeletedQuestions(
-    _documentId: string,
-  ): Promise<Array<{ id: string; text: string; deletedAt: Date }>> {
-    return [];
-  }
   async permanentlyDeleteQuestion(
     _documentId: string,
     _questionId: string,
   ): Promise<void> {}
-  async clearDeletedQuestions(_documentId: string): Promise<void> {}
 
   clear(): void {
     this.documents.clear();

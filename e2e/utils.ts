@@ -94,7 +94,7 @@ export async function createDocumentWithAnswer(
     const win = window as unknown as WindowWithElectronAPI;
     const { id, title, createdAt, updatedAt, questions, answers } = doc;
 
-    await win.electronAPI.db.document.save({ id, title, createdAt, updatedAt });
+    await win.electronAPI.document.saveDocument({ id, title, createdAt, updatedAt });
 
     if (questions.length > 0) {
       await win.electronAPI.question.saveAllQuestions(
@@ -167,7 +167,7 @@ export async function cleanupE2EDocuments(page: Page): Promise<void> {
   try {
     const allDocs = await page.evaluate(async () => {
       const win = window as unknown as WindowWithElectronAPI;
-      return win.electronAPI.db.findAll();
+      return win.electronAPI.document.findAllDocuments();
     });
 
     // 筛选出 e2e 开头的文档
@@ -178,7 +178,7 @@ export async function cleanupE2EDocuments(page: Page): Promise<void> {
       try {
         await page.evaluate(async (docId: string) => {
           const win = window as unknown as WindowWithElectronAPI;
-          await win.electronAPI.db.document.delete(docId);
+          await win.electronAPI.document.deleteDocument(docId);
         }, doc.id);
       } catch (e) {
         log.error(`清理文档失败: ${doc.title} - ${e}`);

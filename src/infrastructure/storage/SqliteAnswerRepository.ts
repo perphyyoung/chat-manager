@@ -18,10 +18,10 @@ export class SqliteAnswerRepository implements AnswerRepository {
     return toAnswer(dto);
   }
 
-  async findByDocumentId(documentId: string): Promise<Answer[]> {
+  async findAnswerByDocumentId(documentId: string): Promise<Answer[]> {
     // 需要通过文档 ID 查询所有关联问题的回答
     // 这里通过 IPC 获取文档数据后提取回答
-    const doc = await window.electronAPI.db.findById(documentId);
+    const doc = await window.electronAPI.document.findDocumentById(documentId);
     if (!doc || !doc.answers) return [];
     return doc.answers.map((a: AnswerDTO) => toAnswer(a));
   }

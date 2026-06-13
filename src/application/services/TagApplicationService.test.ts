@@ -126,7 +126,7 @@ describe("TagApplicationService", () => {
     it("should add tag to document", async () => {
       // Create a document first
       const doc = new Document("doc1", "Test", [], [], mockDate, mockDate, []);
-      await documentRepo.save(doc);
+      await documentRepo.saveDocument(doc);
       const tag = await service.createTag("Work");
 
       await service.addTagToDocument("doc1", tag.id);
@@ -147,7 +147,7 @@ describe("TagApplicationService", () => {
     it("should throw error for non-existent tag", async () => {
       // Create a document first
       const doc = new Document("doc1", "Test", [], [], mockDate, mockDate, []);
-      await documentRepo.save(doc);
+      await documentRepo.saveDocument(doc);
 
       await expect(
         service.addTagToDocument("doc1", "non-existent"),
@@ -157,7 +157,7 @@ describe("TagApplicationService", () => {
     it("should not add duplicate tag to document", async () => {
       // Create a document first
       const doc = new Document("doc1", "Test", [], [], mockDate, mockDate, []);
-      await documentRepo.save(doc);
+      await documentRepo.saveDocument(doc);
       const tag = await service.createTag("Work");
 
       await service.addTagToDocument("doc1", tag.id);
@@ -172,7 +172,7 @@ describe("TagApplicationService", () => {
     it("should remove tag from document", async () => {
       // Create a document first
       const doc = new Document("doc1", "Test", [], [], mockDate, mockDate, []);
-      await documentRepo.save(doc);
+      await documentRepo.saveDocument(doc);
       const tag = await service.createTag("Work");
       await service.addTagToDocument("doc1", tag.id);
 
@@ -191,7 +191,7 @@ describe("TagApplicationService", () => {
     it("should throw error when removing tag not associated with document", async () => {
       // Create a document first
       const doc = new Document("doc1", "Test", [], [], mockDate, mockDate, []);
-      await documentRepo.save(doc);
+      await documentRepo.saveDocument(doc);
       const tag = await service.createTag("Work");
 
       await expect(
@@ -204,7 +204,7 @@ describe("TagApplicationService", () => {
     it("should return tags for document", async () => {
       // Create a document first
       const doc = new Document("doc1", "Test", [], [], mockDate, mockDate, []);
-      await documentRepo.save(doc);
+      await documentRepo.saveDocument(doc);
       const tag1 = await service.createTag("Work");
       const tag2 = await service.createTag("Personal");
       await service.addTagToDocument("doc1", tag1.id);

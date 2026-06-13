@@ -8,10 +8,12 @@ type MockFn = Mock<(...args: unknown[]) => unknown>;
 
 interface MockElectronAPI {
   db: {
-    findById: MockFn;
     questions: {
       delete: MockFn;
     };
+  };
+  document: {
+    findDocumentById: MockFn;
   };
   question: {
     saveAllQuestions: MockFn;
@@ -42,10 +44,12 @@ describe("SqliteQuestionRepository", () => {
   beforeEach(() => {
     mockElectronAPI = {
       db: {
-        findById: vi.fn(),
         questions: {
           delete: vi.fn(),
         },
+      },
+      document: {
+        findDocumentById: vi.fn(),
       },
       question: {
         saveAllQuestions: vi.fn(),
@@ -62,9 +66,9 @@ describe("SqliteQuestionRepository", () => {
 
   describe("findByDocumentId", () => {
     it("should return empty array when document not found", async () => {
-      mockElectronAPI.db.findById.mockResolvedValue(null);
+      mockElectronAPI.document.findDocumentById.mockResolvedValue(null);
 
-      const result = await repository.findByDocumentId("doc1");
+      const result = await repository.findQuestionByDocumentId("doc1");
 
       expect(result).toEqual([]);
     });
@@ -84,9 +88,9 @@ describe("SqliteQuestionRepository", () => {
           }),
         ],
       };
-      mockElectronAPI.db.findById.mockResolvedValue(mockDoc);
+      mockElectronAPI.document.findDocumentById.mockResolvedValue(mockDoc);
 
-      const result = await repository.findByDocumentId("doc1");
+      const result = await repository.findQuestionByDocumentId("doc1");
 
       expect(result).toHaveLength(2);
       expect(result[0]).toBeInstanceOf(Question);
@@ -104,9 +108,9 @@ describe("SqliteQuestionRepository", () => {
           }),
         ],
       };
-      mockElectronAPI.db.findById.mockResolvedValue(mockDoc);
+      mockElectronAPI.document.findDocumentById.mockResolvedValue(mockDoc);
 
-      const result = await repository.findByDocumentId("doc1");
+      const result = await repository.findQuestionByDocumentId("doc1");
 
       expect(result).toHaveLength(1);
       expect(result[0]?.isDeleted).toBe(true);
@@ -114,27 +118,60 @@ describe("SqliteQuestionRepository", () => {
     });
   });
 
-  describe("findById", () => {
-    it("should return null when question not found", async () => {
-      mockElectronAPI.db.findById.mockResolvedValue({
-        questions: [],
+  describe("softDeleteQuestion", () => {
+    it("should soft delete question", async () => {
+      await repository.softDeleteQuestion("doc1", "q1");
+
+      expect(mockElectronAPI.question.softDeleteQuestion).toHaveBeenCalledWith(
+        "doc1",
+        "q1",
+      );
+    });
+  });
+
+  describe("restoreQuestion", () => {
+    it("should restore question", async () => {
+      await repository.restoreQuestion("doc1", "q1");
+
+      expect(mockElectronAPI.question.restoreQuestion).toHaveBeenCalledWith(
+        "doc1",
+        "q1",
+      );
+    });
+  });
+
+  describe("getDeletedQuestions", () => {
+    it("should return deleted questions", async () => {
+      mockElectronAPI.question.getDeletedQuestions.mockResolvedValue([
+        { id: "q1", text: "Question 1", deletedAt: "2024-01-01T00:00:00Z" },
+      ]);
+
+      const result = await repository.getDeletedQuestions("doc1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        id: "q1",
+        text: "Question 1",
+        deletedAt: new Date("2024-01-01T00:00:00Z"),
       });
-
-      const result = await repository.findById("q1");
-
-      expect(result).toBeNull();
     });
 
-    it("should return question when found", async () => {
-      const mockDoc = {
-        questions: [createQuestionDTO({ id: "q1" })],
-      };
-      mockElectronAPI.db.findById.mockResolvedValue(mockDoc);
+    it("should return empty array when no deleted questions", async () => {
+      mockElectronAPI.question.getDeletedQuestions.mockResolvedValue([]);
 
-      const result = await repository.findById("q1");
+      const result = await repository.getDeletedQuestions("doc1");
 
-      expect(result).toBeInstanceOf(Question);
-      expect(result?.text).toBe("Question 1");
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("clearDeletedQuestions", () => {
+    it("should clear deleted questions", async () => {
+      await repository.clearDeletedQuestions("doc1");
+
+      expect(
+        mockElectronAPI.question.clearDeletedQuestions,
+      ).toHaveBeenCalledWith("doc1");
     });
   });
 

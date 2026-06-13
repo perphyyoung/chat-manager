@@ -30,12 +30,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("render-log", level, message);
   },
   db: {
-    findAll: (options?: { isDeleted?: boolean }) =>
-      ipcRenderer.invoke("db:findAll", options),
-    findById: (id: string) => ipcRenderer.invoke("db:findById", id),
-    softDelete: (id: string) => ipcRenderer.invoke("db:softDelete", id),
-    restore: (id: string) => ipcRenderer.invoke("db:restore", id),
-    exists: (id: string) => ipcRenderer.invoke("db:exists", id),
     transaction: {
       begin: () => ipcRenderer.invoke("db:transaction:begin"),
       commit: (txId: string) =>
@@ -43,13 +37,25 @@ contextBridge.exposeInMainWorld("electronAPI", {
       rollback: (txId: string) =>
         ipcRenderer.invoke("db:transaction:rollback", txId),
     },
-    document: {
-      save: (doc: DocumentInput) => ipcRenderer.invoke("db:document:save", doc),
-      delete: (id: string) => ipcRenderer.invoke("db:document:delete", id),
-    },
     questions: {
       delete: (ids: string[]) => ipcRenderer.invoke("db:questions:delete", ids),
     },
+  },
+  document: {
+    findAllDocuments: (options?: { isDeleted?: boolean }) =>
+      ipcRenderer.invoke("document:findAllDocuments", options),
+    findDocumentById: (id: string) =>
+      ipcRenderer.invoke("document:findDocumentById", id),
+    saveDocument: (doc: DocumentInput) =>
+      ipcRenderer.invoke("document:saveDocument", doc),
+    deleteDocument: (id: string) =>
+      ipcRenderer.invoke("document:deleteDocument", id),
+    softDeleteDocument: (id: string) =>
+      ipcRenderer.invoke("document:softDeleteDocument", id),
+    restoreDocument: (id: string) =>
+      ipcRenderer.invoke("document:restoreDocument", id),
+    existsDocument: (id: string) =>
+      ipcRenderer.invoke("document:existsDocument", id),
   },
   answer: {
     findAnswerByQuestionId: (questionId: string) =>

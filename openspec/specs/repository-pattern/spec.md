@@ -12,7 +12,7 @@ TBD - created by archiving change refactor-save-to-ddd. Update Purpose after arc
 
 #### Scenario: 保存文档元数据
 
-- **WHEN** 调用 `db:document:save` 传入文档 JSON
+- **WHEN** 调用 `document:saveDocument` 传入文档 JSON
 - **THEN** 系统保存文档的 id, title, created_at, updated_at 字段
 - **AND THEN** 返回操作成功状态
 

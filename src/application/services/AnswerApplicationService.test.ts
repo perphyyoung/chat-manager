@@ -23,28 +23,16 @@ describe("AnswerApplicationService", () => {
 
   beforeEach(() => {
     mockDocumentRepo = {
-      findAll: vi.fn<() => Promise<Document[]>>(),
-      findAllDeleted: vi.fn<() => Promise<Document[]>>(),
-      findById: vi.fn<() => Promise<Document | null>>(),
+      findAllDocuments: vi.fn<() => Promise<Document[]>>(),
+      findAllDeletedDocuments: vi.fn<() => Promise<Document[]>>(),
+      findDocumentById: vi.fn<() => Promise<Document | null>>(),
       findByTagId: vi.fn<() => Promise<Document[]>>(),
-      save: vi.fn<() => Promise<void>>(),
-      softDelete: vi.fn<() => Promise<void>>(),
-      restore: vi.fn<() => Promise<void>>(),
-      delete: vi.fn<() => Promise<void>>(),
-      exists: vi.fn<() => Promise<boolean>>(),
-      softDeleteQuestion: vi.fn<() => Promise<void>>(),
-      restoreQuestion: vi.fn<() => Promise<void>>(),
-      getDeletedQuestions: vi.fn<
-        () => Promise<
-          Array<{
-            id: string;
-            text: string;
-            deletedAt: Date;
-          }>
-        >
-      >(),
+      saveDocument: vi.fn<() => Promise<void>>(),
+      softDeleteDocument: vi.fn<() => Promise<void>>(),
+      restoreDocument: vi.fn<() => Promise<void>>(),
+      deleteDocument: vi.fn<() => Promise<void>>(),
+      existsDocument: vi.fn<() => Promise<boolean>>(),
       permanentlyDeleteQuestion: vi.fn<() => Promise<void>>(),
-      clearDeletedQuestions: vi.fn<() => Promise<void>>(),
       addTag: vi.fn<() => Promise<void>>(),
       removeTag: vi.fn<() => Promise<void>>(),
       getTags: vi.fn<() => Promise<Array<{ id: string; name: string }>>>(),
@@ -52,7 +40,7 @@ describe("AnswerApplicationService", () => {
 
     mockAnswerRepo = {
       findAnswerByQuestionId: vi.fn<() => Promise<Answer | null>>(),
-      findByDocumentId: vi.fn<() => Promise<Answer[]>>(),
+      findAnswerByDocumentId: vi.fn<() => Promise<Answer[]>>(),
       saveAnswer: vi.fn<() => Promise<void>>(),
       saveAllAnswers: vi.fn<() => Promise<void>>(),
       deleteAnswer: vi.fn<() => Promise<void>>(),
@@ -78,7 +66,7 @@ describe("AnswerApplicationService", () => {
         mockDate,
       );
 
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(document);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(document);
 
       const answer = await service.addAnswer(
         "doc1",
@@ -88,12 +76,12 @@ describe("AnswerApplicationService", () => {
 
       expect(answer.questionId).toBe("q1");
       expect(answer.content).toBe("This is the answer");
-      expect(mockDocumentRepo.save).toHaveBeenCalled();
+      expect(mockDocumentRepo.saveDocument).toHaveBeenCalled();
       expect(mockAnswerRepo.saveAnswer).toHaveBeenCalled();
     });
 
     it("should throw NotFoundError when document not found", async () => {
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(null);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(null);
 
       await expect(service.addAnswer("doc1", "q1", "Answer")).rejects.toThrow(
         NotFoundError,
@@ -102,7 +90,7 @@ describe("AnswerApplicationService", () => {
 
     it("should throw NotFoundError when question not found in document", async () => {
       const document = new Document("doc1", "Test Doc", [], [], mockDate);
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(document);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(document);
 
       await expect(service.addAnswer("doc1", "q1", "Answer")).rejects.toThrow(
         NotFoundError,
@@ -125,7 +113,7 @@ describe("AnswerApplicationService", () => {
         mockDate,
       );
 
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(document);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(document);
 
       await expect(
         service.addAnswer("doc1", "q1", "New answer"),
@@ -142,7 +130,7 @@ describe("AnswerApplicationService", () => {
         mockDate,
       );
 
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(document);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(document);
 
       const events: AnswerCreatedEvent[] = [];
       eventBus.on("AnswerCreatedEvent", (e) =>
@@ -169,17 +157,17 @@ describe("AnswerApplicationService", () => {
         mockDate,
       );
 
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(document);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(document);
 
       await service.updateAnswer("doc1", "a1", "Updated content");
 
       expect(answer.content).toBe("Updated content");
-      expect(mockDocumentRepo.save).toHaveBeenCalled();
+      expect(mockDocumentRepo.saveDocument).toHaveBeenCalled();
       expect(mockAnswerRepo.saveAnswer).toHaveBeenCalled();
     });
 
     it("should throw NotFoundError when document not found", async () => {
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(null);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(null);
 
       await expect(
         service.updateAnswer("doc1", "a1", "Content"),
@@ -188,7 +176,7 @@ describe("AnswerApplicationService", () => {
 
     it("should throw NotFoundError when answer not found", async () => {
       const document = new Document("doc1", "Test Doc", [], [], mockDate);
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(document);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(document);
 
       await expect(
         service.updateAnswer("doc1", "a1", "Content"),
@@ -206,7 +194,7 @@ describe("AnswerApplicationService", () => {
         mockDate,
       );
 
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(document);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(document);
 
       const events: AnswerUpdatedEvent[] = [];
       eventBus.on("AnswerUpdatedEvent", (e) =>
@@ -232,17 +220,17 @@ describe("AnswerApplicationService", () => {
         mockDate,
       );
 
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(document);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(document);
 
       await service.deleteAnswer("doc1", "a1");
 
       expect(document.answers).toHaveLength(0);
-      expect(mockDocumentRepo.save).toHaveBeenCalled();
+      expect(mockDocumentRepo.saveDocument).toHaveBeenCalled();
       expect(mockAnswerRepo.deleteAnswer).toHaveBeenCalledWith("a1");
     });
 
     it("should throw NotFoundError when document not found", async () => {
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(null);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(null);
 
       await expect(service.deleteAnswer("doc1", "a1")).rejects.toThrow(
         NotFoundError,
@@ -251,7 +239,7 @@ describe("AnswerApplicationService", () => {
 
     it("should throw NotFoundError when answer not found", async () => {
       const document = new Document("doc1", "Test Doc", [], [], mockDate);
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(document);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(document);
 
       await expect(service.deleteAnswer("doc1", "a1")).rejects.toThrow(
         NotFoundError,
@@ -269,7 +257,7 @@ describe("AnswerApplicationService", () => {
         mockDate,
       );
 
-      vi.mocked(mockDocumentRepo.findById).mockResolvedValue(document);
+      vi.mocked(mockDocumentRepo.findDocumentById).mockResolvedValue(document);
 
       const events: AnswerDeletedEvent[] = [];
       eventBus.on("AnswerDeletedEvent", (e) =>

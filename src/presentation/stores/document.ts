@@ -193,7 +193,7 @@ export const useDocumentStore = defineStore("document", () => {
     const docs = await documentService.loadAllDocuments();
     if (docs.length === 0) {
       for (const mock of mockDocuments) {
-        await documentRepo.save(mock);
+        await documentRepo.saveDocument(mock);
       }
       documents.value = mockDocuments;
     } else {
@@ -431,7 +431,7 @@ export const useDocumentStore = defineStore("document", () => {
 
   // 回收站相关方法（使用数据库软删除）
   async function softDeleteDocument(documentId: string) {
-    await documentRepo.softDelete(documentId);
+    await documentRepo.softDeleteDocument(documentId);
 
     // 从文档列表中移除
     const index = documents.value.findIndex((d) => d.id === documentId);
@@ -447,15 +447,15 @@ export const useDocumentStore = defineStore("document", () => {
   }
 
   async function loadDeletedDocuments(): Promise<Document[]> {
-    return documentRepo.findAllDeleted();
+    return documentRepo.findAllDeletedDocuments();
   }
 
   async function restoreDocument(documentId: string) {
-    await documentRepo.restore(documentId);
+    await documentRepo.restoreDocument(documentId);
   }
 
   async function permanentlyDeleteDocument(documentId: string) {
-    await documentRepo.delete(documentId);
+    await documentRepo.deleteDocument(documentId);
   }
 
   // 问题回收站相关方法
@@ -472,7 +472,7 @@ export const useDocumentStore = defineStore("document", () => {
     }
 
     // 软删除问题
-    await documentRepo.softDeleteQuestion(docId, questionId);
+    await questionRepo.softDeleteQuestion(docId, questionId);
 
     // 刷新当前文档数据
     const updatedDoc = await documentService.getDocument(docId);
@@ -494,7 +494,7 @@ export const useDocumentStore = defineStore("document", () => {
       deletedQuestions.value = [];
       return;
     }
-    deletedQuestions.value = await documentRepo.getDeletedQuestions(
+    deletedQuestions.value = await questionRepo.getDeletedQuestions(
       selectedDocumentId.value,
     );
   }
@@ -505,7 +505,7 @@ export const useDocumentStore = defineStore("document", () => {
     }
     const docId = selectedDocumentId.value;
 
-    await documentRepo.restoreQuestion(docId, questionId);
+    await questionRepo.restoreQuestion(docId, questionId);
 
     // 刷新当前文档数据
     const updatedDoc = await documentService.getDocument(docId);
@@ -538,7 +538,7 @@ export const useDocumentStore = defineStore("document", () => {
     }
     const docId = selectedDocumentId.value;
 
-    await documentRepo.clearDeletedQuestions(docId);
+    await questionRepo.clearDeletedQuestions(docId);
 
     // 刷新回收站列表
     deletedQuestions.value = [];
