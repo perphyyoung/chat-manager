@@ -87,8 +87,7 @@ describe("SqliteDocumentRepository", () => {
       restoreQuestion: vi.fn(),
       getDeletedQuestions: vi.fn(),
       clearDeletedQuestions: vi.fn(),
-      delete: vi.fn(),
-      deleteAll: vi.fn(),
+      deleteAllQuestions: vi.fn(),
     };
 
     mockAnswerRepo = {

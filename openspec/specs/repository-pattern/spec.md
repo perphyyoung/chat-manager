@@ -30,7 +30,7 @@ TBD - created by archiving change refactor-save-to-ddd. Update Purpose after arc
 
 #### Scenario: 批量删除问题
 
-- **WHEN** 调用 `db:questions:delete` 传入问题 ID 数组
+- **WHEN** 调用 `question:deleteAllQuestions` 传入问题 ID 数组
 - **THEN** 系统从数据库中永久删除这些问题
 
 ### Requirement: Repository 协调子实体保存

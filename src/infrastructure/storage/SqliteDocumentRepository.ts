@@ -171,7 +171,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
     }
     document.permanentlyDeleteQuestion(questionId);
     // 直接删除数据库记录，不通过 save 方法
-    await this.questionRepo.delete(questionId);
+    await this.questionRepo.deleteAllQuestions(questionId);
     // 保存文档（不含已删除的问题）
     await this.saveDocument(document);
   }

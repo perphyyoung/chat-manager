@@ -66,7 +66,7 @@ ipcMain.handle("document:deleteDocument", (_, id: string) => {...})
 
 // 问题（批量操作）
 ipcMain.handle("question:saveAllQuestions", (_, docId: string, questions: QuestionJson[]) => {...})
-ipcMain.handle("db:questions:delete", (_, ids: string[]) => {...})
+ipcMain.handle("question:deleteAllQuestions", (_, ids: string[]) => {...})
 
 // 答案（批量操作）
 ipcMain.handle("answer:saveAllAnswers", (_, docId: string, answers: AnswerJson[]) => {...})

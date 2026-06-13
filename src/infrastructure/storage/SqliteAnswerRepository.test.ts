@@ -157,7 +157,7 @@ describe("SqliteAnswerRepository", () => {
     });
   });
 
-  describe("deleteAll", () => {
+  describe("deleteAllAnswers", () => {
     it("should delete answers by ids", async () => {
       await repository.deleteAllAnswers(["a1", "a2"]);
 

@@ -9,6 +9,5 @@ export interface QuestionRepository {
     documentId: string,
   ): Promise<Array<{ id: string; text: string; deletedAt: Date }>>;
   clearDeletedQuestions(documentId: string): Promise<void>;
-  delete(id: string): Promise<void>;
-  deleteAll(ids: string[]): Promise<void>;
+  deleteAllQuestions(id: string): Promise<void>;
 }

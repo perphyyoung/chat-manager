@@ -37,9 +37,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
       rollback: (txId: string) =>
         ipcRenderer.invoke("db:transaction:rollback", txId),
     },
-    questions: {
-      delete: (ids: string[]) => ipcRenderer.invoke("db:questions:delete", ids),
-    },
   },
   document: {
     findAllDocuments: (options?: { isDeleted?: boolean }) =>
@@ -79,6 +76,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("question:getDeletedQuestions", documentId),
     clearDeletedQuestions: (documentId: string) =>
       ipcRenderer.invoke("question:clearDeletedQuestions", documentId),
+    deleteAllQuestions: (ids: string[]) =>
+      ipcRenderer.invoke("question:deleteAllQuestions", ids),
     moveQuestionToDocument: (questionId: string, targetDocumentId: string) =>
       ipcRenderer.invoke(
         "question:moveQuestionToDocument",

@@ -8,8 +8,10 @@ type MockFn = Mock<(...args: unknown[]) => unknown>;
 
 interface MockElectronAPI {
   db: {
-    questions: {
-      delete: MockFn;
+    transaction: {
+      begin: MockFn;
+      commit: MockFn;
+      rollback: MockFn;
     };
   };
   document: {
@@ -21,6 +23,7 @@ interface MockElectronAPI {
     restoreQuestion: MockFn;
     getDeletedQuestions: MockFn;
     clearDeletedQuestions: MockFn;
+    deleteAllQuestions: MockFn;
   };
 }
 
@@ -44,8 +47,10 @@ describe("SqliteQuestionRepository", () => {
   beforeEach(() => {
     mockElectronAPI = {
       db: {
-        questions: {
-          delete: vi.fn(),
+        transaction: {
+          begin: vi.fn(),
+          commit: vi.fn(),
+          rollback: vi.fn(),
         },
       },
       document: {
@@ -57,6 +62,7 @@ describe("SqliteQuestionRepository", () => {
         restoreQuestion: vi.fn(),
         getDeletedQuestions: vi.fn(),
         clearDeletedQuestions: vi.fn(),
+        deleteAllQuestions: vi.fn(),
       },
     };
     (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =
@@ -225,20 +231,4 @@ describe("SqliteQuestionRepository", () => {
     });
   });
 
-  describe("deleteAll", () => {
-    it("should delete questions by ids", async () => {
-      await repository.deleteAll(["q1", "q2"]);
-
-      expect(mockElectronAPI.db.questions.delete).toHaveBeenCalledWith([
-        "q1",
-        "q2",
-      ]);
-    });
-
-    it("should not call delete when ids array is empty", async () => {
-      await repository.deleteAll([]);
-
-      expect(mockElectronAPI.db.questions.delete).not.toHaveBeenCalled();
-    });
-  });
 });

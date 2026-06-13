@@ -32,9 +32,7 @@ export interface ElectronAPI {
       commit: (txId: string) => Promise<void>;
       rollback: (txId: string) => Promise<void>;
     };
-    questions: {
-      delete: (ids: string[]) => Promise<void>;
-    };
+
   };
   document: {
     findAllDocuments: (options?: {
@@ -68,6 +66,7 @@ export interface ElectronAPI {
       documentId: string,
     ) => Promise<Array<{ id: string; text: string; deletedAt: string }>>;
     clearDeletedQuestions: (documentId: string) => Promise<void>;
+    deleteAllQuestions: (ids: string[]) => Promise<void>;
     moveQuestionToDocument: (
       questionId: string,
       targetDocumentId: string,

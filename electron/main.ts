@@ -604,7 +604,7 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle("db:questions:delete", (_, ids: string[]) => {
+ipcMain.handle("question:deleteAllQuestions", (_, ids: string[]) => {
   const database = getDatabase();
   for (const id of ids) {
     SearchService.deleteQuestion(database, id);

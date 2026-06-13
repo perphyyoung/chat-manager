@@ -65,13 +65,8 @@ export class SqliteQuestionRepository implements QuestionRepository {
     await window.electronAPI.question.clearDeletedQuestions(documentId);
   }
 
-  async delete(id: string): Promise<void> {
-    await window.electronAPI.db.questions.delete([id]);
-  }
-
-  async deleteAll(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
-    await window.electronAPI.db.questions.delete(ids);
+  async deleteAllQuestions(id: string): Promise<void> {
+    await window.electronAPI.question.deleteAllQuestions([id]);
   }
 
   private toQuestion(dto: QuestionDTO): Question {
