@@ -154,6 +154,13 @@ onMounted(() => {
     });
   }
 
+  // 监听 toast 事件
+  if (window.electronAPI.onShowToast) {
+    window.electronAPI.onShowToast((message) => {
+      showToast(message);
+    });
+  }
+
   // 监听导出完成事件
   if (window.electronAPI.onExportComplete) {
     window.electronAPI.onExportComplete((result) => {

@@ -721,6 +721,16 @@ function createMenu() {
         },
         { type: "separator" },
         {
+          label: "重建索引",
+          click: async () => {
+            await SearchService.rebuildIndex(getDatabase());
+            if (win) {
+              win.webContents.send("show-toast", "索引重建完成");
+            }
+          },
+        },
+        { type: "separator" },
+        {
           label: "设置",
           accelerator: "CmdOrCtrl+,",
           click: () => {
@@ -783,9 +793,7 @@ app.whenReady().then(() => {
     .get() as { count: number };
   if (countResult.count === 0) {
     log.info("Search index is empty, rebuilding...");
-    const searchService = new SearchService(db);
-    searchService
-      .rebuildIndex()
+    SearchService.rebuildIndex(db)
       .then(() => {
         log.info("Search index rebuilt successfully");
       })

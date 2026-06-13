@@ -246,7 +246,7 @@ export async function importData() {
       importedDocCount++;
     }
 
-    SearchService.markDirty();
+    await SearchService.rebuildIndex(getDatabase());
     focusedWindow.webContents.send("import-complete", {
       success: true,
       importedDocCount,

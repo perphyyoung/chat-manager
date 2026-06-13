@@ -32,7 +32,6 @@ export interface ElectronAPI {
       commit: (txId: string) => Promise<void>;
       rollback: (txId: string) => Promise<void>;
     };
-
   };
   document: {
     findAllDocuments: (options?: {
@@ -89,4 +88,5 @@ export interface ElectronAPI {
   };
   onExportComplete: (callback: (result: ExportResult) => void) => void;
   onImportComplete: (callback: (result: ImportResult) => void) => void;
+  onShowToast: (callback: (message: string) => void) => void;
 }

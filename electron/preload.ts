@@ -112,4 +112,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onImportComplete: (callback: (result: ImportResult) => void) => {
     ipcRenderer.on("import-complete", (_, result) => callback(result));
   },
+  onShowToast: (callback: (message: string) => void) => {
+    ipcRenderer.on("show-toast", (_, message) => callback(message));
+  },
 });

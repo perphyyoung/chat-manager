@@ -387,7 +387,7 @@ describe("SearchService", () => {
         `INSERT INTO search_fts VALUES ('old-doc', 'document', 'Old', '{}')`,
       ).run();
 
-      await service.rebuildIndex();
+      await SearchService.rebuildIndex(db);
 
       const result = db
         .prepare(
@@ -398,7 +398,7 @@ describe("SearchService", () => {
     });
 
     it("should rebuild all entity types", async () => {
-      await service.rebuildIndex();
+      await SearchService.rebuildIndex(db);
 
       const result = db
         .prepare(`SELECT COUNT(*) as count FROM search_fts`)
