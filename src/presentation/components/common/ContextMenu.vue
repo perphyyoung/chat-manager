@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, nextTick, watch } from "vue";
+
 export interface MenuItem {
   icon?: string;
   text: string;
@@ -18,8 +20,45 @@ interface Emits {
   (e: "close"): void;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+const menuRef = ref<HTMLElement | null>(null);
+const adjustedPosition = ref({ left: 0, top: 0 });
+
+watch(
+  () => props.show,
+  async (newVal) => {
+    if (newVal) {
+      await nextTick();
+      adjustPosition();
+    }
+  },
+);
+
+const adjustPosition = () => {
+  if (!menuRef.value) return;
+
+  const menuWidth = menuRef.value.offsetWidth;
+  const menuHeight = menuRef.value.offsetHeight;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  let left = props.x;
+  let top = props.y;
+
+  // 水平翻转：右侧溢出但左侧有空间时翻转
+  if (left + menuWidth > viewportWidth) {
+    left = Math.max(0, left - menuWidth);
+  }
+
+  // 垂直翻转：下方溢出但上方有空间时翻转
+  if (top + menuHeight > viewportHeight) {
+    top = Math.max(0, top - menuHeight);
+  }
+
+  adjustedPosition.value = { left, top };
+};
 
 const handleItemClick = (item: MenuItem) => {
   item.action();
@@ -40,8 +79,12 @@ const handleClose = () => {
       @contextmenu.prevent="handleClose"
     >
       <div
+        ref="menuRef"
         class="context-menu"
-        :style="{ left: `${x}px`, top: `${y}px` }"
+        :style="{
+          left: `${adjustedPosition.left}px`,
+          top: `${adjustedPosition.top}px`,
+        }"
         @click.stop
       >
         <div
@@ -78,6 +121,8 @@ const handleClose = () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 4px;
   min-width: 120px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 }
 
 .context-menu-item {
