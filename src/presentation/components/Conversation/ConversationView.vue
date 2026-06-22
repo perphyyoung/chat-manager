@@ -105,6 +105,9 @@ function toggleFullscreen() {
           v-for="{ question, answer } in qaPairs"
           :key="question.id"
           class="qa-pair"
+          :class="{
+            'qa-pair--highlighted': question.id === documentStore.activeQuestionId,
+          }"
           :data-question-id="question.id"
         >
           <!-- 问题：右对齐，主题色背景 -->
@@ -203,6 +206,24 @@ function toggleFullscreen() {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  border-radius: 8px;
+  padding: 12px;
+  margin: -12px;
+  transition: background-color 0.3s ease;
+}
+
+.qa-pair--highlighted {
+  background-color: rgba(59, 130, 246, 0.08);
+  animation: pulseHighlight 0.6s ease-out;
+}
+
+@keyframes pulseHighlight {
+  0% {
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+  100% {
+    background-color: rgba(59, 130, 246, 0.08);
+  }
 }
 
 .answer-placeholder {
