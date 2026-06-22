@@ -54,20 +54,20 @@ onMounted(() => {
 .search-input {
   display: flex;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 24px 32px;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .search-input__icon {
-  margin-right: 12px;
-  font-size: 18px;
+  margin-right: 16px;
+  font-size: 24px;
 }
 
 .search-input__field {
   flex: 1;
   border: none;
   outline: none;
-  font-size: 16px;
+  font-size: 22px;
   background: transparent;
   color: var(--color-text);
 }
@@ -77,13 +77,13 @@ onMounted(() => {
 }
 
 .search-input__clear {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: var(--color-hover);
   border-radius: 50%;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1;
   color: var(--color-text-secondary);
   display: flex;

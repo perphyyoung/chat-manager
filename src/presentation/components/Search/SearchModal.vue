@@ -314,31 +314,38 @@ onUnmounted(() => {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 100px;
   z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .search-modal__container {
-  width: 600px;
-  max-height: 70vh;
+  width: 90vw;
+  height: 90vh;
   background: var(--color-surface);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  opacity: 0.95;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 .search-modal__loading,
 .search-modal__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 32px;
   text-align: center;
   color: var(--color-text-secondary);
+  font-size: 16px;
 }
 
 .search-modal__history {
-  max-height: 300px;
+  flex: 1;
   overflow-y: auto;
 }
 
@@ -346,18 +353,18 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--color-border);
 }
 
 .search-modal__history-title {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text-secondary);
 }
 
 .search-modal__history-clear {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-text-secondary);
   background: none;
   border: none;
@@ -379,7 +386,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
+  padding: 14px 24px;
   cursor: pointer;
 }
 
@@ -388,18 +395,18 @@ onUnmounted(() => {
 }
 
 .search-modal__history-text {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-text);
 }
 
 .search-modal__history-remove {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border: none;
   background: var(--color-hover);
   border-radius: 50%;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
   color: var(--color-text-secondary);
   display: flex;
@@ -418,8 +425,8 @@ onUnmounted(() => {
 }
 
 .search-modal__hint {
-  padding: 8px 16px;
-  font-size: 12px;
+  padding: 12px 24px;
+  font-size: 14px;
   color: var(--color-text-secondary);
   border-top: 1px solid var(--color-border);
   display: flex;
