@@ -78,7 +78,7 @@ async function handleSearchSelect(data: {
         await documentStore.selectDocument(item.documentId);
         await nextTick();
         documentStore.setActiveQuestion(item.id);
-        scrollToQuestion(item.id);
+        scrollToQuestion(item.id, searchText);
         documentStore.setHighlightText(searchText);
       }
       break;
@@ -87,7 +87,7 @@ async function handleSearchSelect(data: {
         await documentStore.selectDocument(item.documentId);
         await nextTick();
         documentStore.setActiveQuestion(item.questionId);
-        scrollToQuestion(item.questionId);
+        scrollToQuestion(item.questionId, searchText);
         documentStore.setHighlightText(searchText);
       }
       break;
@@ -97,17 +97,79 @@ async function handleSearchSelect(data: {
   }
 }
 
-function scrollToQuestion(questionId: string) {
+function findTextNode(el: Element, text: string): Text | null {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let node = walker.nextNode();
+  while (node) {
+    if (node.textContent?.toLowerCase().includes(text.toLowerCase())) {
+      return node as Text;
+    }
+    node = walker.nextNode();
+  }
+  return null;
+}
+
+function scrollToQuestion(questionId: string, searchText?: string) {
   nextTick(() => {
-    const element = document.querySelector(
+    const messagesContainer = document.querySelector(
+      ".conversation-view__messages",
+    );
+    if (!messagesContainer) return;
+
+    const qaPair = messagesContainer.querySelector(
       `[data-question-id="${questionId}"]`,
     );
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
+    if (!qaPair) return;
+
+    qaPair.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    if (!searchText) return;
+
+    const answerEl = qaPair.querySelector(".answer-bubble__content");
+    if (!answerEl) return;
+
+    const textNode = findTextNode(answerEl, searchText);
+    if (!textNode) return;
+
+    const parent = textNode.parentElement;
+    const textContent = textNode.textContent || "";
+    const lowerContent = textContent.toLowerCase();
+    const lowerSearch = searchText.toLowerCase();
+    const startIndex = lowerContent.indexOf(lowerSearch);
+    if (startIndex === -1 || !parent) return;
+
+    const beforeText = textContent.slice(0, startIndex);
+    const matchText = textContent.slice(
+      startIndex,
+      startIndex + searchText.length,
+    );
+    const afterText = textContent.slice(startIndex + searchText.length);
+
+    parent.textContent = beforeText;
+    const highlight = document.createElement("mark");
+    highlight.style.background = "var(--color-highlight-bg)";
+    highlight.style.padding = "1px 3px";
+    highlight.style.borderRadius = "2px";
+    highlight.textContent = matchText;
+    parent.appendChild(highlight);
+    parent.appendChild(document.createTextNode(afterText));
+
+    setTimeout(() => {
+      const containerRect = messagesContainer.getBoundingClientRect();
+      const highlightRect = highlight.getBoundingClientRect();
+      const relativeTop = highlightRect.top - containerRect.top;
+      const containerScroll = messagesContainer.scrollTop;
+      const containerHeight = messagesContainer.clientHeight;
+
+      messagesContainer.scrollTo({
+        top: containerScroll + relativeTop - containerHeight / 3,
+        behavior: "instant",
       });
-    }
+    }, 50);
+
+    setTimeout(() => {
+      parent.textContent = textContent;
+    }, 3000);
   });
 }
 
