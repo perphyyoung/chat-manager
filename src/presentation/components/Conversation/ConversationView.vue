@@ -95,7 +95,7 @@ function toggleFullscreen() {
             :title="props.isFullscreen ? '退出全屏' : '全屏专注'"
             @click="toggleFullscreen"
           >
-            {{ props.isFullscreen ? "⤫" : "⤢" }}
+            {{ props.isFullscreen ? "⤣" : "⤢" }}
           </button>
         </div>
         <TagSelector />
