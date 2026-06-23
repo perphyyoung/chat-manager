@@ -532,63 +532,6 @@ onMounted(() => {
   gap: 8px;
 }
 
-.sort-order-btn {
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background-color: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.sort-order-btn:hover {
-  background-color: var(--color-hover);
-  color: var(--color-text);
-}
-
-.sort-order-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.sort-field-wrapper {
-  position: relative;
-}
-
-.sort-field-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border: none;
-  border-radius: 6px;
-  background-color: transparent;
-  color: var(--color-text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.sort-field-btn:hover {
-  background-color: var(--color-hover);
-  color: var(--color-text);
-}
-
-.dropdown-icon {
-  width: 14px;
-  height: 14px;
-  transition: transform 0.2s;
-}
-
-.dropdown-icon.open {
-  transform: rotate(180deg);
-}
-
 .question-list__items {
   flex: 1;
   overflow-y: auto;

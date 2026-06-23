@@ -3,11 +3,45 @@ import { ref, computed, watch, nextTick } from "vue";
 import { useDocumentStore } from "../../stores/document";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
 import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
+import DropdownMenu from "../common/DropdownMenu.vue";
 
 const documentStore = useDocumentStore();
 const showNewTagInput = ref(false);
 const newTagName = ref("");
 const isCollapsed = ref(false);
+
+// 排序状态
+type SortField = "name" | "createdAt" | "count";
+const sortField = ref<SortField>("name");
+const sortReverse = ref(false);
+const sortMenuRef = ref<InstanceType<typeof DropdownMenu> | null>(null);
+const dropdownOpen = computed(() => sortMenuRef.value?.isOpen ?? false);
+
+const sortFieldLabels: Record<SortField, string> = {
+  name: "名称",
+  createdAt: "创建时间",
+  count: "数量",
+};
+
+const sortedTags = computed(() => {
+  const tags = [...documentStore.allTags];
+  const sorted = tags.sort((a, b) => {
+    switch (sortField.value) {
+      case "name":
+        return a.name.localeCompare(b.name);
+      case "createdAt":
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      case "count":
+        return (
+          (documentStore.getTagDocumentCount(b.id) || 0) -
+          (documentStore.getTagDocumentCount(a.id) || 0)
+        );
+      default:
+        return 0;
+    }
+  });
+  return sortReverse.value ? sorted.reverse() : sorted;
+});
 
 // 新标签输入框 ref，用于自动聚焦
 const newTagInput = ref<HTMLInputElement | null>(null);
@@ -175,6 +209,57 @@ function cancelDeleteTag() {
       >
         +
       </button>
+      <button
+        v-if="!showNewTagInput && !showEditInput && !isCollapsed"
+        class="sort-order-btn"
+        :title="sortReverse ? '升序' : '降序'"
+        @click="sortReverse = !sortReverse"
+      >
+        <svg
+          v-if="!sortReverse"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <polyline points="5 12 12 5 19 12"></polyline>
+        </svg>
+        <svg
+          v-else
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <polyline points="5 12 12 19 19 12"></polyline>
+        </svg>
+      </button>
+      <div
+        v-if="!showNewTagInput && !showEditInput && !isCollapsed"
+        class="sort-field-wrapper"
+      >
+        <button class="sort-field-btn" @click="sortMenuRef?.toggle">
+          {{ sortFieldLabels[sortField] }}
+          <svg
+            class="dropdown-icon"
+            :class="{ open: dropdownOpen }"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <DropdownMenu
+          ref="sortMenuRef"
+          :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
+          :active-value="sortField"
+          @select="(v: string) => sortField = v as SortField"
+        />
+      </div>
     </div>
 
     <div v-if="showNewTagInput" class="tag-filter__input-wrapper">
@@ -217,12 +302,12 @@ function cancelDeleteTag() {
     </div>
 
     <div v-if="isCollapsed" class="tag-filter__collapsed-info">
-      <span>共 {{ documentStore.allTags.length }} 个标签</span>
+      <span>共 {{ sortedTags.length }} 个标签</span>
     </div>
 
     <div v-else class="tag-filter__list">
       <button
-        v-for="tag in documentStore.allTags"
+        v-for="tag in sortedTags"
         :key="tag.id"
         class="tag-filter__item"
         :class="{
@@ -240,6 +325,14 @@ function cancelDeleteTag() {
         </span>
       </button>
     </div>
+
+    <!-- 排序下拉菜单 -->
+    <DropdownMenu
+      ref="sortMenuRef"
+      :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
+      :active-value="sortField"
+      @select="(v: string) => sortField = v as SortField"
+    />
 
     <!-- 右键菜单 -->
     <ContextMenu
