@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { useDocumentStore } from "../../stores/document";
 import TagBadge from "../common/TagBadge.vue";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
@@ -9,10 +9,9 @@ const documentStore = useDocumentStore();
 const isOpen = ref(false);
 const showNewTagInput = ref(false);
 const newTagName = ref("");
-const selectorRef = ref<HTMLElement | null>(null);
-
-// 新标签输入框 ref，用于自动聚焦
+const toggleBtnRef = ref<HTMLButtonElement | null>(null);
 const newTagInput = ref<HTMLInputElement | null>(null);
+const dropdownStyle = ref({ top: "0px", left: "0px" });
 
 // 显示新标签输入框时自动聚焦
 watch(showNewTagInput, async (show) => {
@@ -66,10 +65,19 @@ const availableTags = computed(() => {
 const hasAvailableTags = computed(() => availableTags.value.length > 0);
 
 function toggle() {
-  isOpen.value = !isOpen.value;
-  if (!isOpen.value) {
+  if (isOpen.value) {
+    isOpen.value = false;
     showNewTagInput.value = false;
     newTagName.value = "";
+  } else {
+    if (toggleBtnRef.value) {
+      const rect = toggleBtnRef.value.getBoundingClientRect();
+      dropdownStyle.value = {
+        top: `${rect.bottom + 8}px`,
+        left: `${rect.left}px`,
+      };
+    }
+    isOpen.value = true;
   }
 }
 
@@ -142,26 +150,10 @@ async function createAndAddTag() {
   showNewTagInput.value = false;
   isOpen.value = false;
 }
-
-function handleClickOutside(event: MouseEvent) {
-  const target = event.target as HTMLElement;
-  if (selectorRef.value && !selectorRef.value.contains(target)) {
-    close();
-  }
-}
-
-onMounted(() => {
-  // 使用 mousedown 而不是 click，避免与按钮点击冲突
-  document.addEventListener("mousedown", handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("mousedown", handleClickOutside);
-});
 </script>
 
 <template>
-  <div ref="selectorRef" class="tag-selector">
+  <div class="tag-selector">
     <div class="tag-selector__current">
       <TagBadge
         v-for="tag in documentStore.selectedDocument?.tags"
@@ -170,6 +162,7 @@ onUnmounted(() => {
         @contextmenu="showContextMenu($event, tag.id, tag.name)"
       />
       <button
+        ref="toggleBtnRef"
         class="tag-selector__toggle"
         @click="toggle"
         :disabled="!documentStore.selectedDocument"
@@ -178,59 +171,68 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <div v-if="isOpen" class="tag-selector__dropdown">
-      <div v-if="hasAvailableTags" class="tag-selector__section">
-        <div class="tag-selector__section-title">可选标签</div>
-        <div class="tag-selector__list">
-          <button
-            v-for="tag in availableTags"
-            :key="tag.id"
-            class="tag-selector__option"
-            @click="addTag(tag.id)"
-          >
-            {{ tag.name }}
-          </button>
-        </div>
-      </div>
-
+    <Teleport to="body">
       <div
-        v-if="!hasAvailableTags && !showNewTagInput"
-        class="tag-selector__empty"
+        v-if="isOpen"
+        class="tag-selector-overlay"
+        @click="close"
+        @contextmenu.prevent="close"
       >
-        没有更多可选标签
-      </div>
+        <div class="tag-selector__dropdown" :style="dropdownStyle" @click.stop>
+          <div v-if="hasAvailableTags" class="tag-selector__section">
+            <div class="tag-selector__section-title">可选标签</div>
+            <div class="tag-selector__list">
+              <button
+                v-for="tag in availableTags"
+                :key="tag.id"
+                class="tag-selector__option"
+                @click="addTag(tag.id)"
+              >
+                {{ tag.name }}
+              </button>
+            </div>
+          </div>
 
-      <div v-if="showNewTagInput" class="tag-selector__new">
-        <input
-          v-model="newTagName"
-          type="text"
-          placeholder="新标签名称"
-          class="tag-selector__input"
-          @keyup.enter="createAndAddTag"
-          @keyup.esc="showNewTagInput = false"
-          ref="newTagInput"
-        />
-        <div class="tag-selector__actions">
-          <button class="tag-selector__btn-confirm" @click="createAndAddTag">
-            创建
-          </button>
-          <button
-            class="tag-selector__btn-cancel"
-            @click="showNewTagInput = false"
+          <div
+            v-if="!hasAvailableTags && !showNewTagInput"
+            class="tag-selector__empty"
           >
-            取消
+            没有更多可选标签
+          </div>
+
+          <div v-if="showNewTagInput" class="tag-selector__new">
+            <input
+              v-model="newTagName"
+              type="text"
+              placeholder="新标签名称"
+              class="tag-selector__input"
+              @keyup.enter="createAndAddTag"
+              @keyup.esc="showNewTagInput = false"
+              ref="newTagInput"
+            />
+            <div class="tag-selector__actions">
+              <button class="tag-selector__btn-confirm" @click="createAndAddTag">
+                创建
+              </button>
+              <button
+                class="tag-selector__btn-cancel"
+                @click="showNewTagInput = false"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+
+          <button
+            v-if="!showNewTagInput"
+            class="tag-selector__create-btn"
+            @click="showNewTagInput = true"
+          >
+            + 创建新标签
           </button>
         </div>
       </div>
-
-      <button
-        v-if="!showNewTagInput"
-        class="tag-selector__create-btn"
-        @click="showNewTagInput = true"
-      >
-        + 创建新标签
-      </button>
-    </div>
+    </Teleport>
 
     <!-- 右键菜单 -->
     <ContextMenu
@@ -285,11 +287,17 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
-.tag-selector__dropdown {
-  position: absolute;
-  top: 100%;
+.tag-selector-overlay {
+  position: fixed;
+  top: 0;
   left: 0;
-  margin-top: 8px;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+}
+
+.tag-selector__dropdown {
+  position: fixed;
   min-width: 200px;
   max-width: 280px;
   background-color: var(--color-surface);
@@ -297,7 +305,7 @@ onUnmounted(() => {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 12px;
-  z-index: 100;
+  z-index: 10000;
 }
 
 .tag-selector__section {
