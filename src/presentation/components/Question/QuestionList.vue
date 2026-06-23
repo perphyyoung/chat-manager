@@ -89,7 +89,7 @@ const dragState = ref({
 const sortFieldLabels: Record<QuestionSortField, string> = {
   createdAt: "创建时间",
   updatedAt: "更新时间",
-  title: "文本",
+  title: "名称",
   sortOrder: "出现顺序",
 };
 

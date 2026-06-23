@@ -68,7 +68,7 @@ const showRecycleBin = ref(false);
 const sortFieldLabels: Record<SortField, string> = {
   createdAt: "创建时间",
   updatedAt: "更新时间",
-  title: "标题",
+  title: "名称",
 };
 
 async function handleCreateDocument() {

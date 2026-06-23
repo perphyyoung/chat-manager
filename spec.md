@@ -432,11 +432,11 @@ class TagRemovedFromDocumentEvent { constructor(public readonly documentId: stri
 |------|------|------|
 | 文档排序 | `createdAt` | 创建时间 |
 | 文档排序 | `updatedAt` | 更新时间 |
-| 文档排序 | `title` | 文档标题（中文拼音排序） |
+| 文档排序 | `title` | 名称（中文拼音排序） |
 | 问题排序 | `sortOrder` | 出现顺序（文档中的原始顺序） |
 | 问题排序 | `createdAt` | 创建时间 |
 | 问题排序 | `updatedAt` | 更新时间 |
-| 问题排序 | `title` | 问题文本（中文拼音排序） |
+| 问题排序 | `title` | 名称（中文拼音排序） |
 
 ### 9.2 排序方向
 
