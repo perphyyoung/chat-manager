@@ -209,6 +209,30 @@ function cancelDeleteTag() {
       >
         +
       </button>
+      <div
+        v-if="!showNewTagInput && !showEditInput && !isCollapsed"
+        class="sort-field-wrapper"
+      >
+        <button class="sort-field-btn" @click="sortMenuRef?.toggle">
+          {{ sortFieldLabels[sortField] }}
+          <svg
+            class="dropdown-icon"
+            :class="{ open: dropdownOpen }"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <DropdownMenu
+          ref="sortMenuRef"
+          :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
+          :active-value="sortField"
+          @select="(v: string) => sortField = v as SortField"
+        />
+      </div>
       <button
         v-if="!showNewTagInput && !showEditInput && !isCollapsed"
         class="sort-order-btn"
@@ -236,30 +260,6 @@ function cancelDeleteTag() {
           <polyline points="5 12 12 19 19 12"></polyline>
         </svg>
       </button>
-      <div
-        v-if="!showNewTagInput && !showEditInput && !isCollapsed"
-        class="sort-field-wrapper"
-      >
-        <button class="sort-field-btn" @click="sortMenuRef?.toggle">
-          {{ sortFieldLabels[sortField] }}
-          <svg
-            class="dropdown-icon"
-            :class="{ open: dropdownOpen }"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
-        <DropdownMenu
-          ref="sortMenuRef"
-          :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
-          :active-value="sortField"
-          @select="(v: string) => sortField = v as SortField"
-        />
-      </div>
     </div>
 
     <div v-if="showNewTagInput" class="tag-filter__input-wrapper">

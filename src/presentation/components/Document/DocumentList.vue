@@ -263,6 +263,27 @@ onMounted(() => {
     <div class="document-list__header">
       <h2>文档列表</h2>
       <div class="sort-controls">
+        <div class="sort-field-wrapper" style="position: relative">
+          <button class="sort-field-btn" @click="sortMenu?.toggle">
+            {{ sortFieldLabels[documentStore.documentSortField] }}
+            <svg
+              class="dropdown-icon"
+              :class="{ open: iconOpen }"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <DropdownMenu
+            ref="sortMenu"
+            :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
+            :active-value="documentStore.documentSortField"
+            @select="(v: string) => handleSortFieldChange(v as SortField)"
+          />
+        </div>
         <button
           class="sort-order-btn"
           :title="documentStore.documentSortOrder === 'asc' ? '升序' : '降序'"
@@ -289,27 +310,6 @@ onMounted(() => {
             <polyline points="5 12 12 19 19 12"></polyline>
           </svg>
         </button>
-        <div class="sort-field-wrapper" style="position: relative">
-          <button class="sort-field-btn" @click="sortMenu?.toggle">
-            {{ sortFieldLabels[documentStore.documentSortField] }}
-            <svg
-              class="dropdown-icon"
-              :class="{ open: iconOpen }"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-          <DropdownMenu
-            ref="sortMenu"
-            :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
-            :active-value="documentStore.documentSortField"
-            @select="(v: string) => handleSortFieldChange(v as SortField)"
-          />
-        </div>
       </div>
     </div>
     <div class="document-list__items">

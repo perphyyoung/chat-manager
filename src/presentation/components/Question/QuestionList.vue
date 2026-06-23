@@ -279,6 +279,27 @@ onMounted(() => {
     <div class="question-list__header">
       <h2>问题列表</h2>
       <div v-if="documentStore.selectedDocument" class="sort-controls">
+        <div class="sort-field-wrapper" style="position: relative">
+          <button class="sort-field-btn" @click="sortMenu?.toggle">
+            {{ sortFieldLabels[documentStore.questionSortField] }}
+            <svg
+              class="dropdown-icon"
+              :class="{ open: iconOpen }"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <DropdownMenu
+            ref="sortMenu"
+            :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
+            :active-value="documentStore.questionSortField"
+            @select="(v: string) => handleSortFieldChange(v as QuestionSortField)"
+          />
+        </div>
         <button
           class="sort-order-btn"
           :title="documentStore.questionSortOrder === 'asc' ? '升序' : '降序'"
@@ -305,27 +326,6 @@ onMounted(() => {
             <polyline points="5 12 12 19 19 12"></polyline>
           </svg>
         </button>
-        <div class="sort-field-wrapper" style="position: relative">
-          <button class="sort-field-btn" @click="sortMenu?.toggle">
-            {{ sortFieldLabels[documentStore.questionSortField] }}
-            <svg
-              class="dropdown-icon"
-              :class="{ open: iconOpen }"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-          <DropdownMenu
-            ref="sortMenu"
-            :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
-            :active-value="documentStore.questionSortField"
-            @select="(v: string) => handleSortFieldChange(v as QuestionSortField)"
-          />
-        </div>
       </div>
     </div>
     <div class="question-list__items">
