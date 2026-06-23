@@ -1,6 +1,6 @@
 {
   "name": "chat-manager",
-  "version": "0.5.31",
+  "version": "0.5.32",
   "private": true,
   "type": "module",
   "main": "out/main/index.js",

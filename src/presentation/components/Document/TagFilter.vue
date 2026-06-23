@@ -207,6 +207,9 @@ function cancelDeleteTag() {
           >▶</span
         >
         <span class="tag-filter__title">标签筛选</span>
+        <span v-if="isCollapsed" class="tag-filter__title-count">
+          ({{ sortedTags.length }})
+        </span>
       </button>
       <button
         v-if="!showNewTagInput && !showEditInput && !isCollapsed"
@@ -308,11 +311,7 @@ function cancelDeleteTag() {
       </div>
     </div>
 
-    <div v-if="isCollapsed" class="tag-filter__collapsed-info">
-      <span>共 {{ sortedTags.length }} 个标签</span>
-    </div>
-
-    <div v-else class="tag-filter__list">
+    <div v-if="!isCollapsed" class="tag-filter__list">
       <button
         v-for="tag in sortedTags"
         :key="tag.id"
@@ -496,10 +495,11 @@ function cancelDeleteTag() {
   gap: 6px;
 }
 
-.tag-filter__collapsed-info {
-  font-size: 12px;
+.tag-filter__title-count {
   color: var(--color-text-secondary);
-  padding: 4px 0;
+  font-weight: normal;
+  font-size: 11px;
+  margin-left: 2px;
 }
 
 .tag-filter__item {
