@@ -10,20 +10,108 @@ interface Props {
 const props = defineProps<Props>();
 const documentStore = useDocumentStore();
 
-const renderedContent = computed(() => {
-  const html = parseMarkdown(props.content);
+const parsed = computed(() => parseMarkdown(props.content));
+
+const renderedHtml = computed(() => {
+  const { html } = parsed.value;
   if (documentStore.highlightText) {
     return highlightSearchText(html, documentStore.highlightText);
   }
   return html;
 });
+
+const frontmatterList = computed(() => {
+  const fm = parsed.value.frontmatter;
+  if (!fm) return [];
+  return Object.entries(fm).map(([key, value]) => {
+    if (Array.isArray(value)) {
+      return { key, isArray: true as const, items: value.map(String) };
+    }
+    if (typeof value === "object" && value !== null) {
+      return { key, isArray: false as const, items: [JSON.stringify(value)] };
+    }
+    return { key, isArray: false as const, items: [String(value)] };
+  });
+});
 </script>
 
 <template>
-  <div class="markdown-renderer" v-html="renderedContent" />
+  <div class="markdown-renderer">
+    <div v-if="frontmatterList.length > 0" class="markdown-renderer__frontmatter">
+      <div
+        v-for="item in frontmatterList"
+        :key="item.key"
+        class="markdown-renderer__frontmatter-item"
+      >
+        <span class="markdown-renderer__frontmatter-key">{{ item.key }}</span>
+        <span
+          v-if="item.isArray"
+          class="markdown-renderer__frontmatter-tags"
+        >
+          <span
+            v-for="tag in item.items"
+            :key="tag"
+            class="markdown-renderer__frontmatter-tag"
+          >{{ tag }}</span>
+        </span>
+        <span
+          v-else
+          class="markdown-renderer__frontmatter-value"
+        >{{ item.items[0] }}</span>
+      </div>
+    </div>
+    <div v-html="renderedHtml" />
+  </div>
 </template>
 
 <style scoped>
+/* Frontmatter 元信息 */
+.markdown-renderer__frontmatter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: var(--color-background);
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
+.markdown-renderer__frontmatter-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.markdown-renderer__frontmatter-key {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.markdown-renderer__frontmatter-value {
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.markdown-renderer__frontmatter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.markdown-renderer__frontmatter-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--color-border);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
 /* Markdown 渲染样式 */
 .markdown-renderer :deep(p) {
   margin: 0 0 8px;

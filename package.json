@@ -1,6 +1,6 @@
 {
   "name": "chat-manager",
-  "version": "0.5.25",
+  "version": "0.5.26",
   "private": true,
   "type": "module",
   "main": "out/main/index.js",
@@ -40,6 +40,7 @@
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@tsconfig/node24": "^24.0.4",
+    "@types/js-yaml": "^4.0.9",
     "@types/jsdom": "^28.0.1",
     "@types/node": "^24.12.2",
     "@types/prismjs": "^1.26.6",
@@ -57,6 +58,7 @@
     "eslint-plugin-playwright": "^2.10.1",
     "eslint-plugin-vue": "~10.8.0",
     "jiti": "^2.6.1",
+    "js-yaml": "^5.0.0",
     "jsdom": "^29.0.2",
     "npm-run-all2": "^8.0.4",
     "oxfmt": "^0.45.0",

@@ -1,3 +1,4 @@
+import { load } from "js-yaml";
 import { Marked } from "marked";
 import { markedHighlight } from "marked-highlight";
 import Prism from "prismjs";
@@ -75,13 +76,29 @@ marked.setOptions({
   gfm: true, // 支持 GitHub Flavored Markdown
 });
 
+export interface ParsedMarkdown {
+  frontmatter: Record<string, unknown> | null;
+  html: string;
+}
+
 /**
- * 解析 Markdown 内容
+ * 解析 Markdown 内容（含 YAML frontmatter）
  * @param content - Markdown 文本
- * @returns 解析后的 HTML 字符串
+ * @returns frontmatter 对象和渲染后的 HTML
  */
-export function parseMarkdown(content: string): string {
-  return marked.parse(content) as string;
+export function parseMarkdown(content: string): ParsedMarkdown {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  if (match) {
+    try {
+      const frontmatter = load(match[1]!) as Record<string, unknown>;
+      const html = marked.parse(match[2]!) as string;
+      return { frontmatter, html };
+    } catch {
+      // YAML 解析失败时回退到整体渲染
+      return { frontmatter: null, html: marked.parse(content) as string };
+    }
+  }
+  return { frontmatter: null, html: marked.parse(content) as string };
 }
 
 /**
