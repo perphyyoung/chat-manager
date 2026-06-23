@@ -55,9 +55,12 @@ const confirmMessage = computed(() => {
 
 const availableTags = computed(() => {
   if (!documentStore.selectedDocument) return [];
-  return documentStore.allTags.filter(
-    (tag) => !documentStore.selectedDocument!.tags.some((t) => t.id === tag.id),
-  );
+  return documentStore.allTags
+    .filter(
+      (tag) =>
+        !documentStore.selectedDocument!.tags.some((t) => t.id === tag.id),
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 });
 
 const hasAvailableTags = computed(() => availableTags.value.length > 0);
