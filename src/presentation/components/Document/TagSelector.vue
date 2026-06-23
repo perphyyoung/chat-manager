@@ -31,8 +31,8 @@ const contextMenu = ref({
 // 右键菜单项
 const contextMenuItems = computed<MenuItem[]>(() => [
   {
-    text: "删除标签",
-    action: requestDeleteTag,
+    text: "取消标签关联",
+    action: requestUnlinkTag,
     danger: true,
   },
 ]);
@@ -49,7 +49,7 @@ const showConfirmDialog = ref(false);
 // 确认弹窗消息
 const confirmMessage = computed(() => {
   if (!currentTag.value.tagId) return "";
-  return `确定要删除标签 "${currentTag.value.tagName}" 吗？`;
+  return `确定要取消文档与标签 "${currentTag.value.tagName}" 的关联吗？`;
 });
 
 const availableTags = computed(() => {
@@ -112,14 +112,14 @@ function closeContextMenu() {
   contextMenu.value.show = false;
 }
 
-// 请求删除标签（显示确认弹窗）
-function requestDeleteTag() {
+// 请求取消标签关联（显示确认弹窗）
+function requestUnlinkTag() {
   showConfirmDialog.value = true;
   closeContextMenu();
 }
 
-// 确认删除标签
-async function confirmDeleteTag() {
+// 确认取消标签关联
+async function confirmUnlinkTag() {
   if (!currentTag.value.tagId || !documentStore.selectedDocument) return;
   await documentStore.removeTagFromDocument(
     documentStore.selectedDocument.id,
@@ -130,8 +130,8 @@ async function confirmDeleteTag() {
   currentTag.value.tagName = "";
 }
 
-// 取消删除
-function cancelDeleteTag() {
+// 放弃取消标签关联
+function cancelUnlinkTag() {
   showConfirmDialog.value = false;
   currentTag.value.tagId = "";
   currentTag.value.tagName = "";
@@ -246,10 +246,10 @@ async function createAndAddTag() {
     <!-- 删除标签确认弹窗 -->
     <ConfirmDialog
       :show="showConfirmDialog"
-      title="确认删除标签"
+      title="取消标签关联"
       :message="confirmMessage"
-      @confirm="confirmDeleteTag"
-      @cancel="cancelDeleteTag"
+      @confirm="confirmUnlinkTag"
+      @cancel="cancelUnlinkTag"
     />
   </div>
 </template>
