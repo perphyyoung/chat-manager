@@ -7,6 +7,7 @@ import {
 import QuestionItem from "./QuestionItem.vue";
 import RecycleBinModal from "../common/RecycleBinModal.vue";
 import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
+import DropdownMenu from "../common/DropdownMenu.vue";
 
 const showToast = inject<(message: string) => void>("showToast");
 
@@ -16,7 +17,8 @@ const showAddDialog = ref(false);
 const newQuestionText = ref("");
 const newAnswerContent = ref("");
 const isCreating = ref(false);
-const showSortMenu = ref(false);
+const sortMenu = ref<InstanceType<typeof DropdownMenu> | null>(null);
+const iconOpen = computed(() => sortMenu.value?.isOpen ?? false);
 const showRecycleBin = ref(false);
 
 // 问题输入框 ref，用于弹窗打开时聚焦
@@ -126,7 +128,7 @@ function closeAddDialog() {
 
 function handleSortFieldChange(field: QuestionSortField) {
   documentStore.setQuestionSortField(field);
-  showSortMenu.value = false;
+  sortMenu.value?.close();
 }
 
 function handleQuestionClick(questionId: string) {
@@ -303,12 +305,12 @@ onMounted(() => {
             <polyline points="5 12 12 19 19 12"></polyline>
           </svg>
         </button>
-        <div class="sort-field-wrapper">
-          <button class="sort-field-btn" @click="showSortMenu = !showSortMenu">
+        <div class="sort-field-wrapper" style="position: relative">
+          <button class="sort-field-btn" @click="sortMenu?.toggle">
             {{ sortFieldLabels[documentStore.questionSortField] }}
             <svg
               class="dropdown-icon"
-              :class="{ open: showSortMenu }"
+              :class="{ open: iconOpen }"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -317,19 +319,12 @@ onMounted(() => {
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
-          <div v-if="showSortMenu" class="sort-menu">
-            <button
-              v-for="(label, field) in sortFieldLabels"
-              :key="field"
-              class="sort-menu-item"
-              :class="{
-                active: documentStore.questionSortField === field,
-              }"
-              @click="handleSortFieldChange(field)"
-            >
-              {{ label }}
-            </button>
-          </div>
+          <DropdownMenu
+            ref="sortMenu"
+            :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
+            :active-value="documentStore.questionSortField"
+            @select="(v: string) => handleSortFieldChange(v as QuestionSortField)"
+          />
         </div>
       </div>
     </div>
@@ -592,42 +587,6 @@ onMounted(() => {
 
 .dropdown-icon.open {
   transform: rotate(180deg);
-}
-
-.sort-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 100px;
-  z-index: 100;
-  overflow: hidden;
-}
-
-.sort-menu-item {
-  display: block;
-  width: 100%;
-  padding: 8px 12px;
-  border: none;
-  background-color: transparent;
-  color: var(--color-text);
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.sort-menu-item:hover {
-  background-color: var(--color-hover);
-}
-
-.sort-menu-item.active {
-  color: var(--color-primary);
-  font-weight: 500;
 }
 
 .question-list__items {
