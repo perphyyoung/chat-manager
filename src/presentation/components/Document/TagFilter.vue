@@ -8,7 +8,14 @@ import DropdownMenu from "../common/DropdownMenu.vue";
 const documentStore = useDocumentStore();
 const showNewTagInput = ref(false);
 const newTagName = ref("");
-const isCollapsed = ref(false);
+
+// 折叠状态，持久化到本地存储
+const isCollapsed = ref(
+  localStorage.getItem("tagFilter:collapsed") === "true"
+);
+watch(isCollapsed, (val) => {
+  localStorage.setItem("tagFilter:collapsed", val ? "true" : "false");
+});
 
 // 排序状态
 type SortField = "name" | "createdAt" | "count";
