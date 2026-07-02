@@ -21,28 +21,6 @@ import { dataDirManager } from "./DataDirManager";
 // 初始化数据目录（确保 py-data 目录存在）
 dataDirManager.init();
 
-// 请求单实例锁，防止应用多开（仅生产环境）
-if (app.isPackaged) {
-  const gotTheLock = app.requestSingleInstanceLock();
-
-  if (!gotTheLock) {
-    // 如果没有获得锁，说明已有实例在运行，退出当前实例
-    app.quit();
-  } else {
-    // 获得锁，监听 second-instance 事件
-    // 当第二个实例启动时，聚焦到第一个实例的窗口
-    app.on("second-instance", () => {
-      const mainWindow = BrowserWindow.getAllWindows()[0];
-      if (mainWindow) {
-        if (mainWindow.isMinimized()) {
-          mainWindow.restore();
-        }
-        mainWindow.focus();
-      }
-    });
-  }
-}
-
 const logLevels: Record<string, (msg: string) => void> = {
   error: log.error,
   warn: log.warn,
