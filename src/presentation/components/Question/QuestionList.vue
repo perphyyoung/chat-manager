@@ -24,6 +24,9 @@ const showRecycleBin = ref(false);
 // 问题输入框 ref，用于弹窗打开时聚焦
 const questionInput = ref<HTMLInputElement | null>(null);
 
+// 问题列表容器 ref，用于高亮项滚动
+const itemsContainer = ref<HTMLElement | null>(null);
+
 // 弹窗打开时聚焦到问题输入框
 watch(showAddDialog, async (show) => {
   if (show) {
@@ -94,6 +97,21 @@ const sortFieldLabels: Record<QuestionSortField, string> = {
   title: "名称",
   sortOrder: "出现顺序",
 };
+
+function scrollToActiveQuestion() {
+  nextTick(() => {
+    const container = itemsContainer.value;
+    const activeId = documentStore.activeQuestionId;
+    if (!container || !activeId) return;
+
+    const targetElement = container.querySelector(
+      `[data-question-id="${activeId}"]`,
+    );
+    targetElement?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+}
+
+watch(() => documentStore.activeQuestionId, scrollToActiveQuestion);
 
 async function handleCreateQA() {
   const questionText = newQuestionText.value.trim();
@@ -269,8 +287,9 @@ async function handleDrop(targetId: string) {
   }
 }
 
-onMounted(() => {
-  documentStore.loadDeletedQuestions();
+onMounted(async () => {
+  await documentStore.loadDeletedQuestions();
+  scrollToActiveQuestion();
 });
 </script>
 
@@ -328,7 +347,7 @@ onMounted(() => {
         </button>
       </div>
     </div>
-    <div class="question-list__items">
+    <div ref="itemsContainer" class="question-list__items">
       <QuestionItem
         v-for="question in documentStore.selectedDocumentQuestions"
         :key="question.id"

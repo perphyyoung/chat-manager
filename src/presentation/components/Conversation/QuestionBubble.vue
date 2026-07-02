@@ -4,9 +4,14 @@ import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
 
 interface Props {
   text: string;
+  questionId: string;
 }
 
 const props = defineProps<Props>();
+
+const emit = defineEmits<{
+  showInList: [questionId: string];
+}>();
 
 const showToast = inject("showToast") as (message: string) => void;
 
@@ -20,6 +25,10 @@ const contextMenuItems = computed<MenuItem[]>(() => [
   {
     text: "复制",
     action: copyText,
+  },
+  {
+    text: "在问题列表中显示",
+    action: showInQuestionList,
   },
 ]);
 
@@ -39,6 +48,11 @@ function closeContextMenu() {
 async function copyText() {
   await navigator.clipboard.writeText(props.text);
   showToast("问题已复制");
+  closeContextMenu();
+}
+
+function showInQuestionList() {
+  emit("showInList", props.questionId);
   closeContextMenu();
 }
 </script>

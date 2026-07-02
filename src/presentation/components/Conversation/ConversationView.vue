@@ -11,6 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   toggleFullscreen: [];
+  focusQuestion: [questionId: string];
 }>();
 
 const documentStore = useDocumentStore();
@@ -77,6 +78,11 @@ watch(
 function toggleFullscreen() {
   emit("toggleFullscreen");
 }
+
+function handleShowInQuestionList(questionId: string) {
+  documentStore.setActiveQuestion(questionId);
+  emit("focusQuestion", questionId);
+}
 </script>
 
 <template>
@@ -111,7 +117,11 @@ function toggleFullscreen() {
           :data-question-id="question.id"
         >
           <!-- 问题：右对齐，主题色背景 -->
-          <QuestionBubble :text="question.text" />
+          <QuestionBubble
+            :text="question.text"
+            :question-id="question.id"
+            @show-in-list="handleShowInQuestionList"
+          />
 
           <!-- 回答：左对齐，表面色背景 -->
           <AnswerBubble

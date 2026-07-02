@@ -134,6 +134,10 @@ function toggleFullscreen() {
     isFullscreen.value = true;
   }
 }
+
+function handleFocusQuestion() {
+  expandRight();
+}
 </script>
 
 <template>
@@ -169,6 +173,7 @@ function toggleFullscreen() {
       <ConversationView
         :is-fullscreen="isFullscreen"
         @toggle-fullscreen="toggleFullscreen"
+        @focus-question="handleFocusQuestion"
       />
     </main>
 
