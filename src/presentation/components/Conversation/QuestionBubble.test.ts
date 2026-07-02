@@ -46,9 +46,10 @@ describe("QuestionBubble", () => {
     await nextTick();
 
     const items = document.querySelectorAll(".context-menu-item");
-    expect(items.length).toBe(2);
+    expect(items.length).toBe(3);
     expect(items[0]?.textContent?.trim()).toBe("复制");
     expect(items[1]?.textContent?.trim()).toBe("在问题列表中显示");
+    expect(items[2]?.textContent?.trim()).toBe("在文档列表中显示");
   });
 
   it("should emit showInList when '在问题列表中显示' clicked", async () => {
@@ -61,5 +62,17 @@ describe("QuestionBubble", () => {
 
     expect(wrapper.emitted("showInList")).toHaveLength(1);
     expect(wrapper.emitted("showInList")![0]).toEqual(["q-1"]);
+  });
+
+  it("should emit showInDocumentList when '在文档列表中显示' clicked", async () => {
+    const wrapper = createWrapper();
+    openContextMenu(wrapper);
+    await nextTick();
+
+    const item = document.querySelectorAll(".context-menu-item")[2] as HTMLElement;
+    await item.click();
+
+    expect(wrapper.emitted("showInDocumentList")).toHaveLength(1);
+    expect(wrapper.emitted("showInDocumentList")![0]).toEqual(["q-1"]);
   });
 });

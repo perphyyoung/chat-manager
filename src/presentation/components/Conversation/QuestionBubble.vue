@@ -11,6 +11,7 @@ const props = defineProps<Props>();
 
 const emit = defineEmits<{
   showInList: [questionId: string];
+  showInDocumentList: [questionId: string];
 }>();
 
 const showToast = inject("showToast") as (message: string) => void;
@@ -29,6 +30,10 @@ const contextMenuItems = computed<MenuItem[]>(() => [
   {
     text: "在问题列表中显示",
     action: showInQuestionList,
+  },
+  {
+    text: "在文档列表中显示",
+    action: showInDocumentList,
   },
 ]);
 
@@ -53,6 +58,11 @@ async function copyText() {
 
 function showInQuestionList() {
   emit("showInList", props.questionId);
+  closeContextMenu();
+}
+
+function showInDocumentList() {
+  emit("showInDocumentList", props.questionId);
   closeContextMenu();
 }
 </script>

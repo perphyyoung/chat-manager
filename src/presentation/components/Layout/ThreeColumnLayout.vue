@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, nextTick } from "vue";
 import DocumentList from "../Document/DocumentList.vue";
 import ConversationView from "../Conversation/ConversationView.vue";
 import QuestionList from "../Question/QuestionList.vue";
@@ -11,6 +11,8 @@ const rightWidth = ref(280);
 const leftCollapsed = ref(false);
 const rightCollapsed = ref(false);
 const isFullscreen = ref(false);
+
+const documentListRef = ref<InstanceType<typeof DocumentList> | null>(null);
 
 const isDraggingLeft = ref(false);
 const isDraggingRight = ref(false);
@@ -138,6 +140,13 @@ function toggleFullscreen() {
 function handleFocusQuestion() {
   expandRight();
 }
+
+function handleFocusDocument() {
+  expandLeft();
+  nextTick(() => {
+    documentListRef.value?.scrollToSelectedDocument();
+  });
+}
 </script>
 
 <template>
@@ -147,7 +156,7 @@ function handleFocusQuestion() {
       class="left-panel"
       :style="{ width: `${leftWidth}px` }"
     >
-      <DocumentList />
+      <DocumentList ref="documentListRef" />
     </aside>
 
     <div
@@ -174,6 +183,7 @@ function handleFocusQuestion() {
         :is-fullscreen="isFullscreen"
         @toggle-fullscreen="toggleFullscreen"
         @focus-question="handleFocusQuestion"
+        @focus-document="handleFocusDocument"
       />
     </main>
 

@@ -18,6 +18,7 @@ const newDocumentTitle = ref("");
 const isCreating = ref(false);
 const sortMenu = ref<InstanceType<typeof DropdownMenu> | null>(null);
 const titleInputRef = ref<HTMLInputElement | null>(null);
+const itemsContainer = ref<HTMLElement | null>(null);
 const iconOpen = computed(() => sortMenu.value?.isOpen ?? false);
 
 // 拖拽状态
@@ -223,6 +224,23 @@ async function loadDeletedDocuments() {
   deletedDocuments.value = await documentStore.loadDeletedDocuments();
 }
 
+function scrollToSelectedDocument() {
+  nextTick(() => {
+    const container = itemsContainer.value;
+    const selectedId = documentStore.selectedDocumentId;
+    if (!container || !selectedId) return;
+
+    const targetElement = container.querySelector(
+      `[data-document-id="${selectedId}"]`,
+    );
+    targetElement?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+}
+
+defineExpose({
+  scrollToSelectedDocument,
+});
+
 async function openRecycleBin() {
   await loadDeletedDocuments();
   showRecycleBin.value = true;
@@ -312,13 +330,14 @@ onMounted(() => {
         </button>
       </div>
     </div>
-    <div class="document-list__items">
+    <div ref="itemsContainer" class="document-list__items">
       <DocumentItem
         v-for="doc in documentStore.sortedDocuments"
         :key="doc.id"
         :document="doc"
         :is-active="doc.id === documentStore.selectedDocumentId"
         :is-drag-over="dragOverDocId === doc.id"
+        :data-document-id="doc.id"
         @click="documentStore.selectDocument(doc.id)"
         @contextmenu="handleContextMenu"
         @drag-over="handleDragOver"

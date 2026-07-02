@@ -12,6 +12,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   toggleFullscreen: [];
   focusQuestion: [questionId: string];
+  focusDocument: [questionId: string];
 }>();
 
 const documentStore = useDocumentStore();
@@ -83,6 +84,10 @@ function handleShowInQuestionList(questionId: string) {
   documentStore.setActiveQuestion(questionId);
   emit("focusQuestion", questionId);
 }
+
+function handleShowInDocumentList(questionId: string) {
+  emit("focusDocument", questionId);
+}
 </script>
 
 <template>
@@ -121,6 +126,7 @@ function handleShowInQuestionList(questionId: string) {
             :text="question.text"
             :question-id="question.id"
             @show-in-list="handleShowInQuestionList"
+            @show-in-document-list="handleShowInDocumentList"
           />
 
           <!-- 回答：左对齐，表面色背景 -->
