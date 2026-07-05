@@ -705,6 +705,24 @@ function createMenu() {
       label: "File",
       submenu: [
         {
+          label: "新建窗口",
+          accelerator: "CmdOrCtrl+N",
+          click: createWindow,
+        },
+        {
+          label: "设置",
+          accelerator: "CmdOrCtrl+,",
+          click: () => {
+            const window = BrowserWindow.getFocusedWindow();
+            if (window) {
+              window.webContents.send("open-settings");
+            } else {
+              log.error("Window is null, cannot send open-settings");
+            }
+          },
+        },
+        { type: "separator" },
+        {
           label: "导出数据",
           click: exportData,
         },
@@ -719,19 +737,6 @@ function createMenu() {
             await SearchService.rebuildIndex(getDatabase());
             const window = BrowserWindow.getFocusedWindow();
             window?.webContents.send("show-toast", "索引重建完成");
-          },
-        },
-        { type: "separator" },
-        {
-          label: "设置",
-          accelerator: "CmdOrCtrl+,",
-          click: () => {
-            const window = BrowserWindow.getFocusedWindow();
-            if (window) {
-              window.webContents.send("open-settings");
-            } else {
-              log.error("Window is null, cannot send open-settings");
-            }
           },
         },
         { type: "separator" },
