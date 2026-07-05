@@ -21,6 +21,17 @@ import { dataDirManager } from "./DataDirManager";
 // 初始化数据目录（确保 py-data 目录存在）
 dataDirManager.init();
 
+// 请求单实例锁；第二个实例会触发 first-instance 的 second-instance 事件，
+// 由第一个实例新建窗口，实现单进程多窗口。
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    createWindow();
+  });
+}
+
 const logLevels: Record<string, (msg: string) => void> = {
   error: log.error,
   warn: log.warn,
@@ -656,10 +667,8 @@ const VITE_PUBLIC = app.isPackaged ? DIST : path.join(DIST, "../public");
 process.env.DIST = DIST;
 process.env.VITE_PUBLIC = VITE_PUBLIC;
 
-let win: BrowserWindow | null;
-
 function createWindow() {
-  win = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 800,
@@ -682,6 +691,12 @@ function createWindow() {
   win.webContents.on("preload-error", (_, preloadPath, error) => {
     log.error(`Preload error for ${preloadPath}: ${error.message}`);
   });
+
+  win.on("closed", () => {
+    // BrowserWindow 实例会在关闭后自动释放，无需额外处理
+  });
+
+  return win;
 }
 
 function createMenu() {
@@ -702,9 +717,8 @@ function createMenu() {
           label: "重建索引",
           click: async () => {
             await SearchService.rebuildIndex(getDatabase());
-            if (win) {
-              win.webContents.send("show-toast", "索引重建完成");
-            }
+            const window = BrowserWindow.getFocusedWindow();
+            window?.webContents.send("show-toast", "索引重建完成");
           },
         },
         { type: "separator" },
@@ -712,8 +726,9 @@ function createMenu() {
           label: "设置",
           accelerator: "CmdOrCtrl+,",
           click: () => {
-            if (win) {
-              win.webContents.send("open-settings");
+            const window = BrowserWindow.getFocusedWindow();
+            if (window) {
+              window.webContents.send("open-settings");
             } else {
               log.error("Window is null, cannot send open-settings");
             }
@@ -747,9 +762,8 @@ function createMenu() {
         {
           label: "About",
           click: () => {
-            if (win) {
-              win.webContents.send("open-about");
-            }
+            const window = BrowserWindow.getFocusedWindow();
+            window?.webContents.send("open-about");
           },
         },
       ],
