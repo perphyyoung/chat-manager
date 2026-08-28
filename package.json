@@ -1,6 +1,6 @@
 {
   "name": "chat-manager",
-  "version": "0.5.46",
+  "version": "0.5.47",
   "private": true,
   "type": "module",
   "main": "out/main/index.js",
@@ -83,6 +83,12 @@
       "out/**/*"
     ],
     "icon": "public/favicon.ico",
+    "extraResources": [
+      {
+        "from": "public/favicon.ico",
+        "to": "public/favicon.ico"
+      }
+    ],
     "win": {
       "target": [
         {

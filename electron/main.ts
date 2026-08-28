@@ -24,10 +24,20 @@ dataDirManager.init();
 let tray: Tray | null = null;
 let isQuitting = false;
 
-const MAIN_WINDOW_ICON = path.join(__dirname, "../../public/favicon.ico");
+const MAIN_WINDOW_ICON = "public/favicon.ico";
 
 // e2e 环境禁用托盘，保证测试关闭时应用能正常退出
 const IS_E2E = process.env.E2E === "1";
+
+/**
+ * 解析应用图标路径：dev 指向项目 public，打包后用 extraResources 放入的 resources 目录
+ */
+function getAppIconPath(): string {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, MAIN_WINDOW_ICON);
+  }
+  return path.join(__dirname, "../../", MAIN_WINDOW_ICON);
+}
 
 // 请求单实例锁；第二个实例会触发 first-instance 的 second-instance 事件，
 // 由第一个实例新建窗口，实现单进程多窗口。
@@ -628,7 +638,7 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    icon: MAIN_WINDOW_ICON,
+    icon: getAppIconPath(),
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.cjs"),
       nodeIntegration: false,
@@ -694,7 +704,7 @@ function createTray() {
   if (tray) {
     return;
   }
-  tray = new Tray(nativeImage.createFromPath(MAIN_WINDOW_ICON));
+  tray = new Tray(nativeImage.createFromPath(getAppIconPath()));
   tray.setToolTip("Chat Manager");
   tray.setContextMenu(
     Menu.buildFromTemplate([
