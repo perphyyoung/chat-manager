@@ -675,6 +675,20 @@ function showMainWindow() {
   }
 }
 
+/** 托盘点击：窗口可见则隐藏，否则显示 */
+function toggleMainWindow() {
+  const win = BrowserWindow.getAllWindows()[0];
+  if (!win) {
+    createWindow();
+    return;
+  }
+  if (win.isVisible() && !win.isMinimized()) {
+    win.hide();
+    return;
+  }
+  showMainWindow();
+}
+
 /** 创建系统托盘：左键显示窗口，右键菜单含显示/退出 */
 function createTray() {
   if (tray) {
@@ -695,7 +709,7 @@ function createTray() {
       },
     ]),
   );
-  tray.on("click", showMainWindow);
+  tray.on("click", toggleMainWindow);
 }
 
 function createMenu() {
