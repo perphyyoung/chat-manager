@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     });
   },
   getVersions: () => ipcRenderer.invoke("get-versions"),
+  getDataPath: () => ipcRenderer.invoke("get-data-path"),
+  openDataDir: () => ipcRenderer.invoke("open-data-dir"),
   onOpenSearch: (callback: () => void) => {
     ipcRenderer.on("shortcut:open-search", () => {
       callback();

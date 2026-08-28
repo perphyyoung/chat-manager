@@ -26,6 +26,8 @@ export interface ElectronAPI {
     node: string;
     chrome: string;
   }>;
+  getDataPath: () => Promise<string>;
+  openDataDir: () => Promise<string>;
   db: {
     transaction: {
       begin: () => Promise<string>;

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, ipcMain, globalShortcut } from "electron";
+import { app, BrowserWindow, Menu, ipcMain, globalShortcut, shell } from "electron";
 import path from "node:path";
 import { log } from "./logger";
 import { getDatabase, closeDatabase } from "./database";
@@ -43,6 +43,11 @@ ipcMain.handle("get-versions", () => {
     chrome: process.versions.chrome,
   };
 });
+
+// 数据目录 IPC handler
+ipcMain.handle("get-data-path", () => dataDirManager.getDbDir());
+
+ipcMain.handle("open-data-dir", () => shell.openPath(dataDirManager.getDbDir()));
 
 // Document IPC handlers
 ipcMain.handle("document:findAllDocuments", (_, options?: { isDeleted?: boolean }) => {

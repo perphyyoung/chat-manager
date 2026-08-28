@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, onMounted } from "vue";
 import { useSettingsStore } from "../../stores/settings";
 
 const settingsStore = useSettingsStore();
@@ -11,8 +12,18 @@ const emit = defineEmits<{
   close: [];
 }>();
 
+const dataPath = ref("");
+
+onMounted(async () => {
+  dataPath.value = await window.electronAPI.getDataPath();
+});
+
 function handleClose() {
   emit("close");
+}
+
+async function handleOpenDataDir() {
+  await window.electronAPI.openDataDir();
 }
 </script>
 
@@ -35,6 +46,15 @@ function handleClose() {
             <span class="slider"></span>
           </label>
         </div>
+        <div class="setting-item">
+          <div class="dir-info">
+            <span class="dir-label">数据目录</span>
+            <span class="dir-path" :title="dataPath">
+              {{ dataPath || "加载中…" }}
+            </span>
+          </div>
+          <button class="open-btn" @click="handleOpenDataDir">打开文件夹</button>
+        </div>
       </div>
     </div>
   </div>
@@ -56,8 +76,8 @@ function handleClose() {
 
 .modal-content {
   background-color: var(--color-surface);
-  border-radius: 8px;
-  width: 400px;
+  border-radius: 10px;
+  width: 520px;
   max-width: 90%;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -66,13 +86,13 @@ function handleClose() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   color: var(--color-text);
 }
 
@@ -85,7 +105,7 @@ function handleClose() {
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 24px;
 }
 
 .setting-item {
@@ -93,7 +113,32 @@ function handleClose() {
   justify-content: space-between;
   align-items: center;
   font-size: 14px;
+  gap: 16px;
   color: var(--color-text);
+}
+
+.setting-item + .setting-item {
+  margin-top: 24px;
+}
+
+.dir-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dir-label {
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.dir-path {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+  word-break: break-all;
+  user-select: text;
 }
 
 .switch {
@@ -101,12 +146,29 @@ function handleClose() {
   display: inline-block;
   width: 48px;
   height: 24px;
+  flex-shrink: 0;
 }
 
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
+}
+
+.open-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.open-btn:hover {
+  background-color: var(--color-border);
 }
 
 .slider {

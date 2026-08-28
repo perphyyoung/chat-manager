@@ -104,7 +104,7 @@ pnpm format
 
 数据存储在用户数据目录：
 
-| 操作系统 | 数据路径 |
+| 操作系统 | 数据目录 |
 |----------|----------|
 | Windows | `%APPDATA%/Chat Manager/py-data/` |
 | macOS | `~/Library/Application Support/Chat Manager/py-data/` |
