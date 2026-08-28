@@ -85,15 +85,8 @@ function handleDrop(event: DragEvent) {
       <div class="document-item__meta">
         <span>{{ document.activeQuestions.length }} 个问题</span>
         <span v-if="document.tags?.length" class="document-item__tags">
-          <TagBadge
-            v-for="tag in document.tags.slice(0, 2)"
-            :key="tag.id"
-            :name="tag.name"
-          />
-          <span
-            v-if="(document.tags.length || 0) > 2"
-            class="document-item__more-tags"
-          >
+          <TagBadge v-for="tag in document.tags.slice(0, 2)" :key="tag.id" :name="tag.name" />
+          <span v-if="(document.tags.length || 0) > 2" class="document-item__more-tags">
             +{{ document.tags.length - 2 }}
           </span>
         </span>

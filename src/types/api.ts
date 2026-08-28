@@ -34,9 +34,7 @@ export interface ElectronAPI {
     };
   };
   document: {
-    findAllDocuments: (options?: {
-      isDeleted?: boolean;
-    }) => Promise<DocumentDTO[]>;
+    findAllDocuments: (options?: { isDeleted?: boolean }) => Promise<DocumentDTO[]>;
     findDocumentById: (id: string) => Promise<DocumentDTO | null>;
     saveDocument: (doc: DocumentInput) => Promise<void>;
     deleteDocument: (id: string) => Promise<void>;
@@ -52,24 +50,15 @@ export interface ElectronAPI {
     saveAllAnswers: (docId: string, answers: AnswerInput[]) => Promise<void>;
   };
   question: {
-    softDeleteQuestion: (
-      documentId: string,
-      questionId: string,
-    ) => Promise<void>;
+    softDeleteQuestion: (documentId: string, questionId: string) => Promise<void>;
     restoreQuestion: (documentId: string, questionId: string) => Promise<void>;
-    saveAllQuestions: (
-      docId: string,
-      questions: QuestionInput[],
-    ) => Promise<void>;
+    saveAllQuestions: (docId: string, questions: QuestionInput[]) => Promise<void>;
     getDeletedQuestions: (
       documentId: string,
     ) => Promise<Array<{ id: string; text: string; deletedAt: string }>>;
     clearDeletedQuestions: (documentId: string) => Promise<void>;
     deleteAllQuestions: (ids: string[]) => Promise<void>;
-    moveQuestionToDocument: (
-      questionId: string,
-      targetDocumentId: string,
-    ) => Promise<void>;
+    moveQuestionToDocument: (questionId: string, targetDocumentId: string) => Promise<void>;
   };
   tag: {
     findAllTags: () => Promise<TagDTO[]>;

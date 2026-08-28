@@ -7,6 +7,4 @@ export abstract class DomainEvent {
   }
 }
 
-export type DomainEventClass<T extends DomainEvent> = new (
-  ...args: unknown[]
-) => T;
+export type DomainEventClass<T extends DomainEvent> = new (...args: unknown[]) => T;

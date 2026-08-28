@@ -1,6 +1,6 @@
 {
   "name": "chat-manager",
-  "version": "0.5.41",
+  "version": "0.5.42",
   "private": true,
   "type": "module",
   "main": "out/main/index.js",
@@ -13,7 +13,7 @@
     "e2e": "run-s build && playwright test --project=chromium",
     "release": "electron-vite build && electron-builder",
     "type-check": "vue-tsc --build",
-    "check": "run-s type-check lint",
+    "check": "run-s format type-check lint",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint .",
     "lint:eslint": "eslint . --cache",

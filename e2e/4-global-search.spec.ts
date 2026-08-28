@@ -1,10 +1,5 @@
 import { expect } from "@playwright/test";
-import {
-  test,
-  generateUniqueDocTitle,
-  openSearch,
-  createDocumentWithAnswer,
-} from "./utils";
+import { test, generateUniqueDocTitle, openSearch, createDocumentWithAnswer } from "./utils";
 
 test.describe("全局搜索功能", () => {
   const SEARCH_TEST_DOC_TITLE = generateUniqueDocTitle("search");
@@ -77,9 +72,7 @@ test.describe("全局搜索功能", () => {
     await window.waitForSelector(".search-results", { timeout: 2000 });
     await window.keyboard.press("ArrowDown");
 
-    await expect(window.locator(".search-results__item--selected")).toBeVisible(
-      { timeout: 2000 },
-    );
+    await expect(window.locator(".search-results__item--selected")).toBeVisible({ timeout: 2000 });
   });
 
   test("键盘导航 - 上箭头回退", async ({ window }) => {
@@ -93,9 +86,7 @@ test.describe("全局搜索功能", () => {
     await window.keyboard.press("ArrowDown");
     await window.keyboard.press("ArrowUp");
 
-    await expect(window.locator(".search-results__item--selected")).toBeVisible(
-      { timeout: 2000 },
-    );
+    await expect(window.locator(".search-results__item--selected")).toBeVisible({ timeout: 2000 });
   });
 
   test("Enter 键确认选择", async ({ window }) => {

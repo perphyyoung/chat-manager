@@ -230,9 +230,7 @@ function scrollToSelectedDocument() {
     const selectedId = documentStore.selectedDocumentId;
     if (!container || !selectedId) return;
 
-    const targetElement = container.querySelector(
-      `[data-document-id="${selectedId}"]`,
-    );
+    const targetElement = container.querySelector(`[data-document-id="${selectedId}"]`);
     targetElement?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
 }
@@ -297,7 +295,12 @@ onMounted(() => {
           </button>
           <DropdownMenu
             ref="sortMenu"
-            :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
+            :items="
+              Object.entries(sortFieldLabels).map(([value, label]) => ({
+                value,
+                label,
+              }))
+            "
             :active-value="documentStore.documentSortField"
             @select="(v: string) => handleSortFieldChange(v as SortField)"
           />
@@ -317,13 +320,7 @@ onMounted(() => {
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <polyline points="5 12 12 5 19 12"></polyline>
           </svg>
-          <svg
-            v-else
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <polyline points="5 12 12 19 19 12"></polyline>
           </svg>
@@ -357,12 +354,7 @@ onMounted(() => {
 
     <!-- 浮动添加按钮 -->
     <button class="fab" title="添加文档" @click="showAddDialog = true">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-      >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
@@ -394,11 +386,7 @@ onMounted(() => {
     </div>
 
     <!-- 编辑文档对话框 -->
-    <div
-      v-if="showEditDialog"
-      class="add-doc-model"
-      @click.self="handleCancelEdit"
-    >
+    <div v-if="showEditDialog" class="add-doc-model" @click.self="handleCancelEdit">
       <div class="dialog">
         <h3>编辑文档标题</h3>
         <input
@@ -423,11 +411,7 @@ onMounted(() => {
     </div>
 
     <!-- 回收站按钮 -->
-    <RecycleBinButton
-      :count="deletedDocuments.length"
-      title="文档回收站"
-      @click="openRecycleBin"
-    />
+    <RecycleBinButton :count="deletedDocuments.length" title="文档回收站" @click="openRecycleBin" />
 
     <!-- 回收站弹窗 -->
     <RecycleBinModal

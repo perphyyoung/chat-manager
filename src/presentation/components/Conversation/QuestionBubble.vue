@@ -69,10 +69,7 @@ function showInDocumentList() {
 
 <template>
   <div class="question-bubble">
-    <div
-      class="question-bubble__content"
-      @contextmenu="handleContextMenu"
-    >
+    <div class="question-bubble__content" @contextmenu="handleContextMenu">
       {{ text }}
     </div>
     <!-- 右键菜单 -->

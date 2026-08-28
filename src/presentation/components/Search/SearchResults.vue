@@ -68,12 +68,7 @@ function getTypeName(type: string): string {
 
 function getItemsByType(
   type: string,
-): Array<
-  | DocumentSearchResult
-  | QuestionSearchResult
-  | AnswerSearchResult
-  | TagSearchResult
-> {
+): Array<DocumentSearchResult | QuestionSearchResult | AnswerSearchResult | TagSearchResult> {
   switch (type) {
     case "document":
       return props.results.documents;
@@ -89,11 +84,7 @@ function getItemsByType(
 }
 
 function getDisplayContent(
-  item:
-    | DocumentSearchResult
-    | QuestionSearchResult
-    | AnswerSearchResult
-    | TagSearchResult,
+  item: DocumentSearchResult | QuestionSearchResult | AnswerSearchResult | TagSearchResult,
   type: string,
 ): string {
   switch (type) {
@@ -106,9 +97,7 @@ function getDisplayContent(
       if (answer.snippet) {
         return answer.snippet;
       }
-      return (
-        answer.content.slice(0, 80) + (answer.content.length > 80 ? "..." : "")
-      );
+      return answer.content.slice(0, 80) + (answer.content.length > 80 ? "..." : "");
     }
     case "tag":
       return (item as TagSearchResult).name;
@@ -118,11 +107,7 @@ function getDisplayContent(
 }
 
 function getMetadata(
-  item:
-    | DocumentSearchResult
-    | QuestionSearchResult
-    | AnswerSearchResult
-    | TagSearchResult,
+  item: DocumentSearchResult | QuestionSearchResult | AnswerSearchResult | TagSearchResult,
   type: string,
 ): string {
   switch (type) {
@@ -140,11 +125,7 @@ function getMetadata(
 }
 
 function getDocumentId(
-  item:
-    | DocumentSearchResult
-    | QuestionSearchResult
-    | AnswerSearchResult
-    | TagSearchResult,
+  item: DocumentSearchResult | QuestionSearchResult | AnswerSearchResult | TagSearchResult,
   type: string,
 ): string | undefined {
   switch (type) {
@@ -162,11 +143,7 @@ function getDocumentId(
 }
 
 function getQuestionId(
-  item:
-    | DocumentSearchResult
-    | QuestionSearchResult
-    | AnswerSearchResult
-    | TagSearchResult,
+  item: DocumentSearchResult | QuestionSearchResult | AnswerSearchResult | TagSearchResult,
   type: string,
 ): string | undefined {
   switch (type) {
@@ -209,17 +186,14 @@ function handleClick(item: SearchResult) {
       <template v-if="getItemsByType(type).length > 0">
         <div class="search-results__group-title">
           {{ getTypeIcon(type) }} {{ getTypeName(type) }}
-          <span class="search-results__count"
-            >({{ getItemsByType(type).length }})</span
-          >
+          <span class="search-results__count">({{ getItemsByType(type).length }})</span>
         </div>
         <div
           v-for="(item, index) in getItemsByType(type)"
           :key="item.id"
           class="search-results__item"
           :class="{
-            'search-results__item--selected':
-              getGlobalIndex(type, index) === selectedIndex,
+            'search-results__item--selected': getGlobalIndex(type, index) === selectedIndex,
           }"
           @click="
             handleClick({

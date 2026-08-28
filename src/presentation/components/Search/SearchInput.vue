@@ -44,9 +44,7 @@ onMounted(() => {
       :value="value"
       @input="handleInput"
     />
-    <button v-if="value" class="search-input__clear" @click="handleClear">
-      ×
-    </button>
+    <button v-if="value" class="search-input__clear" @click="handleClear">×</button>
   </div>
 </template>
 

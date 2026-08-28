@@ -48,9 +48,7 @@ export class MockDocumentRepository implements DocumentRepository {
     this.documentTags.get(documentId)?.delete(tagId);
   }
 
-  async getTags(
-    documentId: string,
-  ): Promise<Array<{ id: string; name: string }>> {
+  async getTags(documentId: string): Promise<Array<{ id: string; name: string }>> {
     const tagIds = this.documentTags.get(documentId) || new Set();
     return Array.from(tagIds).map((id) => ({
       id,
@@ -58,10 +56,7 @@ export class MockDocumentRepository implements DocumentRepository {
     }));
   }
 
-  async permanentlyDeleteQuestion(
-    _documentId: string,
-    _questionId: string,
-  ): Promise<void> {}
+  async permanentlyDeleteQuestion(_documentId: string, _questionId: string): Promise<void> {}
 
   clear(): void {
     this.documents.clear();

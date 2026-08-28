@@ -1,9 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type {
-  DocumentInput,
-  QuestionInput,
-  AnswerInput,
-} from "../src/types/dto";
+import type { DocumentInput, QuestionInput, AnswerInput } from "../src/types/dto";
 import type { ExportResult, ImportResult } from "../src/types/importExport";
 
 contextBridge.exposeInMainWorld("electronAPI", {
@@ -32,36 +28,26 @@ contextBridge.exposeInMainWorld("electronAPI", {
   db: {
     transaction: {
       begin: () => ipcRenderer.invoke("db:transaction:begin"),
-      commit: (txId: string) =>
-        ipcRenderer.invoke("db:transaction:commit", txId),
-      rollback: (txId: string) =>
-        ipcRenderer.invoke("db:transaction:rollback", txId),
+      commit: (txId: string) => ipcRenderer.invoke("db:transaction:commit", txId),
+      rollback: (txId: string) => ipcRenderer.invoke("db:transaction:rollback", txId),
     },
   },
   document: {
     findAllDocuments: (options?: { isDeleted?: boolean }) =>
       ipcRenderer.invoke("document:findAllDocuments", options),
-    findDocumentById: (id: string) =>
-      ipcRenderer.invoke("document:findDocumentById", id),
-    saveDocument: (doc: DocumentInput) =>
-      ipcRenderer.invoke("document:saveDocument", doc),
-    deleteDocument: (id: string) =>
-      ipcRenderer.invoke("document:deleteDocument", id),
-    softDeleteDocument: (id: string) =>
-      ipcRenderer.invoke("document:softDeleteDocument", id),
-    restoreDocument: (id: string) =>
-      ipcRenderer.invoke("document:restoreDocument", id),
-    existsDocument: (id: string) =>
-      ipcRenderer.invoke("document:existsDocument", id),
+    findDocumentById: (id: string) => ipcRenderer.invoke("document:findDocumentById", id),
+    saveDocument: (doc: DocumentInput) => ipcRenderer.invoke("document:saveDocument", doc),
+    deleteDocument: (id: string) => ipcRenderer.invoke("document:deleteDocument", id),
+    softDeleteDocument: (id: string) => ipcRenderer.invoke("document:softDeleteDocument", id),
+    restoreDocument: (id: string) => ipcRenderer.invoke("document:restoreDocument", id),
+    existsDocument: (id: string) => ipcRenderer.invoke("document:existsDocument", id),
   },
   answer: {
     findAnswerByQuestionId: (questionId: string) =>
       ipcRenderer.invoke("answer:findAnswerByQuestionId", questionId),
-    saveAnswer: (answerJson: string) =>
-      ipcRenderer.invoke("answer:saveAnswer", answerJson),
+    saveAnswer: (answerJson: string) => ipcRenderer.invoke("answer:saveAnswer", answerJson),
     deleteAnswer: (id: string) => ipcRenderer.invoke("answer:deleteAnswer", id),
-    deleteAllAnswers: (ids: string[]) =>
-      ipcRenderer.invoke("answer:deleteAllAnswers", ids),
+    deleteAllAnswers: (ids: string[]) => ipcRenderer.invoke("answer:deleteAllAnswers", ids),
     saveAllAnswers: (docId: string, answers: AnswerInput[]) =>
       ipcRenderer.invoke("answer:saveAllAnswers", docId, answers),
   },
@@ -76,20 +62,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("question:getDeletedQuestions", documentId),
     clearDeletedQuestions: (documentId: string) =>
       ipcRenderer.invoke("question:clearDeletedQuestions", documentId),
-    deleteAllQuestions: (ids: string[]) =>
-      ipcRenderer.invoke("question:deleteAllQuestions", ids),
+    deleteAllQuestions: (ids: string[]) => ipcRenderer.invoke("question:deleteAllQuestions", ids),
     moveQuestionToDocument: (questionId: string, targetDocumentId: string) =>
-      ipcRenderer.invoke(
-        "question:moveQuestionToDocument",
-        questionId,
-        targetDocumentId,
-      ),
+      ipcRenderer.invoke("question:moveQuestionToDocument", questionId, targetDocumentId),
   },
   tag: {
     findAllTags: () => ipcRenderer.invoke("tag:findAllTags"),
     findTagById: (id: string) => ipcRenderer.invoke("tag:findTagById", id),
-    findTagByName: (name: string) =>
-      ipcRenderer.invoke("tag:findTagByName", name),
+    findTagByName: (name: string) => ipcRenderer.invoke("tag:findTagByName", name),
     saveTag: (tagJson: string) => ipcRenderer.invoke("tag:saveTag", tagJson),
     deleteTag: (id: string) => ipcRenderer.invoke("tag:deleteTag", id),
     existsTag: (name: string) => ipcRenderer.invoke("tag:existsTag", name),
@@ -97,14 +77,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("tag:addTagToDocument", documentId, tagId),
     removeTagFromDocument: (documentId: string, tagId: string) =>
       ipcRenderer.invoke("tag:removeTagFromDocument", documentId, tagId),
-    getDocumentTags: (documentId: string) =>
-      ipcRenderer.invoke("tag:getDocumentTags", documentId),
-    findDocumentsByTagId: (tagId: string) =>
-      ipcRenderer.invoke("tag:findDocumentsByTagId", tagId),
+    getDocumentTags: (documentId: string) => ipcRenderer.invoke("tag:getDocumentTags", documentId),
+    findDocumentsByTagId: (tagId: string) => ipcRenderer.invoke("tag:findDocumentsByTagId", tagId),
   },
   search: {
-    querySearch: (query: string) =>
-      ipcRenderer.invoke("search:querySearch", query),
+    querySearch: (query: string) => ipcRenderer.invoke("search:querySearch", query),
   },
   onExportComplete: (callback: (result: ExportResult) => void) => {
     ipcRenderer.on("export-complete", (_, result) => callback(result));

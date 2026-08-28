@@ -68,7 +68,8 @@ function handleClose() {
   background: #0a0a0a;
   color: #00ff88;
   border: 2px solid #00ff88;
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.4),
+  box-shadow:
+    0 0 20px rgba(0, 255, 136, 0.4),
     inset 0 0 10px rgba(0, 255, 136, 0.1);
   font-size: 14px;
   z-index: 10002;

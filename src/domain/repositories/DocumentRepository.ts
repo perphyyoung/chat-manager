@@ -17,8 +17,5 @@ export interface DocumentRepository {
   getTags(documentId: string): Promise<Array<{ id: string; name: string }>>;
 
   // 问题软删除相关方法
-  permanentlyDeleteQuestion(
-    documentId: string,
-    questionId: string,
-  ): Promise<void>;
+  permanentlyDeleteQuestion(documentId: string, questionId: string): Promise<void>;
 }

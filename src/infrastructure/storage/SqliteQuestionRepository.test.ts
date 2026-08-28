@@ -65,8 +65,7 @@ describe("SqliteQuestionRepository", () => {
         deleteAllQuestions: vi.fn(),
       },
     };
-    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =
-      mockElectronAPI;
+    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI = mockElectronAPI;
     repository = new SqliteQuestionRepository();
   });
 
@@ -128,10 +127,7 @@ describe("SqliteQuestionRepository", () => {
     it("should soft delete question", async () => {
       await repository.softDeleteQuestion("doc1", "q1");
 
-      expect(mockElectronAPI.question.softDeleteQuestion).toHaveBeenCalledWith(
-        "doc1",
-        "q1",
-      );
+      expect(mockElectronAPI.question.softDeleteQuestion).toHaveBeenCalledWith("doc1", "q1");
     });
   });
 
@@ -139,10 +135,7 @@ describe("SqliteQuestionRepository", () => {
     it("should restore question", async () => {
       await repository.restoreQuestion("doc1", "q1");
 
-      expect(mockElectronAPI.question.restoreQuestion).toHaveBeenCalledWith(
-        "doc1",
-        "q1",
-      );
+      expect(mockElectronAPI.question.restoreQuestion).toHaveBeenCalledWith("doc1", "q1");
     });
   });
 
@@ -175,9 +168,7 @@ describe("SqliteQuestionRepository", () => {
     it("should clear deleted questions", async () => {
       await repository.clearDeletedQuestions("doc1");
 
-      expect(
-        mockElectronAPI.question.clearDeletedQuestions,
-      ).toHaveBeenCalledWith("doc1");
+      expect(mockElectronAPI.question.clearDeletedQuestions).toHaveBeenCalledWith("doc1");
     });
   });
 
@@ -210,18 +201,12 @@ describe("SqliteQuestionRepository", () => {
     });
 
     it("should include deletedAt for soft deleted questions", async () => {
-      const question = new Question(
-        "q1",
-        "Question 1",
-        0,
-        new Date("2024-01-01"),
-      );
+      const question = new Question("q1", "Question 1", 0, new Date("2024-01-01"));
       question.softDelete();
 
       await repository.saveAllQuestions("doc1", [question]);
 
-      const savedQuestions = mockElectronAPI.question.saveAllQuestions.mock
-        .calls[0]?.[1] as Array<{
+      const savedQuestions = mockElectronAPI.question.saveAllQuestions.mock.calls[0]?.[1] as Array<{
         isDeleted: boolean;
         deletedAt: string;
       }>;
@@ -230,5 +215,4 @@ describe("SqliteQuestionRepository", () => {
       expect(savedQuestions[0]?.deletedAt).toBeDefined();
     });
   });
-
 });

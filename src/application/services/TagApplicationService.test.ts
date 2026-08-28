@@ -116,9 +116,7 @@ describe("TagApplicationService", () => {
     });
 
     it("should throw error for non-existent tag", async () => {
-      await expect(service.deleteTag("non-existent")).rejects.toThrow(
-        NotFoundError,
-      );
+      await expect(service.deleteTag("non-existent")).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -139,9 +137,7 @@ describe("TagApplicationService", () => {
     it("should throw error for non-existent document", async () => {
       const tag = await service.createTag("Work");
 
-      await expect(
-        service.addTagToDocument("non-existent", tag.id),
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.addTagToDocument("non-existent", tag.id)).rejects.toThrow(NotFoundError);
     });
 
     it("should throw error for non-existent tag", async () => {
@@ -149,9 +145,7 @@ describe("TagApplicationService", () => {
       const doc = new Document("doc1", "Test", [], [], mockDate, mockDate, []);
       await documentRepo.saveDocument(doc);
 
-      await expect(
-        service.addTagToDocument("doc1", "non-existent"),
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.addTagToDocument("doc1", "non-existent")).rejects.toThrow(NotFoundError);
     });
 
     it("should not add duplicate tag to document", async () => {
@@ -183,9 +177,9 @@ describe("TagApplicationService", () => {
     });
 
     it("should throw error for non-existent document", async () => {
-      await expect(
-        service.removeTagFromDocument("non-existent", "tag1"),
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.removeTagFromDocument("non-existent", "tag1")).rejects.toThrow(
+        NotFoundError,
+      );
     });
 
     it("should throw error when removing tag not associated with document", async () => {
@@ -194,9 +188,7 @@ describe("TagApplicationService", () => {
       await documentRepo.saveDocument(doc);
       const tag = await service.createTag("Work");
 
-      await expect(
-        service.removeTagFromDocument("doc1", tag.id),
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.removeTagFromDocument("doc1", tag.id)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -216,9 +208,7 @@ describe("TagApplicationService", () => {
     });
 
     it("should throw error for non-existent document", async () => {
-      await expect(service.getDocumentTags("non-existent")).rejects.toThrow(
-        NotFoundError,
-      );
+      await expect(service.getDocumentTags("non-existent")).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -232,9 +222,7 @@ describe("TagApplicationService", () => {
     });
 
     it("should throw error for non-existent tag", async () => {
-      await expect(service.getDocumentsByTag("non-existent")).rejects.toThrow(
-        NotFoundError,
-      );
+      await expect(service.getDocumentsByTag("non-existent")).rejects.toThrow(NotFoundError);
     });
   });
 });

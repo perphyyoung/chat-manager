@@ -5,10 +5,7 @@ import { LocalStorageSettingsRepository } from "@/infrastructure/storage/LocalSt
 import { globalEventBus } from "@/domain/events";
 
 const settingsRepo = new LocalStorageSettingsRepository();
-const settingsService = new SettingsApplicationService(
-  settingsRepo,
-  globalEventBus,
-);
+const settingsService = new SettingsApplicationService(settingsRepo, globalEventBus);
 
 export const useSettingsStore = defineStore("settings", () => {
   const isDarkMode = ref(false);

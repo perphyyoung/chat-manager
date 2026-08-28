@@ -10,9 +10,7 @@ const showNewTagInput = ref(false);
 const newTagName = ref("");
 
 // 折叠状态，持久化到本地存储
-const isCollapsed = ref(
-  localStorage.getItem("tagFilter:collapsed") === "true"
-);
+const isCollapsed = ref(localStorage.getItem("tagFilter:collapsed") === "true");
 watch(isCollapsed, (val) => {
   localStorage.setItem("tagFilter:collapsed", val ? "true" : "false");
 });
@@ -156,10 +154,7 @@ async function handleEditTag() {
   if (!editTagName.value.trim() || !editingTagId.value) {
     return;
   }
-  await documentStore.updateTagName(
-    editingTagId.value,
-    editTagName.value.trim(),
-  );
+  await documentStore.updateTagName(editingTagId.value, editTagName.value.trim());
   showEditInput.value = false;
   editTagName.value = "";
   editingTagId.value = "";
@@ -207,9 +202,7 @@ function cancelDeleteTag() {
           >▶</span
         >
         <span class="tag-filter__title">标签筛选</span>
-        <span v-if="isCollapsed" class="tag-filter__title-count">
-          ({{ sortedTags.length }})
-        </span>
+        <span v-if="isCollapsed" class="tag-filter__title-count"> ({{ sortedTags.length }}) </span>
       </button>
       <button
         v-if="!showNewTagInput && !showEditInput && !isCollapsed"
@@ -219,10 +212,7 @@ function cancelDeleteTag() {
       >
         +
       </button>
-      <div
-        v-if="!showNewTagInput && !showEditInput && !isCollapsed"
-        class="sort-field-wrapper"
-      >
+      <div v-if="!showNewTagInput && !showEditInput && !isCollapsed" class="sort-field-wrapper">
         <button class="sort-field-btn" @click="sortMenuRef?.toggle">
           {{ sortFieldLabels[sortField] }}
           <svg
@@ -238,9 +228,14 @@ function cancelDeleteTag() {
         </button>
         <DropdownMenu
           ref="sortMenuRef"
-          :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
+          :items="
+            Object.entries(sortFieldLabels).map(([value, label]) => ({
+              value,
+              label,
+            }))
+          "
           :active-value="sortField"
-          @select="(v: string) => sortField = v as SortField"
+          @select="(v: string) => (sortField = v as SortField)"
         />
       </div>
       <button
@@ -259,13 +254,7 @@ function cancelDeleteTag() {
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <polyline points="5 12 12 5 19 12"></polyline>
         </svg>
-        <svg
-          v-else
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
+        <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <polyline points="5 12 12 19 19 12"></polyline>
         </svg>
@@ -283,12 +272,8 @@ function cancelDeleteTag() {
         @keyup.esc="handleCancel"
       />
       <div class="tag-filter__input-actions">
-        <button class="tag-filter__btn-confirm" @click="handleCreateTag">
-          确定
-        </button>
-        <button class="tag-filter__btn-cancel" @click="handleCancel">
-          取消
-        </button>
+        <button class="tag-filter__btn-confirm" @click="handleCreateTag">确定</button>
+        <button class="tag-filter__btn-cancel" @click="handleCancel">取消</button>
       </div>
     </div>
 
@@ -302,12 +287,8 @@ function cancelDeleteTag() {
         @keyup.esc="handleEditCancel"
       />
       <div class="tag-filter__input-actions">
-        <button class="tag-filter__btn-confirm" @click="handleEditTag">
-          保存
-        </button>
-        <button class="tag-filter__btn-cancel" @click="handleEditCancel">
-          取消
-        </button>
+        <button class="tag-filter__btn-confirm" @click="handleEditTag">保存</button>
+        <button class="tag-filter__btn-cancel" @click="handleEditCancel">取消</button>
       </div>
     </div>
 
@@ -323,10 +304,7 @@ function cancelDeleteTag() {
         @contextmenu="showContextMenu($event, tag.id, tag.name)"
       >
         <span class="tag-filter__name">{{ tag.name }}</span>
-        <span
-          class="tag-filter__count"
-          v-if="documentStore.getTagDocumentCount(tag.id) > 0"
-        >
+        <span class="tag-filter__count" v-if="documentStore.getTagDocumentCount(tag.id) > 0">
           {{ documentStore.getTagDocumentCount(tag.id) }}
         </span>
       </button>
@@ -335,9 +313,14 @@ function cancelDeleteTag() {
     <!-- 排序下拉菜单 -->
     <DropdownMenu
       ref="sortMenuRef"
-      :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
+      :items="
+        Object.entries(sortFieldLabels).map(([value, label]) => ({
+          value,
+          label,
+        }))
+      "
       :active-value="sortField"
-      @select="(v: string) => sortField = v as SortField"
+      @select="(v: string) => (sortField = v as SortField)"
     />
 
     <!-- 右键菜单 -->

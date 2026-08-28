@@ -22,12 +22,8 @@ function toDocument(stored: DocumentDTO): Document {
   const questionIds = new Set(questions.map((q) => q.id));
   const answers = (stored.answers ?? [])
     .filter((a) => questionIds.has(a.questionId))
-    .map(
-      (a) => new Answer(a.id, a.questionId, a.content, new Date(a.createdAt)),
-    );
-  const tags = (stored.tags ?? []).map(
-    (t) => new Tag(t.id, t.name, new Date(t.createdAt)),
-  );
+    .map((a) => new Answer(a.id, a.questionId, a.content, new Date(a.createdAt)));
+  const tags = (stored.tags ?? []).map((t) => new Tag(t.id, t.name, new Date(t.createdAt)));
   return new Document(
     stored.id,
     stored.title,
@@ -45,19 +41,13 @@ export class SqliteDocumentRepository implements DocumentRepository {
   private questionRepo: QuestionRepository;
   private answerRepo: AnswerRepository;
 
-  constructor(
-    questionRepo?: QuestionRepository,
-    answerRepo?: AnswerRepository,
-  ) {
+  constructor(questionRepo?: QuestionRepository, answerRepo?: AnswerRepository) {
     // 延迟初始化，避免循环依赖
     this.questionRepo = questionRepo!;
     this.answerRepo = answerRepo!;
   }
 
-  setRepositories(
-    questionRepo: QuestionRepository,
-    answerRepo: AnswerRepository,
-  ) {
+  setRepositories(questionRepo: QuestionRepository, answerRepo: AnswerRepository) {
     this.questionRepo = questionRepo;
     this.answerRepo = answerRepo;
   }
@@ -110,21 +100,14 @@ export class SqliteDocumentRepository implements DocumentRepository {
     } catch (error) {
       // 回滚事务
       await window.electronAPI.db.transaction.rollback(txId);
-      console.error(
-        "[REPO] Failed to save document, transaction rolled back:",
-        error,
-      );
+      console.error("[REPO] Failed to save document, transaction rolled back:", error);
       throw error;
     }
   }
 
-  private async syncDocumentTags(
-    documentId: string,
-    tags: Tag[],
-  ): Promise<void> {
+  private async syncDocumentTags(documentId: string, tags: Tag[]): Promise<void> {
     // 获取当前文档的标签
-    const currentTags =
-      (await window.electronAPI.tag?.getDocumentTags(documentId)) || [];
+    const currentTags = (await window.electronAPI.tag?.getDocumentTags(documentId)) || [];
     const currentTagIds = new Set(currentTags.map((t) => t.id));
     const newTagIds = new Set(tags.map((t) => t.id));
 
@@ -160,10 +143,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
   }
 
   // 问题的永久删除需要从找到对应文档开始
-  async permanentlyDeleteQuestion(
-    documentId: string,
-    questionId: string,
-  ): Promise<void> {
+  async permanentlyDeleteQuestion(documentId: string, questionId: string): Promise<void> {
     // DDD 规范：先加载实体，调用领域方法删除，再删除数据库记录
     const document = await this.findDocumentById(documentId);
     if (!document) {
@@ -176,14 +156,8 @@ export class SqliteDocumentRepository implements DocumentRepository {
     await this.saveDocument(document);
   }
 
-  async moveQuestionToDocument(
-    questionId: string,
-    targetDocumentId: string,
-  ): Promise<void> {
-    await window.electronAPI.question.moveQuestionToDocument(
-      questionId,
-      targetDocumentId,
-    );
+  async moveQuestionToDocument(questionId: string, targetDocumentId: string): Promise<void> {
+    await window.electronAPI.question.moveQuestionToDocument(questionId, targetDocumentId);
   }
 
   // 标签相关方法
@@ -201,9 +175,7 @@ export class SqliteDocumentRepository implements DocumentRepository {
     await window.electronAPI.tag?.removeTagFromDocument(documentId, tagId);
   }
 
-  async getTags(
-    documentId: string,
-  ): Promise<Array<{ id: string; name: string }>> {
+  async getTags(documentId: string): Promise<Array<{ id: string; name: string }>> {
     const tags = await window.electronAPI.tag?.getDocumentTags(documentId);
     return tags || [];
   }

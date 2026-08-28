@@ -1,7 +1,4 @@
-import type {
-  DocumentRepository,
-  AnswerRepository,
-} from "../../domain/repositories";
+import type { DocumentRepository, AnswerRepository } from "../../domain/repositories";
 import type { EventBus } from "../../domain/events/EventBus";
 import { Answer } from "../../domain/entities";
 import {
@@ -19,11 +16,7 @@ export class AnswerApplicationService {
     private eventBus: EventBus,
   ) {}
 
-  async addAnswer(
-    documentId: string,
-    questionId: string,
-    content: string,
-  ): Promise<Answer> {
+  async addAnswer(documentId: string, questionId: string, content: string): Promise<Answer> {
     const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
@@ -46,17 +39,11 @@ export class AnswerApplicationService {
     await this.answerRepo.saveAnswer(answer);
     await this.documentRepo.saveDocument(document);
 
-    this.eventBus.emit(
-      new AnswerCreatedEvent(documentId, questionId, answerId),
-    );
+    this.eventBus.emit(new AnswerCreatedEvent(documentId, questionId, answerId));
     return answer;
   }
 
-  async updateAnswer(
-    documentId: string,
-    answerId: string,
-    newContent: string,
-  ): Promise<void> {
+  async updateAnswer(documentId: string, answerId: string, newContent: string): Promise<void> {
     const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);

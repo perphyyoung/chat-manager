@@ -16,9 +16,7 @@ test("settings menu opens settings modal", async () => {
   await electronApp.evaluate(async ({ app }) => {
     const menu = app.applicationMenu;
     const fileMenu = menu?.items.find((item) => item.label === "File");
-    const settingsItem = fileMenu?.submenu?.items.find(
-      (item) => item.label === "设置",
-    );
+    const settingsItem = fileMenu?.submenu?.items.find((item) => item.label === "设置");
     if (settingsItem) {
       settingsItem.click();
     }
@@ -54,9 +52,7 @@ test("settings shortcut is configured correctly", async () => {
   const accelerator = await electronApp.evaluate(async ({ app }) => {
     const menu = app.applicationMenu;
     const fileMenu = menu?.items.find((item) => item.label === "File");
-    const settingsItem = fileMenu?.submenu?.items.find(
-      (item) => item.label === "设置",
-    );
+    const settingsItem = fileMenu?.submenu?.items.find((item) => item.label === "设置");
     return settingsItem?.accelerator || null;
   });
 

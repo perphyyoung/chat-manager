@@ -80,25 +80,13 @@ defineExpose({
 
 <template>
   <Teleport to="body">
-    <div
-      v-if="modelValue"
-      class="fullscreen-edit-overlay"
-      @click="handleCancel"
-    >
-      <div
-        class="fullscreen-edit-container"
-        @click.stop
-        @contextmenu="handleContextMenu"
-      >
+    <div v-if="modelValue" class="fullscreen-edit-overlay" @click="handleCancel">
+      <div class="fullscreen-edit-container" @click.stop @contextmenu="handleContextMenu">
         <div class="fullscreen-edit-header">
           <span class="edit-title">编辑回答</span>
           <div class="fullscreen-edit-actions">
-            <button class="btn-action" @click="undo" title="撤销 (Ctrl+Z)">
-              ↩
-            </button>
-            <button class="btn-action" @click="redo" title="重做 (Ctrl+Y)">
-              ↪
-            </button>
+            <button class="btn-action" @click="undo" title="撤销 (Ctrl+Z)">↩</button>
+            <button class="btn-action" @click="redo" title="重做 (Ctrl+Y)">↪</button>
             <button class="btn-cancel" @click="handleCancel">取消</button>
             <button class="btn-save" @click="handleSave">保存</button>
           </div>

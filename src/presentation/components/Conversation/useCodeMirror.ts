@@ -74,8 +74,7 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
           const approximateIndex = matches.findIndex(
             (match) => cursorFrom >= match.from && cursorFrom <= match.to,
           );
-          searchIndex.value =
-            approximateIndex !== -1 ? approximateIndex + 1 : 1;
+          searchIndex.value = approximateIndex !== -1 ? approximateIndex + 1 : 1;
         } else {
           searchIndex.value = currentIndex + 1;
         }
@@ -83,10 +82,7 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
         searchIndex.value = 0;
       }
 
-      searchPanel.setAttribute(
-        "data-search-index",
-        `${searchIndex.value}/${searchCount.value}`,
-      );
+      searchPanel.setAttribute("data-search-index", `${searchIndex.value}/${searchCount.value}`);
     } else {
       searchIndex.value = 0;
       searchCount.value = 0;
@@ -175,8 +171,7 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
 
       // 计算滚动比例（0-1之间）
       const scrollHeight = scrollDOM.scrollHeight - scrollDOM.clientHeight;
-      const scrollRatio =
-        scrollHeight > 0 ? scrollDOM.scrollTop / scrollHeight : 0;
+      const scrollRatio = scrollHeight > 0 ? scrollDOM.scrollTop / scrollHeight : 0;
 
       destroyCodeMirror();
 
@@ -187,8 +182,7 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
       nextTick(() => {
         if (editorView.value) {
           const newScrollDOM = editorView.value.scrollDOM;
-          const newScrollHeight =
-            newScrollDOM.scrollHeight - newScrollDOM.clientHeight;
+          const newScrollHeight = newScrollDOM.scrollHeight - newScrollDOM.clientHeight;
           newScrollDOM.scrollTop = newScrollHeight * scrollRatio;
         }
       });

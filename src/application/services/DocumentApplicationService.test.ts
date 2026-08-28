@@ -51,9 +51,7 @@ describe("DocumentApplicationService", () => {
   });
 
   it("should throw when selecting non-existent document", async () => {
-    await expect(service.selectDocument("non-existent")).rejects.toThrow(
-      NotFoundError,
-    );
+    await expect(service.selectDocument("non-existent")).rejects.toThrow(NotFoundError);
   });
 
   it("should update document title", async () => {
@@ -66,9 +64,9 @@ describe("DocumentApplicationService", () => {
   });
 
   it("should throw when updating non-existent document title", async () => {
-    await expect(
-      service.updateDocumentTitle("non-existent", "New Title"),
-    ).rejects.toThrow(NotFoundError);
+    await expect(service.updateDocumentTitle("non-existent", "New Title")).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it("should delete document", async () => {
@@ -81,9 +79,7 @@ describe("DocumentApplicationService", () => {
   });
 
   it("should throw when deleting non-existent document", async () => {
-    await expect(service.deleteDocument("non-existent")).rejects.toThrow(
-      NotFoundError,
-    );
+    await expect(service.deleteDocument("non-existent")).rejects.toThrow(NotFoundError);
   });
 
   it("should add question to document", async () => {
@@ -113,8 +109,6 @@ describe("DocumentApplicationService", () => {
   it("should throw when selecting non-existent question", async () => {
     const doc = await service.createDocument("Test Doc");
 
-    await expect(
-      service.selectQuestion(doc.id, "non-existent"),
-    ).rejects.toThrow(NotFoundError);
+    await expect(service.selectQuestion(doc.id, "non-existent")).rejects.toThrow(NotFoundError);
   });
 });

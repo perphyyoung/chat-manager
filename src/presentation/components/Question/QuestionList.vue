@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick, inject } from "vue";
-import {
-  useDocumentStore,
-  type QuestionSortField,
-} from "../../stores/document";
+import { useDocumentStore, type QuestionSortField } from "../../stores/document";
 import QuestionItem from "./QuestionItem.vue";
 import RecycleBinModal from "../common/RecycleBinModal.vue";
 import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
@@ -104,9 +101,7 @@ function scrollToActiveQuestion() {
     const activeId = documentStore.activeQuestionId;
     if (!container || !activeId) return;
 
-    const targetElement = container.querySelector(
-      `[data-question-id="${activeId}"]`,
-    );
+    const targetElement = container.querySelector(`[data-question-id="${activeId}"]`);
     targetElement?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
 }
@@ -129,10 +124,7 @@ async function handleCreateQA() {
     showAddDialog.value = false;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "未知错误";
-    window.electronAPI.renderLog(
-      "error",
-      `[QuestionList] 创建问答失败: ${errorMsg}`,
-    );
+    window.electronAPI.renderLog("error", `[QuestionList] 创建问答失败: ${errorMsg}`);
   } finally {
     isCreating.value = false;
   }
@@ -232,10 +224,7 @@ async function handleReorderClick() {
     await documentStore.reorderQuestions();
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "未知错误";
-    window.electronAPI.renderLog(
-      "error",
-      `[QuestionList] 重新排序失败: ${errorMsg}`,
-    );
+    window.electronAPI.renderLog("error", `[QuestionList] 重新排序失败: ${errorMsg}`);
   }
 }
 
@@ -278,10 +267,7 @@ async function handleDrop(targetId: string) {
     await documentStore.moveQuestion(sourceId, targetId);
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "未知错误";
-    window.electronAPI.renderLog(
-      "error",
-      `[QuestionList] 拖拽排序失败: ${errorMsg}`,
-    );
+    window.electronAPI.renderLog("error", `[QuestionList] 拖拽排序失败: ${errorMsg}`);
   } finally {
     handleDragEnd();
   }
@@ -314,7 +300,12 @@ onMounted(async () => {
           </button>
           <DropdownMenu
             ref="sortMenu"
-            :items="Object.entries(sortFieldLabels).map(([value, label]) => ({ value, label }))"
+            :items="
+              Object.entries(sortFieldLabels).map(([value, label]) => ({
+                value,
+                label,
+              }))
+            "
             :active-value="documentStore.questionSortField"
             @select="(v: string) => handleSortFieldChange(v as QuestionSortField)"
           />
@@ -334,13 +325,7 @@ onMounted(async () => {
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <polyline points="5 12 12 5 19 12"></polyline>
           </svg>
-          <svg
-            v-else
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <polyline points="5 12 12 19 19 12"></polyline>
           </svg>
@@ -375,12 +360,7 @@ onMounted(async () => {
       :disabled="!documentStore.selectedDocument"
       @click="showAddDialog = true"
     >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-      >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
@@ -396,22 +376,15 @@ onMounted(async () => {
         documentStore.loadDeletedQuestions();
       "
     >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-      >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="3 6 5 6 21 6"></polyline>
         <path
           d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
         ></path>
       </svg>
-      <span
-        v-if="documentStore.deletedQuestionCount > 0"
-        class="recycle-badge"
-        >{{ documentStore.deletedQuestionCount }}</span
-      >
+      <span v-if="documentStore.deletedQuestionCount > 0" class="recycle-badge">{{
+        documentStore.deletedQuestionCount
+      }}</span>
     </button>
 
     <!-- 回收站弹窗 -->
@@ -437,11 +410,7 @@ onMounted(async () => {
     />
 
     <!-- 添加问答对对话框 -->
-    <div
-      v-if="showAddDialog"
-      class="add-question-model"
-      @click.self="closeAddDialog"
-    >
+    <div v-if="showAddDialog" class="add-question-model" @click.self="closeAddDialog">
       <div class="dialog">
         <h3>添加问答对</h3>
         <div class="dialog-field">
@@ -467,9 +436,7 @@ onMounted(async () => {
           <button class="btn-secondary" @click="closeAddDialog">取消</button>
           <button
             class="btn-primary"
-            :disabled="
-              !newQuestionText.trim() || !newAnswerContent.trim() || isCreating
-            "
+            :disabled="!newQuestionText.trim() || !newAnswerContent.trim() || isCreating"
             @click="handleCreateQA"
           >
             {{ isCreating ? "创建中..." : "创建" }}
@@ -488,11 +455,7 @@ onMounted(async () => {
     />
 
     <!-- 编辑问题对话框 -->
-    <div
-      v-if="showEditDialog"
-      class="add-question-model"
-      @click.self="cancelEdit"
-    >
+    <div v-if="showEditDialog" class="add-question-model" @click.self="cancelEdit">
       <div class="dialog">
         <h3>编辑问题</h3>
         <div class="dialog-field">

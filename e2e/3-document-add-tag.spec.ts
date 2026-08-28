@@ -1,9 +1,7 @@
 import { expect } from "@playwright/test";
 import { test, generateUniqueTagName, log } from "./utils";
 
-test("add existing tag to document via conversation view", async ({
-  window,
-}) => {
+test("add existing tag to document via conversation view", async ({ window }) => {
   // 等待文档列表加载
   await window.waitForSelector(".document-list", { timeout: 2000 });
 
@@ -54,9 +52,7 @@ test("add existing tag to document via conversation view", async ({
     await expect(addedTag).toBeVisible({ timeout: 2000 });
   } catch (e) {
     // 记录当前页面中的所有标签
-    const allTags = await window
-      .locator(".tag-selector__current .tag-badge")
-      .allTextContents();
+    const allTags = await window.locator(".tag-selector__current .tag-badge").allTextContents();
     log.error(`标签未找到。当前所有标签: ${JSON.stringify(allTags)}`);
     throw e;
   }
@@ -66,9 +62,7 @@ test("add existing tag to document via conversation view", async ({
   await expect(documentItemTags.first()).toBeVisible();
 });
 
-test("create and add new tag to document via tag filter", async ({
-  window,
-}) => {
+test("create and add new tag to document via tag filter", async ({ window }) => {
   // 等待文档列表加载
   await window.waitForSelector(".document-list", { timeout: 2000 });
 
@@ -116,9 +110,7 @@ test("create and add new tag to document via tag filter", async ({
   await expect(addedTag).toBeVisible({ timeout: 2000 });
 
   // 验证新标签已添加到文档
-  const addedTagNames = await window
-    .locator(".tag-selector__current .tag-badge")
-    .allTextContents();
+  const addedTagNames = await window.locator(".tag-selector__current .tag-badge").allTextContents();
   expect(addedTagNames.some((name) => name.includes(uniqueTagName))).toBe(true);
 });
 
@@ -193,14 +185,10 @@ test("remove tag from document via conversation view", async ({ window }) => {
   const remainingTagNames = await window
     .locator(".tag-selector__current .tag-badge")
     .allTextContents();
-  expect(remainingTagNames.some((name) => name.includes(uniqueTagName))).toBe(
-    false,
-  );
+  expect(remainingTagNames.some((name) => name.includes(uniqueTagName))).toBe(false);
 });
 
-test("tag filter input auto focus when creating new tag", async ({
-  window,
-}) => {
+test("tag filter input auto focus when creating new tag", async ({ window }) => {
   // 等待文档列表加载
   await window.waitForSelector(".document-list", { timeout: 2000 });
 
@@ -224,9 +212,7 @@ test("tag filter input auto focus when creating new tag", async ({
   });
 });
 
-test("tag selector input auto focus when creating new tag", async ({
-  window,
-}) => {
+test("tag selector input auto focus when creating new tag", async ({ window }) => {
   // 等待文档列表加载
   await window.waitForSelector(".document-list", { timeout: 2000 });
 
@@ -305,9 +291,7 @@ test("update tag name via tag filter", async ({ window }) => {
   await expect(tagBadge).toBeVisible({ timeout: 2000 });
 
   // 右键点击标签筛选区的标签，选择编辑
-  const tagFilterItem = window
-    .locator(".tag-filter__item")
-    .filter({ hasText: uniqueTagName });
+  const tagFilterItem = window.locator(".tag-filter__item").filter({ hasText: uniqueTagName });
   await tagFilterItem.click({ button: "right" });
 
   // 等待右键菜单出现

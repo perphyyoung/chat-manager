@@ -168,9 +168,7 @@ export class Document {
 
   reorderQuestions(orderedIds: string[]): void {
     if (orderedIds.length !== this._questions.length) {
-      throw new ValidationError(
-        "Ordered IDs must match the number of questions",
-      );
+      throw new ValidationError("Ordered IDs must match the number of questions");
     }
 
     const newOrder: Question[] = [];
@@ -205,9 +203,7 @@ export class Document {
     return this._answers.find((a) => a.questionId === questionId);
   }
 
-  getQuestionAnswerPair(
-    questionId: string,
-  ): { question: Question; answer?: Answer } | undefined {
+  getQuestionAnswerPair(questionId: string): { question: Question; answer?: Answer } | undefined {
     const question = this.getQuestionById(questionId);
     if (!question) return undefined;
     const answer = this.getAnswerByQuestionId(questionId);

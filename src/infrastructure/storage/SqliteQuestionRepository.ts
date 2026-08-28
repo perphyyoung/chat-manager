@@ -10,10 +10,7 @@ export class SqliteQuestionRepository implements QuestionRepository {
     return rows.map((q: unknown) => this.toQuestion(q as QuestionDTO));
   }
 
-  async saveAllQuestions(
-    documentId: string,
-    questions: Question[],
-  ): Promise<void> {
+  async saveAllQuestions(documentId: string, questions: Question[]): Promise<void> {
     const questionJsons = questions.map((q) => ({
       id: q.id,
       text: q.text,
@@ -23,42 +20,26 @@ export class SqliteQuestionRepository implements QuestionRepository {
       isDeleted: q.isDeleted,
       deletedAt: q.deletedAt?.toISOString(),
     }));
-    await window.electronAPI.question.saveAllQuestions(
-      documentId,
-      questionJsons,
-    );
+    await window.electronAPI.question.saveAllQuestions(documentId, questionJsons);
   }
 
-  async softDeleteQuestion(
-    documentId: string,
-    questionId: string,
-  ): Promise<void> {
-    await window.electronAPI.question.softDeleteQuestion(
-      documentId,
-      questionId,
-    );
+  async softDeleteQuestion(documentId: string, questionId: string): Promise<void> {
+    await window.electronAPI.question.softDeleteQuestion(documentId, questionId);
   }
 
-  async restoreQuestion(
-    documentId: string,
-    questionId: string,
-  ): Promise<void> {
+  async restoreQuestion(documentId: string, questionId: string): Promise<void> {
     await window.electronAPI.question.restoreQuestion(documentId, questionId);
   }
 
   async getDeletedQuestions(
     documentId: string,
   ): Promise<Array<{ id: string; text: string; deletedAt: Date }>> {
-    const questions =
-      (await window.electronAPI.question.getDeletedQuestions(documentId)) ||
-      [];
-    return questions.map(
-      (q: { id: string; text: string; deletedAt: string }) => ({
-        id: q.id,
-        text: q.text,
-        deletedAt: new Date(q.deletedAt),
-      }),
-    );
+    const questions = (await window.electronAPI.question.getDeletedQuestions(documentId)) || [];
+    return questions.map((q: { id: string; text: string; deletedAt: string }) => ({
+      id: q.id,
+      text: q.text,
+      deletedAt: new Date(q.deletedAt),
+    }));
   }
 
   async clearDeletedQuestions(documentId: string): Promise<void> {

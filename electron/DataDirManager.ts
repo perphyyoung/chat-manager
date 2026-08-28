@@ -41,8 +41,7 @@ class DataDirManager {
    */
   getDbDir(): string {
     const isDev =
-      process.execPath.includes("node_modules") ||
-      process.execPath.includes("electron");
+      process.execPath.includes("node_modules") || process.execPath.includes("electron");
 
     if (isDev) {
       return path.join(process.cwd(), DB_DIR);

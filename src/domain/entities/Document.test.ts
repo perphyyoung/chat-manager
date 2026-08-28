@@ -27,15 +27,11 @@ describe("Document", () => {
     });
 
     it("should throw error with empty title", () => {
-      expect(() => new Document("doc1", "", [], [], mockDate)).toThrow(
-        ValidationError,
-      );
+      expect(() => new Document("doc1", "", [], [], mockDate)).toThrow(ValidationError);
     });
 
     it("should throw error with whitespace title", () => {
-      expect(() => new Document("doc1", "   ", [], [], mockDate)).toThrow(
-        ValidationError,
-      );
+      expect(() => new Document("doc1", "   ", [], [], mockDate)).toThrow(ValidationError);
     });
   });
 
@@ -47,9 +43,7 @@ describe("Document", () => {
       doc.updateTitle("New Title");
 
       expect(doc.title).toBe("New Title");
-      expect(doc.updatedAt.getTime()).toBeGreaterThanOrEqual(
-        originalUpdatedAt.getTime(),
-      );
+      expect(doc.updatedAt.getTime()).toBeGreaterThanOrEqual(originalUpdatedAt.getTime());
     });
 
     it("should throw error with empty title", () => {
@@ -233,13 +227,7 @@ describe("Document", () => {
         new Question("q2", "Q2", 1, mockDate),
       ];
       const answers = [new Answer("a1", "q1", "A1", mockDate)];
-      const doc = new Document(
-        "doc1",
-        "Test Doc",
-        questions,
-        answers,
-        mockDate,
-      );
+      const doc = new Document("doc1", "Test Doc", questions, answers, mockDate);
 
       const summary = doc.getSummary();
 

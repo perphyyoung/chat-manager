@@ -50,9 +50,7 @@ test.describe("回答编辑保存后重新打开", () => {
     await expect(editorReopened).toBeVisible({ timeout: 2000 });
 
     // 验证编辑器中显示的是最新保存的内容
-    const editorContent = await editorReopened
-      .locator(".cm-content")
-      .textContent();
+    const editorContent = await editorReopened.locator(".cm-content").textContent();
 
     expect(editorContent).toContain(newContent);
 

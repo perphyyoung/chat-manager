@@ -9,8 +9,7 @@ export interface EventBus {
 
 export class SimpleEventBus implements EventBus {
   private handlers: Map<string, Set<(event: DomainEvent) => void>> = new Map();
-  private onceHandlers: Map<string, Set<(event: DomainEvent) => void>> =
-    new Map();
+  private onceHandlers: Map<string, Set<(event: DomainEvent) => void>> = new Map();
 
   emit(event: DomainEvent): void {
     const type = event.type;

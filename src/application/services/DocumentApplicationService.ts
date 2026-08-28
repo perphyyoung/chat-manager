@@ -44,10 +44,7 @@ export class DocumentApplicationService {
     this.eventBus.emit(new DocumentSelectedEvent(documentId));
   }
 
-  async createDocument(
-    title: string,
-    questionTexts: string[] = [],
-  ): Promise<Document> {
+  async createDocument(title: string, questionTexts: string[] = []): Promise<Document> {
     const id = generateDocumentId();
     const document = new Document(id, title, []);
 
@@ -60,10 +57,7 @@ export class DocumentApplicationService {
     return document;
   }
 
-  async updateDocumentTitle(
-    documentId: string,
-    newTitle: string,
-  ): Promise<void> {
+  async updateDocumentTitle(documentId: string, newTitle: string): Promise<void> {
     const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
@@ -133,11 +127,7 @@ export class DocumentApplicationService {
     this.eventBus.emit(new QuestionDeletedEvent(documentId, questionId));
   }
 
-  async updateQuestionText(
-    documentId: string,
-    questionId: string,
-    newText: string,
-  ): Promise<void> {
+  async updateQuestionText(documentId: string, questionId: string, newText: string): Promise<void> {
     const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);

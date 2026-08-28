@@ -55,10 +55,7 @@ const confirmMessage = computed(() => {
 const availableTags = computed(() => {
   if (!documentStore.selectedDocument) return [];
   return documentStore.allTags
-    .filter(
-      (tag) =>
-        !documentStore.selectedDocument!.tags.some((t) => t.id === tag.id),
-    )
+    .filter((tag) => !documentStore.selectedDocument!.tags.some((t) => t.id === tag.id))
     .sort((a, b) => a.name.localeCompare(b.name));
 });
 
@@ -89,10 +86,7 @@ function close() {
 
 async function addTag(tagId: string) {
   if (!documentStore.selectedDocument) return;
-  await documentStore.addTagToDocument(
-    documentStore.selectedDocument.id,
-    tagId,
-  );
+  await documentStore.addTagToDocument(documentStore.selectedDocument.id, tagId);
   isOpen.value = false;
 }
 
@@ -141,10 +135,7 @@ async function createAndAddTag() {
   if (!newTagName.value.trim() || !documentStore.selectedDocument) return;
   const tag = await documentStore.createTag(newTagName.value.trim());
   if (tag) {
-    await documentStore.addTagToDocument(
-      documentStore.selectedDocument.id,
-      tag.id,
-    );
+    await documentStore.addTagToDocument(documentStore.selectedDocument.id, tag.id);
   }
   newTagName.value = "";
   showNewTagInput.value = false;
@@ -172,12 +163,7 @@ async function createAndAddTag() {
     </div>
 
     <Teleport to="body">
-      <div
-        v-if="isOpen"
-        class="tag-selector-overlay"
-        @click="close"
-        @contextmenu.prevent="close"
-      >
+      <div v-if="isOpen" class="tag-selector-overlay" @click="close" @contextmenu.prevent="close">
         <div class="tag-selector__dropdown" :style="dropdownStyle" @click.stop>
           <div v-if="hasAvailableTags" class="tag-selector__section">
             <div class="tag-selector__section-title">可选标签</div>
@@ -193,10 +179,7 @@ async function createAndAddTag() {
             </div>
           </div>
 
-          <div
-            v-if="!hasAvailableTags && !showNewTagInput"
-            class="tag-selector__empty"
-          >
+          <div v-if="!hasAvailableTags && !showNewTagInput" class="tag-selector__empty">
             没有更多可选标签
           </div>
 
@@ -211,13 +194,8 @@ async function createAndAddTag() {
               ref="newTagInput"
             />
             <div class="tag-selector__actions">
-              <button class="tag-selector__btn-confirm" @click="createAndAddTag">
-                创建
-              </button>
-              <button
-                class="tag-selector__btn-cancel"
-                @click="showNewTagInput = false"
-              >
+              <button class="tag-selector__btn-confirm" @click="createAndAddTag">创建</button>
+              <button class="tag-selector__btn-cancel" @click="showNewTagInput = false">
                 取消
               </button>
             </div>

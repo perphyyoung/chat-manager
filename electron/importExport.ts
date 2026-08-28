@@ -19,21 +19,15 @@ export async function exportData() {
 
   try {
     const database = getDatabase();
-    const docs = database
-      .prepare("SELECT * FROM documents")
-      .all() as unknown as DocRow[];
-    const tags = database
-      .prepare("SELECT * FROM tags")
-      .all() as unknown as TagRow[];
+    const docs = database.prepare("SELECT * FROM documents").all() as unknown as DocRow[];
+    const tags = database.prepare("SELECT * FROM tags").all() as unknown as TagRow[];
 
     const exportData = {
       version: 1,
       exportedAt: new Date().toISOString(),
       documents: docs.map((doc) => {
         const questions = database
-          .prepare(
-            "SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order",
-          )
+          .prepare("SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order")
           .all(doc.id) as unknown as QuestionRow[];
         const answers = database
           .prepare(
@@ -83,11 +77,7 @@ export async function exportData() {
       })),
     };
 
-    fs.writeFileSync(
-      result.filePath,
-      JSON.stringify(exportData, null, 2),
-      "utf-8",
-    );
+    fs.writeFileSync(result.filePath, JSON.stringify(exportData, null, 2), "utf-8");
     focusedWindow.webContents.send("export-complete", {
       success: true,
       filePath: result.filePath,
@@ -98,9 +88,7 @@ export async function exportData() {
       success: false,
       error: errorMsg,
     });
-    log.error(
-      `Export failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    log.error(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -130,9 +118,7 @@ export async function importData() {
     let importedTagCount = 0;
 
     // 收集所有标签名称到 ID 的映射（按名称匹配）
-    const existingTags = database
-      .prepare("SELECT * FROM tags")
-      .all() as unknown as TagRow[];
+    const existingTags = database.prepare("SELECT * FROM tags").all() as unknown as TagRow[];
     const tagNameToId = new Map<string, string>();
     for (const tag of existingTags) {
       tagNameToId.set(tag.name, tag.id);
@@ -151,9 +137,7 @@ export async function importData() {
     }
 
     // 收集所有导入文档的标题
-    const importTitles = importData.documents.map(
-      (doc: { title: string }) => doc.title,
-    );
+    const importTitles = importData.documents.map((doc: { title: string }) => doc.title);
 
     // 一次性查询所有已存在的文档标题
     const placeholders = importTitles.map(() => "?").join(",");
@@ -259,8 +243,6 @@ export async function importData() {
       success: false,
       error: errorMsg,
     });
-    log.error(
-      `Import failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    log.error(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

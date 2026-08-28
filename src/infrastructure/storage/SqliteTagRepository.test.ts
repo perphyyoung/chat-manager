@@ -31,8 +31,7 @@ describe("SqliteTagRepository", () => {
         existsTag: vi.fn(),
       },
     };
-    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =
-      mockElectronAPI;
+    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI = mockElectronAPI;
     repository = new SqliteTagRepository();
   });
 
@@ -126,9 +125,7 @@ describe("SqliteTagRepository", () => {
 
       await repository.saveTag(tag);
 
-      expect(mockElectronAPI.tag.saveTag).toHaveBeenCalledWith(
-        JSON.stringify(tag.toJSON()),
-      );
+      expect(mockElectronAPI.tag.saveTag).toHaveBeenCalledWith(JSON.stringify(tag.toJSON()));
     });
   });
 

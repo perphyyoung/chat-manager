@@ -3,12 +3,7 @@ import { Answer } from "../../domain/entities";
 import type { AnswerDTO } from "@/types/dto";
 
 function toAnswer(dto: AnswerDTO): Answer {
-  return new Answer(
-    dto.id,
-    dto.questionId,
-    dto.content,
-    new Date(dto.createdAt),
-  );
+  return new Answer(dto.id, dto.questionId, dto.content, new Date(dto.createdAt));
 }
 
 export class SqliteAnswerRepository implements AnswerRepository {

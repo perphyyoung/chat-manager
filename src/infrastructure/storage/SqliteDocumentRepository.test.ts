@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { Mock } from "vitest";
 import { SqliteDocumentRepository } from "./SqliteDocumentRepository";
 import { Document, Question, Answer } from "@/domain/entities";
-import type {
-  QuestionRepository,
-  AnswerRepository,
-} from "@/domain/repositories";
+import type { QuestionRepository, AnswerRepository } from "@/domain/repositories";
 
 type MockFn = Mock<(...args: unknown[]) => unknown>;
 
@@ -99,8 +96,7 @@ describe("SqliteDocumentRepository", () => {
       deleteAllAnswers: vi.fn(),
     };
 
-    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =
-      mockElectronAPI;
+    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI = mockElectronAPI;
     repository = new SqliteDocumentRepository();
     repository.setRepositories(mockQuestionRepo, mockAnswerRepo);
   });
@@ -163,18 +159,13 @@ describe("SqliteDocumentRepository", () => {
 
       await repository.saveDocument(document);
 
-      expect(mockQuestionRepo.saveAllQuestions).toHaveBeenCalledWith(
-        "doc1",
-        expect.any(Array),
-      );
+      expect(mockQuestionRepo.saveAllQuestions).toHaveBeenCalledWith("doc1", expect.any(Array));
     });
 
     it("should save answers using AnswerRepository", async () => {
       mockElectronAPI.db.transaction.begin.mockResolvedValue("tx-123");
 
-      const answers = [
-        new Answer("a1", "q1", "Answer 1", new Date("2024-01-01")),
-      ];
+      const answers = [new Answer("a1", "q1", "Answer 1", new Date("2024-01-01"))];
       const document = new Document(
         "doc1",
         "Test Doc",
@@ -186,10 +177,7 @@ describe("SqliteDocumentRepository", () => {
 
       await repository.saveDocument(document);
 
-      expect(mockAnswerRepo.saveAllAnswers).toHaveBeenCalledWith(
-        "doc1",
-        expect.any(Array),
-      );
+      expect(mockAnswerRepo.saveAllAnswers).toHaveBeenCalledWith("doc1", expect.any(Array));
     });
 
     it("should commit transaction after successful save", async () => {
@@ -206,9 +194,7 @@ describe("SqliteDocumentRepository", () => {
 
       await repository.saveDocument(document);
 
-      expect(mockElectronAPI.db.transaction.commit).toHaveBeenCalledWith(
-        "tx-123",
-      );
+      expect(mockElectronAPI.db.transaction.commit).toHaveBeenCalledWith("tx-123");
     });
 
     it("should rollback transaction on error", async () => {
@@ -225,9 +211,7 @@ describe("SqliteDocumentRepository", () => {
       );
 
       await expect(repository.saveDocument(document)).rejects.toThrow("DB Error");
-      expect(mockElectronAPI.db.transaction.rollback).toHaveBeenCalledWith(
-        "tx-123",
-      );
+      expect(mockElectronAPI.db.transaction.rollback).toHaveBeenCalledWith("tx-123");
     });
 
     it("should not commit if rollback was called", async () => {
@@ -327,10 +311,7 @@ describe("SqliteDocumentRepository", () => {
     it("should move question to another document", async () => {
       await repository.moveQuestionToDocument("q1", "doc2");
 
-      expect(mockElectronAPI.question.moveQuestionToDocument).toHaveBeenCalledWith(
-        "q1",
-        "doc2",
-      );
+      expect(mockElectronAPI.question.moveQuestionToDocument).toHaveBeenCalledWith("q1", "doc2");
     });
   });
 });

@@ -139,11 +139,7 @@ function handleDrop(event: DragEvent) {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--color-primary),
-    var(--color-primary-light, #60a5fa)
-  );
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light, #60a5fa));
   border-radius: 2px;
   animation: dropIndicator 0.2s ease;
   z-index: 1;

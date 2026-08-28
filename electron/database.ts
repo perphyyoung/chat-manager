@@ -133,16 +133,18 @@ function initVersionControl(db: SqliteDB): void {
 }
 
 function getCurrentVersion(db: SqliteDB): number {
-  const result = db
-    .prepare("SELECT MAX(version) as version FROM db_version")
-    .get() as { version: number | null } | undefined;
+  const result = db.prepare("SELECT MAX(version) as version FROM db_version").get() as
+    | { version: number | null }
+    | undefined;
   return result?.version ?? 0;
 }
 
 function recordMigration(db: SqliteDB, migration: Migration): void {
-  db.prepare(
-    "INSERT INTO db_version (version, name, applied_at) VALUES (?, ?, ?)",
-  ).run(migration.version, migration.name, new Date().toISOString());
+  db.prepare("INSERT INTO db_version (version, name, applied_at) VALUES (?, ?, ?)").run(
+    migration.version,
+    migration.name,
+    new Date().toISOString(),
+  );
 }
 
 function runMigrations(db: SqliteDB): void {

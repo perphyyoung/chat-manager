@@ -251,96 +251,120 @@ describe("SearchService", () => {
     it("should update document index incrementally", () => {
       db.prepare("UPDATE documents SET title = 'Updated Title' WHERE id = 'doc-1'").run();
 
-      SearchService.updateDocument(db, 'doc-1');
+      SearchService.updateDocument(db, "doc-1");
 
-      const result = db.prepare("SELECT content FROM search_fts WHERE id = 'doc-1' AND type = 'document'").get() as { content: string } | undefined;
-      expect(result?.content).toContain('Updated');
+      const result = db
+        .prepare("SELECT content FROM search_fts WHERE id = 'doc-1' AND type = 'document'")
+        .get() as { content: string } | undefined;
+      expect(result?.content).toContain("Updated");
     });
 
     it("should delete document index incrementally", () => {
-      SearchService.deleteDocument(db, 'doc-1');
+      SearchService.deleteDocument(db, "doc-1");
 
-      const result = db.prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'doc-1'").get() as { count: number };
+      const result = db
+        .prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'doc-1'")
+        .get() as { count: number };
       expect(result.count).toBe(0);
     });
 
     it("should cascade delete document's questions and answers", () => {
-      SearchService.deleteDocument(db, 'doc-1');
+      SearchService.deleteDocument(db, "doc-1");
 
-      const result = db.prepare("SELECT COUNT(*) as count FROM search_fts WHERE type IN ('question', 'answer')").get() as { count: number };
+      const result = db
+        .prepare("SELECT COUNT(*) as count FROM search_fts WHERE type IN ('question', 'answer')")
+        .get() as { count: number };
       expect(result.count).toBe(0);
     });
 
     it("should update question index incrementally", () => {
       db.prepare("UPDATE questions SET text = 'Updated Question?' WHERE id = 'q-1'").run();
 
-      SearchService.updateQuestion(db, 'q-1');
+      SearchService.updateQuestion(db, "q-1");
 
-      const result = db.prepare("SELECT content FROM search_fts WHERE id = 'q-1' AND type = 'question'").get() as { content: string } | undefined;
-      expect(result?.content).toContain('Updated');
+      const result = db
+        .prepare("SELECT content FROM search_fts WHERE id = 'q-1' AND type = 'question'")
+        .get() as { content: string } | undefined;
+      expect(result?.content).toContain("Updated");
     });
 
     it("should delete question index incrementally", () => {
-      SearchService.deleteQuestion(db, 'q-1');
+      SearchService.deleteQuestion(db, "q-1");
 
-      const result = db.prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'q-1' AND type = 'question'").get() as { count: number };
+      const result = db
+        .prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'q-1' AND type = 'question'")
+        .get() as { count: number };
       expect(result.count).toBe(0);
     });
 
     it("should cascade delete question's answers", () => {
-      SearchService.deleteQuestion(db, 'q-1');
+      SearchService.deleteQuestion(db, "q-1");
 
-      const result = db.prepare("SELECT COUNT(*) as count FROM search_fts WHERE type = 'answer'").get() as { count: number };
+      const result = db
+        .prepare("SELECT COUNT(*) as count FROM search_fts WHERE type = 'answer'")
+        .get() as { count: number };
       expect(result.count).toBe(0);
     });
 
     it("should update answer index incrementally", () => {
       db.prepare("UPDATE answers SET content = 'Updated Answer' WHERE id = 'a-1'").run();
 
-      SearchService.updateAnswer(db, 'a-1');
+      SearchService.updateAnswer(db, "a-1");
 
-      const result = db.prepare("SELECT content FROM search_fts WHERE id = 'a-1' AND type = 'answer'").get() as { content: string } | undefined;
-      expect(result?.content).toContain('Updated');
+      const result = db
+        .prepare("SELECT content FROM search_fts WHERE id = 'a-1' AND type = 'answer'")
+        .get() as { content: string } | undefined;
+      expect(result?.content).toContain("Updated");
     });
 
     it("should delete answer index incrementally", () => {
-      SearchService.deleteAnswer(db, 'a-1');
+      SearchService.deleteAnswer(db, "a-1");
 
-      const result = db.prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'a-1' AND type = 'answer'").get() as { count: number };
+      const result = db
+        .prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'a-1' AND type = 'answer'")
+        .get() as { count: number };
       expect(result.count).toBe(0);
     });
 
     it("should update tag index incrementally", () => {
       db.prepare("UPDATE tags SET name = 'UpdatedTag' WHERE id = 'tag-1'").run();
 
-      SearchService.updateTag(db, 'tag-1');
+      SearchService.updateTag(db, "tag-1");
 
-      const result = db.prepare("SELECT content FROM search_fts WHERE id = 'tag-1' AND type = 'tag'").get() as { content: string } | undefined;
-      expect(result?.content).toBe('UpdatedTag');
+      const result = db
+        .prepare("SELECT content FROM search_fts WHERE id = 'tag-1' AND type = 'tag'")
+        .get() as { content: string } | undefined;
+      expect(result?.content).toBe("UpdatedTag");
     });
 
     it("should delete tag index incrementally", () => {
-      SearchService.deleteTag(db, 'tag-1');
+      SearchService.deleteTag(db, "tag-1");
 
-      const result = db.prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'tag-1' AND type = 'tag'").get() as { count: number };
+      const result = db
+        .prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'tag-1' AND type = 'tag'")
+        .get() as { count: number };
       expect(result.count).toBe(0);
     });
 
     it("should not create index for deleted document", () => {
       db.prepare("UPDATE documents SET is_deleted = 1 WHERE id = 'doc-1'").run();
 
-      SearchService.updateDocument(db, 'doc-1');
+      SearchService.updateDocument(db, "doc-1");
 
-      const result = db.prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'doc-1'").get() as { count: number };
+      const result = db
+        .prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'doc-1'")
+        .get() as { count: number };
       expect(result.count).toBe(0);
     });
 
     it("should not create index for deleted question", () => {
       db.prepare("UPDATE questions SET is_deleted = 1 WHERE id = 'q-1'").run();
 
-      SearchService.updateQuestion(db, 'q-1');
+      SearchService.updateQuestion(db, "q-1");
 
-      const result = db.prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'q-1' AND type = 'question'").get() as { count: number };
+      const result = db
+        .prepare("SELECT COUNT(*) as count FROM search_fts WHERE id = 'q-1' AND type = 'question'")
+        .get() as { count: number };
       expect(result.count).toBe(0);
     });
   });
@@ -383,16 +407,12 @@ describe("SearchService", () => {
     });
 
     it("should clear existing index before rebuilding", async () => {
-      db.prepare(
-        `INSERT INTO search_fts VALUES ('old-doc', 'document', 'Old', '{}')`,
-      ).run();
+      db.prepare(`INSERT INTO search_fts VALUES ('old-doc', 'document', 'Old', '{}')`).run();
 
       await SearchService.rebuildIndex(db);
 
       const result = db
-        .prepare(
-          `SELECT COUNT(*) as count FROM search_fts WHERE id = 'old-doc'`,
-        )
+        .prepare(`SELECT COUNT(*) as count FROM search_fts WHERE id = 'old-doc'`)
         .get() as { count: number };
       expect(result.count).toBe(0);
     });
@@ -400,9 +420,7 @@ describe("SearchService", () => {
     it("should rebuild all entity types", async () => {
       await SearchService.rebuildIndex(db);
 
-      const result = db
-        .prepare(`SELECT COUNT(*) as count FROM search_fts`)
-        .get() as {
+      const result = db.prepare(`SELECT COUNT(*) as count FROM search_fts`).get() as {
         count: number;
       };
       expect(result.count).toBeGreaterThan(0);

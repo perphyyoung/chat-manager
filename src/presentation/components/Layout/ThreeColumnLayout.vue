@@ -151,11 +151,7 @@ function handleFocusDocument() {
 
 <template>
   <div class="three-column-layout">
-    <aside
-      v-show="!leftCollapsed"
-      class="left-panel"
-      :style="{ width: `${leftWidth}px` }"
-    >
+    <aside v-show="!leftCollapsed" class="left-panel" :style="{ width: `${leftWidth}px` }">
       <DocumentList ref="documentListRef" />
     </aside>
 
@@ -168,11 +164,7 @@ function handleFocusDocument() {
       @pointerdown="onLeftResizeStart"
       @dblclick="onLeftDoubleClick"
     >
-      <div
-        v-if="leftCollapsed"
-        class="collapse-button left"
-        @click.stop="expandLeft"
-      >
+      <div v-if="leftCollapsed" class="collapse-button left" @click.stop="expandLeft">
         <span class="collapse-icon">▶</span>
       </div>
       <div v-else class="resize-line" />
@@ -196,21 +188,13 @@ function handleFocusDocument() {
       @pointerdown="onRightResizeStart"
       @dblclick="onRightDoubleClick"
     >
-      <div
-        v-if="rightCollapsed"
-        class="collapse-button right"
-        @click.stop="expandRight"
-      >
+      <div v-if="rightCollapsed" class="collapse-button right" @click.stop="expandRight">
         <span class="collapse-icon">◀</span>
       </div>
       <div v-else class="resize-line" />
     </div>
 
-    <aside
-      v-show="!rightCollapsed"
-      class="right-panel"
-      :style="{ width: `${rightWidth}px` }"
-    >
+    <aside v-show="!rightCollapsed" class="right-panel" :style="{ width: `${rightWidth}px` }">
       <QuestionList />
     </aside>
   </div>

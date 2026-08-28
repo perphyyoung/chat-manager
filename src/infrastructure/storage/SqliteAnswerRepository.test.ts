@@ -35,8 +35,7 @@ describe("SqliteAnswerRepository", () => {
         saveAllAnswers: vi.fn(),
       },
     };
-    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI =
-      mockElectronAPI;
+    (window as unknown as { electronAPI: MockElectronAPI }).electronAPI = mockElectronAPI;
     repository = new SqliteAnswerRepository();
   });
 
@@ -107,12 +106,7 @@ describe("SqliteAnswerRepository", () => {
 
   describe("save", () => {
     it("should save single answer", async () => {
-      const answer = new Answer(
-        "a1",
-        "q1",
-        "Answer content",
-        new Date("2024-01-01"),
-      );
+      const answer = new Answer("a1", "q1", "Answer content", new Date("2024-01-01"));
 
       await repository.saveAnswer(answer);
 
@@ -161,10 +155,7 @@ describe("SqliteAnswerRepository", () => {
     it("should delete answers by ids", async () => {
       await repository.deleteAllAnswers(["a1", "a2"]);
 
-      expect(mockElectronAPI.answer.deleteAllAnswers).toHaveBeenCalledWith([
-        "a1",
-        "a2",
-      ]);
+      expect(mockElectronAPI.answer.deleteAllAnswers).toHaveBeenCalledWith(["a1", "a2"]);
     });
 
     it("should not call delete when ids array is empty", async () => {

@@ -1,7 +1,4 @@
-import type {
-  TagRepository,
-  DocumentRepository,
-} from "../../domain/repositories";
+import type { TagRepository, DocumentRepository } from "../../domain/repositories";
 import type { EventBus } from "../../domain/events/EventBus";
 import { Tag } from "../../domain/entities";
 import { NotFoundError, ValidationError } from "../../domain/errors";
@@ -97,10 +94,7 @@ export class TagApplicationService {
     await this.documentRepo.saveDocument(document);
   }
 
-  async removeTagFromDocument(
-    documentId: string,
-    tagId: string,
-  ): Promise<void> {
+  async removeTagFromDocument(documentId: string, tagId: string): Promise<void> {
     const document = await this.documentRepo.findDocumentById(documentId);
     if (!document) {
       throw new NotFoundError("Document", documentId);
@@ -119,9 +113,7 @@ export class TagApplicationService {
     return [...document.tags];
   }
 
-  async getDocumentsByTag(
-    tagId: string,
-  ): Promise<import("../../domain/entities").Document[]> {
+  async getDocumentsByTag(tagId: string): Promise<import("../../domain/entities").Document[]> {
     const tag = await this.tagRepo.findTagById(tagId);
     if (!tag) {
       throw new NotFoundError("Tag", tagId);

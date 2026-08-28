@@ -22,11 +22,7 @@ const notification = ref<{
   details: string[];
 }>({ show: false, title: "", message: "", details: [] });
 
-function showNotification(
-  title: string,
-  message: string,
-  details: string[] = [],
-) {
+function showNotification(title: string, message: string, details: string[] = []) {
   notification.value = {
     show: true,
     title,
@@ -111,14 +107,10 @@ function findTextNode(el: Element, text: string): Text | null {
 
 function scrollToQuestion(questionId: string, searchText?: string) {
   nextTick(() => {
-    const messagesContainer = document.querySelector(
-      ".conversation-view__messages",
-    );
+    const messagesContainer = document.querySelector(".conversation-view__messages");
     if (!messagesContainer) return;
 
-    const qaPair = messagesContainer.querySelector(
-      `[data-question-id="${questionId}"]`,
-    );
+    const qaPair = messagesContainer.querySelector(`[data-question-id="${questionId}"]`);
     if (!qaPair) return;
 
     qaPair.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -139,10 +131,7 @@ function scrollToQuestion(questionId: string, searchText?: string) {
     if (startIndex === -1 || !parent) return;
 
     const beforeText = textContent.slice(0, startIndex);
-    const matchText = textContent.slice(
-      startIndex,
-      startIndex + searchText.length,
-    );
+    const matchText = textContent.slice(startIndex, startIndex + searchText.length);
     const afterText = textContent.slice(startIndex + searchText.length);
 
     parent.textContent = beforeText;
@@ -180,10 +169,7 @@ onMounted(() => {
   if (window.electronAPI.onOpenSettings) {
     window.electronAPI.onOpenSettings(openSettings);
   } else {
-    window.electronAPI.renderLog(
-      "error",
-      "window.electronAPI.onOpenSettings not available",
-    );
+    window.electronAPI.renderLog("error", "window.electronAPI.onOpenSettings not available");
   }
 
   // 监听 About 菜单事件
@@ -197,9 +183,7 @@ onMounted(() => {
       if (result.success) {
         const details: string[] = [];
         if (result.skippedDocs && result.skippedDocs.length > 0) {
-          details.push(
-            `以下 ${result.skippedDocs.length} 个文档已存在，已跳过：`,
-          );
+          details.push(`以下 ${result.skippedDocs.length} 个文档已存在，已跳过：`);
           details.push(...result.skippedDocs);
         }
         showNotification(

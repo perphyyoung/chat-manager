@@ -62,9 +62,7 @@ test("删除文档后可以重新创建同名文档", async ({ window }) => {
   await expect(dialog).toBeHidden();
 
   // 验证文档重新创建成功
-  const recreatedDocumentItem = window.locator(
-    `.document-item:has-text("${docTitle}")`,
-  );
+  const recreatedDocumentItem = window.locator(`.document-item:has-text("${docTitle}")`);
   await expect(recreatedDocumentItem).toBeVisible();
 
   // 验证可以输入标题（点击文档查看详情）

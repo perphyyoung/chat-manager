@@ -27,9 +27,7 @@ export class SearchService {
 
   // 增量更新：更新单个文档的索引
   static updateDocument(db: SqliteDB, docId: string): void {
-    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'document'").run(
-      docId,
-    );
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'document'").run(docId);
 
     const doc = db
       .prepare(`
@@ -49,9 +47,7 @@ export class SearchService {
       | undefined;
 
     if (doc) {
-      db.prepare(
-        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
-      ).run(
+      db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
         doc.id,
         "document",
         segmentText(doc.title),
@@ -66,9 +62,7 @@ export class SearchService {
 
   // 增量更新：删除文档的索引
   static deleteDocument(db: SqliteDB, docId: string): void {
-    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'document'").run(
-      docId,
-    );
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'document'").run(docId);
     // 同时删除关联的问题和答案索引
     const questionIds = db
       .prepare("SELECT id FROM questions WHERE document_id = ?")
@@ -80,9 +74,7 @@ export class SearchService {
 
   // 增量更新：更新单个问题的索引
   static updateQuestion(db: SqliteDB, questionId: string): void {
-    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'question'").run(
-      questionId,
-    );
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'question'").run(questionId);
 
     const q = db
       .prepare(`
@@ -101,9 +93,7 @@ export class SearchService {
       | undefined;
 
     if (q) {
-      db.prepare(
-        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
-      ).run(
+      db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
         q.id,
         "question",
         segmentText(q.text),
@@ -118,9 +108,7 @@ export class SearchService {
 
   // 增量更新：删除问题的索引
   static deleteQuestion(db: SqliteDB, questionId: string): void {
-    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'question'").run(
-      questionId,
-    );
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'question'").run(questionId);
     // 同时删除关联的答案索引
     const answerIds = db
       .prepare("SELECT id FROM answers WHERE question_id = ?")
@@ -132,9 +120,7 @@ export class SearchService {
 
   // 增量更新：更新单个答案的索引
   static updateAnswer(db: SqliteDB, answerId: string): void {
-    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'answer'").run(
-      answerId,
-    );
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'answer'").run(answerId);
 
     const a = db
       .prepare(`
@@ -156,9 +142,7 @@ export class SearchService {
       | undefined;
 
     if (a) {
-      db.prepare(
-        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
-      ).run(
+      db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
         a.id,
         "answer",
         segmentText(a.content),
@@ -175,23 +159,17 @@ export class SearchService {
 
   // 增量更新：删除答案的索引
   static deleteAnswer(db: SqliteDB, answerId: string): void {
-    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'answer'").run(
-      answerId,
-    );
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'answer'").run(answerId);
   }
 
   // 增量更新：删除标签的索引
   static deleteTag(db: SqliteDB, tagId: string): void {
-    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'tag'").run(
-      tagId,
-    );
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'tag'").run(tagId);
   }
 
   // 增量更新：更新单个标签的索引
   static updateTag(db: SqliteDB, tagId: string): void {
-    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'tag'").run(
-      tagId,
-    );
+    db.prepare("DELETE FROM search_fts WHERE id = ? AND type = 'tag'").run(tagId);
 
     const t = db
       .prepare(`
@@ -208,9 +186,7 @@ export class SearchService {
       | undefined;
 
     if (t) {
-      db.prepare(
-        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
-      ).run(
+      db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
         t.id,
         "tag",
         segmentText(t.name),
@@ -358,10 +334,7 @@ export class SearchService {
 
     const contextRadius = 50;
     const start = Math.max(0, index - contextRadius);
-    const end = Math.min(
-      text.length,
-      index + firstKeyword.length + contextRadius,
-    );
+    const end = Math.min(text.length, index + firstKeyword.length + contextRadius);
 
     let snippet = text.slice(start, end);
     if (start > 0) snippet = "..." + snippet;
@@ -389,9 +362,7 @@ export class SearchService {
     }>;
 
     for (const doc of docs) {
-      db.prepare(
-        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
-      ).run(
+      db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
         doc.id,
         "document",
         segmentText(doc.title),
@@ -418,9 +389,7 @@ export class SearchService {
     }>;
 
     for (const q of questions) {
-      db.prepare(
-        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
-      ).run(
+      db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
         q.id,
         "question",
         segmentText(q.text),
@@ -450,9 +419,7 @@ export class SearchService {
     }>;
 
     for (const a of answers) {
-      db.prepare(
-        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
-      ).run(
+      db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
         a.id,
         "answer",
         segmentText(a.content),
@@ -478,9 +445,7 @@ export class SearchService {
     }>;
 
     for (const t of tags) {
-      db.prepare(
-        "INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)",
-      ).run(
+      db.prepare("INSERT INTO search_fts(id, type, content, metadata) VALUES (?, ?, ?, ?)").run(
         t.id,
         "tag",
         segmentText(t.name),

@@ -55,10 +55,7 @@ export function generateUniqueDocTitle(label: string): string {
  * @param title 文档标题
  * @returns 创建的文档 ID
  */
-export async function createDocumentWithAnswer(
-  page: Page,
-  title: string,
-): Promise<string> {
+export async function createDocumentWithAnswer(page: Page, title: string): Promise<string> {
   const docId = crypto.randomUUID();
   const questionId = crypto.randomUUID();
   const answerId = crypto.randomUUID();
@@ -94,7 +91,12 @@ export async function createDocumentWithAnswer(
     const win = window as unknown as WindowWithElectronAPI;
     const { id, title, createdAt, updatedAt, questions, answers } = doc;
 
-    await win.electronAPI.document.saveDocument({ id, title, createdAt, updatedAt });
+    await win.electronAPI.document.saveDocument({
+      id,
+      title,
+      createdAt,
+      updatedAt,
+    });
 
     if (questions.length > 0) {
       await win.electronAPI.question.saveAllQuestions(
@@ -227,10 +229,7 @@ export async function openSearch(page: Page): Promise<void> {
  * @param page Playwright Page 对象
  * @param title 文档标题
  */
-export async function clickDocumentByTitle(
-  page: Page,
-  title: string,
-): Promise<void> {
+export async function clickDocumentByTitle(page: Page, title: string): Promise<void> {
   const document = page.locator(".document-item").filter({ hasText: title });
   await expect(document).toBeVisible({ timeout: 2000 });
   await document.click();

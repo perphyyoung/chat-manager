@@ -1,9 +1,6 @@
 import type { SettingsRepository, Settings } from "../../domain/repositories";
 import type { EventBus } from "../../domain/events/EventBus";
-import {
-  ThemeToggledEvent,
-  SettingsChangedEvent,
-} from "../../domain/events/SettingsEvents";
+import { ThemeToggledEvent, SettingsChangedEvent } from "../../domain/events/SettingsEvents";
 
 export class SettingsApplicationService {
   constructor(

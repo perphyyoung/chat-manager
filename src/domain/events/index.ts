@@ -14,8 +14,4 @@ export {
   QuestionsReorderedEvent,
 } from "./QuestionEvents";
 export { ThemeToggledEvent, SettingsChangedEvent } from "./SettingsEvents";
-export {
-  AnswerCreatedEvent,
-  AnswerUpdatedEvent,
-  AnswerDeletedEvent,
-} from "./AnswerEvents";
+export { AnswerCreatedEvent, AnswerUpdatedEvent, AnswerDeletedEvent } from "./AnswerEvents";

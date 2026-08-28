@@ -114,10 +114,7 @@ function addLanguageIdentifiers() {
       const indentMatch = firstLine.match(/^(\s*)/);
       const indent = indentMatch ? indentMatch[1] : "";
       const newCode = `${indent}// language: ${lang}\n${code}`;
-      result = result.replace(
-        match[0],
-        `\`\`\`${lang}\n${newCode}\`\`\``,
-      );
+      result = result.replace(match[0], `\`\`\`${lang}\n${newCode}\`\`\``);
     }
   }
 
@@ -132,11 +129,7 @@ function addLanguageIdentifiers() {
 <template>
   <div class="answer-bubble">
     <!-- 渲染模式 -->
-    <div
-      v-if="!isEditing"
-      class="answer-bubble__content"
-      @contextmenu="handleContextMenu"
-    >
+    <div v-if="!isEditing" class="answer-bubble__content" @contextmenu="handleContextMenu">
       <MarkdownRenderer :content="content" />
     </div>
 

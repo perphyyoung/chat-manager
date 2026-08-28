@@ -20,20 +20,9 @@ const tagRepo = new SqliteTagRepository();
 // 设置 Repository 之间的依赖关系（解决循环依赖）
 documentRepo.setRepositories(questionRepo, answerRepo);
 
-const documentService = new DocumentApplicationService(
-  documentRepo,
-  globalEventBus,
-);
-const answerService = new AnswerApplicationService(
-  documentRepo,
-  answerRepo,
-  globalEventBus,
-);
-const tagService = new TagApplicationService(
-  tagRepo,
-  documentRepo,
-  globalEventBus,
-);
+const documentService = new DocumentApplicationService(documentRepo, globalEventBus);
+const answerService = new AnswerApplicationService(documentRepo, answerRepo, globalEventBus);
+const tagService = new TagApplicationService(tagRepo, documentRepo, globalEventBus);
 
 export type SortField = "createdAt" | "updatedAt" | "title";
 export type QuestionSortField = SortField | "sortOrder";
@@ -100,9 +89,7 @@ export const useDocumentStore = defineStore("document", () => {
   const selectedTagId = ref<string | null>(null);
 
   // 问题回收站状态
-  const deletedQuestions = ref<
-    Array<{ id: string; text: string; deletedAt: Date }>
-  >([]);
+  const deletedQuestions = ref<Array<{ id: string; text: string; deletedAt: Date }>>([]);
 
   // 搜索高亮状态
   const highlightText = ref<string | null>(null);
@@ -116,24 +103,16 @@ export const useDocumentStore = defineStore("document", () => {
   const documentSortOrder = ref<SortOrder>(savedPreferences.documentSortOrder);
 
   // 问题排序状态
-  const questionSortField = ref<QuestionSortField>(
-    savedPreferences.questionSortField,
-  );
+  const questionSortField = ref<QuestionSortField>(savedPreferences.questionSortField);
   const questionSortOrder = ref<SortOrder>(savedPreferences.questionSortOrder);
 
   const selectedDocument = computed(() => {
-    return (
-      documents.value.find((doc) => doc.id === selectedDocumentId.value) || null
-    );
+    return documents.value.find((doc) => doc.id === selectedDocumentId.value) || null;
   });
 
   const selectedDocumentQuestions = computed(() => {
     const questions = selectedDocument.value?.activeQuestions || [];
-    return sortQuestions(
-      questions,
-      questionSortField.value,
-      questionSortOrder.value,
-    );
+    return sortQuestions(questions, questionSortField.value, questionSortOrder.value);
   });
 
   const sortedDocuments = computed(() => {
@@ -144,11 +123,7 @@ export const useDocumentStore = defineStore("document", () => {
         doc.tags.some((tag) => tag.id === selectedTagId.value),
       );
     }
-    return sortDocuments(
-      filteredDocs,
-      documentSortField.value,
-      documentSortOrder.value,
-    );
+    return sortDocuments(filteredDocs, documentSortField.value, documentSortOrder.value);
   });
 
   function selectDocument(id: string) {
@@ -161,9 +136,7 @@ export const useDocumentStore = defineStore("document", () => {
   function setActiveQuestion(id: string | null) {
     activeQuestionId.value = id;
     if (id && selectedDocumentId.value) {
-      documentService
-        .selectQuestion(selectedDocumentId.value, id)
-        .catch(() => {});
+      documentService.selectQuestion(selectedDocumentId.value, id).catch(() => {});
     }
   }
 
@@ -200,11 +173,7 @@ export const useDocumentStore = defineStore("document", () => {
       documents.value = docs;
     }
     // 自动选中排序后的第一个文档
-    const sorted = sortDocuments(
-      documents.value,
-      documentSortField.value,
-      documentSortOrder.value,
-    );
+    const sorted = sortDocuments(documents.value, documentSortField.value, documentSortOrder.value);
     if (sorted.length > 0 && !selectedDocumentId.value) {
       selectDocument(sorted[0]!.id);
     }
@@ -216,10 +185,7 @@ export const useDocumentStore = defineStore("document", () => {
     selectDocument(doc.id);
   }
 
-  async function updateDocumentTitle(
-    documentId: string,
-    newTitle: string,
-  ): Promise<void> {
+  async function updateDocumentTitle(documentId: string, newTitle: string): Promise<void> {
     await documentService.updateDocumentTitle(documentId, newTitle);
     // 刷新文档列表
     const updatedDoc = await documentService.getDocument(documentId);
@@ -257,10 +223,7 @@ export const useDocumentStore = defineStore("document", () => {
     }
   }
 
-  async function addQuestionAndAnswer(
-    questionText: string,
-    answerContent: string,
-  ): Promise<void> {
+  async function addQuestionAndAnswer(questionText: string, answerContent: string): Promise<void> {
     if (!selectedDocumentId.value) {
       throw new Error("No document selected");
     }
@@ -271,8 +234,7 @@ export const useDocumentStore = defineStore("document", () => {
       throw new Error("Document not found after adding question");
     }
     // 找到新添加的问题（最后一个）
-    const newQuestion =
-      updatedDoc.activeQuestions[updatedDoc.activeQuestions.length - 1];
+    const newQuestion = updatedDoc.activeQuestions[updatedDoc.activeQuestions.length - 1];
     if (!newQuestion) {
       throw new Error("Failed to add question");
     }
@@ -288,10 +250,7 @@ export const useDocumentStore = defineStore("document", () => {
     setActiveQuestion(newQuestion.id);
   }
 
-  async function updateAnswerContent(
-    answerId: string,
-    content: string,
-  ): Promise<void> {
+  async function updateAnswerContent(answerId: string, content: string): Promise<void> {
     if (!selectedDocumentId.value) {
       throw new Error("No document selected");
     }
@@ -347,10 +306,7 @@ export const useDocumentStore = defineStore("document", () => {
   }
 
   // 更新问题文本
-  async function updateQuestionText(
-    questionId: string,
-    newText: string,
-  ): Promise<void> {
+  async function updateQuestionText(questionId: string, newText: string): Promise<void> {
     if (!selectedDocumentId.value) {
       throw new Error("No document selected");
     }
@@ -494,9 +450,7 @@ export const useDocumentStore = defineStore("document", () => {
       deletedQuestions.value = [];
       return;
     }
-    deletedQuestions.value = await questionRepo.getDeletedQuestions(
-      selectedDocumentId.value,
-    );
+    deletedQuestions.value = await questionRepo.getDeletedQuestions(selectedDocumentId.value);
   }
 
   async function restoreQuestion(questionId: string): Promise<void> {
@@ -551,10 +505,7 @@ export const useDocumentStore = defineStore("document", () => {
         documents.value[index] = updatedDoc;
       }
       // 如果当前有选中的问题，检查它是否仍然有效
-      if (
-        activeQuestionId.value &&
-        !updatedDoc.hasQuestion(activeQuestionId.value)
-      ) {
+      if (activeQuestionId.value && !updatedDoc.hasQuestion(activeQuestionId.value)) {
         activeQuestionId.value = null;
       }
     }
@@ -590,10 +541,7 @@ export const useDocumentStore = defineStore("document", () => {
     selectedTagId.value = tagId;
   }
 
-  async function addTagToDocument(
-    documentId: string,
-    tagId: string,
-  ): Promise<void> {
+  async function addTagToDocument(documentId: string, tagId: string): Promise<void> {
     await tagService.addTagToDocument(documentId, tagId);
     // 刷新文档数据
     const updatedDoc = await documentService.getDocument(documentId);
@@ -605,10 +553,7 @@ export const useDocumentStore = defineStore("document", () => {
     }
   }
 
-  async function removeTagFromDocument(
-    documentId: string,
-    tagId: string,
-  ): Promise<void> {
+  async function removeTagFromDocument(documentId: string, tagId: string): Promise<void> {
     await tagService.removeTagFromDocument(documentId, tagId);
     // 刷新文档数据
     const updatedDoc = await documentService.getDocument(documentId);
@@ -622,9 +567,7 @@ export const useDocumentStore = defineStore("document", () => {
 
   // 获取标签关联的文档数量
   function getTagDocumentCount(tagId: string): number {
-    return documents.value.filter((doc) =>
-      doc.tags.some((tag) => tag.id === tagId),
-    ).length;
+    return documents.value.filter((doc) => doc.tags.some((tag) => tag.id === tagId)).length;
   }
 
   async function updateTagName(tagId: string, newName: string): Promise<void> {
@@ -649,9 +592,7 @@ export const useDocumentStore = defineStore("document", () => {
     }
 
     // 按当前 order 升序排序
-    const questions = [...doc.activeQuestions].sort(
-      (a, b) => a.order - b.order,
-    );
+    const questions = [...doc.activeQuestions].sort((a, b) => a.order - b.order);
 
     // 找到最大连续已排序位置
     let maxOrderedIndex = -1;
@@ -687,10 +628,7 @@ export const useDocumentStore = defineStore("document", () => {
   }
 
   // 移动问题到指定位置（拖拽）
-  async function moveQuestion(
-    sourceId: string,
-    targetId: string,
-  ): Promise<void> {
+  async function moveQuestion(sourceId: string, targetId: string): Promise<void> {
     if (!selectedDocumentId.value) {
       throw new Error("No document selected");
     }
@@ -702,18 +640,12 @@ export const useDocumentStore = defineStore("document", () => {
     }
 
     // 获取所有问题并排序
-    const questions = [...doc.activeQuestions].sort(
-      (a, b) => a.order - b.order,
-    );
+    const questions = [...doc.activeQuestions].sort((a, b) => a.order - b.order);
 
     const sourceIndex = questions.findIndex((q) => q.id === sourceId);
     const targetIndex = questions.findIndex((q) => q.id === targetId);
 
-    if (
-      sourceIndex === -1 ||
-      targetIndex === -1 ||
-      sourceIndex === targetIndex
-    ) {
+    if (sourceIndex === -1 || targetIndex === -1 || sourceIndex === targetIndex) {
       return;
     }
 
@@ -725,8 +657,7 @@ export const useDocumentStore = defineStore("document", () => {
 
     // 插入到目标位置前
     // 如果源在目标后，移除后目标索引不变；如果源在目标前，目标索引-1
-    const adjustedTargetIndex =
-      sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    const adjustedTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
     questions.splice(adjustedTargetIndex, 0, sourceQuestion);
 
     // 计算变化的最小索引，从该位置开始重新编号

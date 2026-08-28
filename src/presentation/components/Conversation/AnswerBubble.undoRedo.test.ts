@@ -26,8 +26,7 @@ class FakeDOMRectList extends Array<DOMRect> implements DOMRectList {
 function setupDOMMocks(): void {
   document.elementFromPoint = (): null => null;
   HTMLElement.prototype.getBoundingClientRect = mockDOMRect;
-  HTMLElement.prototype.getClientRects = (): DOMRectList =>
-    new FakeDOMRectList();
+  HTMLElement.prototype.getClientRects = (): DOMRectList => new FakeDOMRectList();
   Range.prototype.getBoundingClientRect = mockDOMRect;
   Range.prototype.getClientRects = (): DOMRectList => new FakeDOMRectList();
   document.createRange = () => {

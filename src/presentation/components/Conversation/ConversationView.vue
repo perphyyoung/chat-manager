@@ -92,10 +92,7 @@ function handleShowInDocumentList(questionId: string) {
 
 <template>
   <div class="conversation-view">
-    <div
-      v-if="documentStore.selectedDocument"
-      class="conversation-view__content"
-    >
+    <div v-if="documentStore.selectedDocument" class="conversation-view__content">
       <div class="conversation-view__header">
         <div class="header-row">
           <h2 class="conversation-view__title">

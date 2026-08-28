@@ -5,12 +5,7 @@ describe("Answer", () => {
   const mockDate = new Date("2025-01-01T00:00:00.000Z");
 
   it("should create an answer with valid parameters", () => {
-    const answer = new Answer(
-      "a1",
-      "q1",
-      "This is the answer content",
-      mockDate,
-    );
+    const answer = new Answer("a1", "q1", "This is the answer content", mockDate);
 
     expect(answer.id).toBe("a1");
     expect(answer.questionId).toBe("q1");
@@ -36,9 +31,7 @@ describe("Answer", () => {
     const afterEdit = new Date();
 
     expect(answer.content).toBe("Updated content");
-    expect(answer.updatedAt.getTime()).toBeGreaterThanOrEqual(
-      beforeEdit.getTime(),
-    );
+    expect(answer.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeEdit.getTime());
     expect(answer.updatedAt.getTime()).toBeLessThanOrEqual(afterEdit.getTime());
   });
 

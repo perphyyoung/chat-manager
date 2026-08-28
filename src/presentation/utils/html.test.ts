@@ -4,9 +4,7 @@ import { escapeHtml, escapeRegex } from "./html";
 describe("html utilities", () => {
   describe("escapeHtml", () => {
     it("should escape HTML special characters", () => {
-      expect(escapeHtml("<div>&amp;</div>")).toBe(
-        "&lt;div&gt;&amp;amp;&lt;/div&gt;",
-      );
+      expect(escapeHtml("<div>&amp;</div>")).toBe("&lt;div&gt;&amp;amp;&lt;/div&gt;");
     });
 
     it("should escape quotes", () => {
@@ -57,9 +55,7 @@ describe("search highlight", () => {
   it("should highlight keyword in HTML", () => {
     const html = "<p>Hello World</p>";
     const result = highlightSearchText(html, "World");
-    expect(result).toBe(
-      '<p>Hello <span class="search-highlight">World</span></p>',
-    );
+    expect(result).toBe('<p>Hello <span class="search-highlight">World</span></p>');
   });
 
   it("should highlight multiple occurrences", () => {
@@ -73,9 +69,7 @@ describe("search highlight", () => {
   it("should be case insensitive", () => {
     const html = "<p>Hello WORLD</p>";
     const result = highlightSearchText(html, "world");
-    expect(result).toBe(
-      '<p>Hello <span class="search-highlight">WORLD</span></p>',
-    );
+    expect(result).toBe('<p>Hello <span class="search-highlight">WORLD</span></p>');
   });
 
   it("should return original if keyword is empty", () => {
@@ -87,9 +81,7 @@ describe("search highlight", () => {
   it("should escape HTML in keyword", () => {
     const html = "<p>Test &amp; more</p>";
     const result = highlightSearchText(html, "&");
-    expect(result).toBe(
-      '<p>Test <span class="search-highlight">&amp;</span> more</p>',
-    );
+    expect(result).toBe('<p>Test <span class="search-highlight">&amp;</span> more</p>');
   });
 
   it("should escape regex special characters in keyword", () => {

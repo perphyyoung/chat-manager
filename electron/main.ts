@@ -3,18 +3,8 @@ import path from "node:path";
 import { log } from "./logger";
 import { getDatabase, closeDatabase } from "./database";
 import { SearchService } from "../src/infrastructure/search/SearchService";
-import type {
-  DocRow,
-  QuestionRow,
-  AnswerRow,
-  ExistsRow,
-  TagRow,
-} from "../src/types/db";
-import type {
-  DocumentInput,
-  QuestionInput,
-  AnswerInput,
-} from "../src/types/dto";
+import type { DocRow, QuestionRow, AnswerRow, ExistsRow, TagRow } from "../src/types/db";
+import type { DocumentInput, QuestionInput, AnswerInput } from "../src/types/dto";
 import { exportData, importData } from "./importExport";
 import { dataDirManager } from "./DataDirManager";
 
@@ -55,83 +45,74 @@ ipcMain.handle("get-versions", () => {
 });
 
 // Document IPC handlers
-ipcMain.handle(
-  "document:findAllDocuments",
-  (_, options?: { isDeleted?: boolean }) => {
-    const database = getDatabase();
-    const docs = database
-      .prepare(
-        options?.isDeleted === undefined
-          ? "SELECT * FROM documents ORDER BY updated_at DESC"
-          : "SELECT * FROM documents WHERE is_deleted = ? ORDER BY updated_at DESC",
-      )
-      .all(
-        ...(options?.isDeleted === undefined
-          ? []
-          : [options.isDeleted ? 1 : 0]),
-      ) as unknown as DocRow[];
+ipcMain.handle("document:findAllDocuments", (_, options?: { isDeleted?: boolean }) => {
+  const database = getDatabase();
+  const docs = database
+    .prepare(
+      options?.isDeleted === undefined
+        ? "SELECT * FROM documents ORDER BY updated_at DESC"
+        : "SELECT * FROM documents WHERE is_deleted = ? ORDER BY updated_at DESC",
+    )
+    .all(
+      ...(options?.isDeleted === undefined ? [] : [options.isDeleted ? 1 : 0]),
+    ) as unknown as DocRow[];
 
-    return docs.map((doc) => {
-      const questions = database
-        .prepare(
-          "SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order",
-        )
-        .all(doc.id) as unknown as QuestionRow[];
-      const answers = database
-        .prepare(
-          "SELECT * FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)",
-        )
-        .all(doc.id) as unknown as AnswerRow[];
-      const tags = database
-        .prepare(
-          "SELECT t.* FROM tags t JOIN document_tags dt ON t.id = dt.tag_id WHERE dt.document_id = ?",
-        )
-        .all(doc.id) as unknown as TagRow[];
-      return {
-        id: doc.id,
-        title: doc.title,
-        createdAt: doc.created_at,
-        updatedAt: doc.updated_at,
-        deletedAt: doc.deleted_at,
-        questions: questions.map((q) => ({
-          id: q.id,
-          text: q.text,
-          order: q.sort_order,
-          createdAt: q.created_at,
-          updatedAt: q.updated_at,
-          isDeleted: q.is_deleted,
-          deletedAt: q.deleted_at,
-        })),
-        answers: answers.map((a) => ({
-          id: a.id,
-          questionId: a.question_id,
-          content: a.content,
-          createdAt: a.created_at,
-          updatedAt: a.updated_at,
-        })),
-        tags: tags.map((t) => ({
-          id: t.id,
-          name: t.name,
-          createdAt: t.created_at,
-        })),
-      };
-    });
-  },
-);
+  return docs.map((doc) => {
+    const questions = database
+      .prepare("SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order")
+      .all(doc.id) as unknown as QuestionRow[];
+    const answers = database
+      .prepare(
+        "SELECT * FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)",
+      )
+      .all(doc.id) as unknown as AnswerRow[];
+    const tags = database
+      .prepare(
+        "SELECT t.* FROM tags t JOIN document_tags dt ON t.id = dt.tag_id WHERE dt.document_id = ?",
+      )
+      .all(doc.id) as unknown as TagRow[];
+    return {
+      id: doc.id,
+      title: doc.title,
+      createdAt: doc.created_at,
+      updatedAt: doc.updated_at,
+      deletedAt: doc.deleted_at,
+      questions: questions.map((q) => ({
+        id: q.id,
+        text: q.text,
+        order: q.sort_order,
+        createdAt: q.created_at,
+        updatedAt: q.updated_at,
+        isDeleted: q.is_deleted,
+        deletedAt: q.deleted_at,
+      })),
+      answers: answers.map((a) => ({
+        id: a.id,
+        questionId: a.question_id,
+        content: a.content,
+        createdAt: a.created_at,
+        updatedAt: a.updated_at,
+      })),
+      tags: tags.map((t) => ({
+        id: t.id,
+        name: t.name,
+        createdAt: t.created_at,
+      })),
+    };
+  });
+});
 
 ipcMain.handle("document:findDocumentById", (_, id: string) => {
   const database = getDatabase();
-  const doc = database
-    .prepare("SELECT * FROM documents WHERE id = ?")
-    .get(id) as DocRow | undefined;
+  const doc = database.prepare("SELECT * FROM documents WHERE id = ?").get(id) as
+    | DocRow
+    | undefined;
   if (!doc) {
     return null;
   }
 
   const questions = database
-    .prepare(
-      "SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order",
-    )
+    .prepare("SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order")
     .all(doc.id) as unknown as QuestionRow[];
   const answers = database
     .prepare(
@@ -177,9 +158,7 @@ ipcMain.handle("document:findDocumentById", (_, id: string) => {
 ipcMain.handle("document:softDeleteDocument", (_, id: string) => {
   const database = getDatabase();
   const now = new Date().toISOString();
-  database
-    .prepare("UPDATE documents SET is_deleted = 1, deleted_at = ? WHERE id = ?")
-    .run(now, id);
+  database.prepare("UPDATE documents SET is_deleted = 1, deleted_at = ? WHERE id = ?").run(now, id);
   SearchService.deleteDocument(database, id);
 });
 
@@ -187,9 +166,7 @@ ipcMain.handle("document:restoreDocument", (_, id: string) => {
   const database = getDatabase();
   const now = new Date().toISOString();
   database
-    .prepare(
-      "UPDATE documents SET is_deleted = 0, deleted_at = NULL, updated_at = ? WHERE id = ?",
-    )
+    .prepare("UPDATE documents SET is_deleted = 0, deleted_at = NULL, updated_at = ? WHERE id = ?")
     .run(now, id);
   SearchService.updateDocument(database, id);
 });
@@ -205,9 +182,9 @@ ipcMain.handle("document:existsDocument", (_, id: string) => {
 // Answer IPC handlers
 ipcMain.handle("answer:findAnswerByQuestionId", (_, questionId: string) => {
   const database = getDatabase();
-  const answer = database
-    .prepare("SELECT * FROM answers WHERE question_id = ?")
-    .get(questionId) as AnswerRow | undefined;
+  const answer = database.prepare("SELECT * FROM answers WHERE question_id = ?").get(questionId) as
+    | AnswerRow
+    | undefined;
   if (!answer) return null;
   return {
     id: answer.id,
@@ -243,31 +220,23 @@ ipcMain.handle("answer:deleteAnswer", (_, id: string) => {
 });
 
 // Question IPC handlers (soft delete)
-ipcMain.handle(
-  "question:softDeleteQuestion",
-  (_, documentId: string, questionId: string) => {
-    const database = getDatabase();
-    const now = new Date().toISOString();
-    database
-      .prepare(
-        "UPDATE questions SET is_deleted = 1, deleted_at = ? WHERE id = ? AND document_id = ?",
-      )
-      .run(now, questionId, documentId);
-  },
-);
+ipcMain.handle("question:softDeleteQuestion", (_, documentId: string, questionId: string) => {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  database
+    .prepare("UPDATE questions SET is_deleted = 1, deleted_at = ? WHERE id = ? AND document_id = ?")
+    .run(now, questionId, documentId);
+});
 
-ipcMain.handle(
-  "question:restoreQuestion",
-  (_, documentId: string, questionId: string) => {
-    const database = getDatabase();
-    const now = new Date().toISOString();
-    database
-      .prepare(
-        "UPDATE questions SET is_deleted = 0, deleted_at = NULL, updated_at = ? WHERE id = ? AND document_id = ?",
-      )
-      .run(now, questionId, documentId);
-  },
-);
+ipcMain.handle("question:restoreQuestion", (_, documentId: string, questionId: string) => {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  database
+    .prepare(
+      "UPDATE questions SET is_deleted = 0, deleted_at = NULL, updated_at = ? WHERE id = ? AND document_id = ?",
+    )
+    .run(now, questionId, documentId);
+});
 
 ipcMain.handle("question:getDeletedQuestions", (_, documentId: string) => {
   const database = getDatabase();
@@ -287,9 +256,7 @@ ipcMain.handle("question:clearDeletedQuestions", (_, documentId: string) => {
   const database = getDatabase();
   // 获取所有已删除的问题ID
   const deletedQuestions = database
-    .prepare(
-      "SELECT id FROM questions WHERE document_id = ? AND is_deleted = 1",
-    )
+    .prepare("SELECT id FROM questions WHERE document_id = ? AND is_deleted = 1")
     .all(documentId) as Array<{ id: string }>;
   // 删除关联的回答
   for (const q of deletedQuestions) {
@@ -308,9 +275,7 @@ ipcMain.handle(
 
     // 获取目标文档的问题数量，用于设置新问题的 order
     const result = database
-      .prepare(
-        "SELECT COUNT(*) as count FROM questions WHERE document_id = ? AND is_deleted = 0",
-      )
+      .prepare("SELECT COUNT(*) as count FROM questions WHERE document_id = ? AND is_deleted = 0")
       .get(targetDocumentId) as { count: number };
     const newOrder = result.count;
 
@@ -338,9 +303,7 @@ ipcMain.handle("tag:findAllTags", () => {
 
 ipcMain.handle("tag:findTagById", (_, id: string) => {
   const database = getDatabase();
-  const tag = database.prepare("SELECT * FROM tags WHERE id = ?").get(id) as
-    | TagRow
-    | undefined;
+  const tag = database.prepare("SELECT * FROM tags WHERE id = ?").get(id) as TagRow | undefined;
   if (!tag) return null;
   return {
     id: tag.id,
@@ -351,9 +314,7 @@ ipcMain.handle("tag:findTagById", (_, id: string) => {
 
 ipcMain.handle("tag:findTagByName", (_, name: string) => {
   const database = getDatabase();
-  const tag = database
-    .prepare("SELECT * FROM tags WHERE name = ?")
-    .get(name) as TagRow | undefined;
+  const tag = database.prepare("SELECT * FROM tags WHERE name = ?").get(name) as TagRow | undefined;
   if (!tag) return null;
   return {
     id: tag.id,
@@ -382,37 +343,29 @@ ipcMain.handle("tag:deleteTag", (_, id: string) => {
 
 ipcMain.handle("tag:existsTag", (_, name: string) => {
   const database = getDatabase();
-  const row = database
-    .prepare("SELECT 1 FROM tags WHERE name = ?")
-    .get(name) as ExistsRow | undefined;
+  const row = database.prepare("SELECT 1 FROM tags WHERE name = ?").get(name) as
+    | ExistsRow
+    | undefined;
   return !!row;
 });
 
-ipcMain.handle(
-  "tag:addTagToDocument",
-  (_, documentId: string, tagId: string) => {
-    const database = getDatabase();
-    database
-      .prepare(
-        "INSERT INTO document_tags (document_id, tag_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
-      )
-      .run(documentId, tagId);
-    SearchService.updateTag(database, tagId);
-    SearchService.updateDocument(database, documentId);
-  },
-);
+ipcMain.handle("tag:addTagToDocument", (_, documentId: string, tagId: string) => {
+  const database = getDatabase();
+  database
+    .prepare("INSERT INTO document_tags (document_id, tag_id) VALUES (?, ?) ON CONFLICT DO NOTHING")
+    .run(documentId, tagId);
+  SearchService.updateTag(database, tagId);
+  SearchService.updateDocument(database, documentId);
+});
 
-ipcMain.handle(
-  "tag:removeTagFromDocument",
-  (_, documentId: string, tagId: string) => {
-    const database = getDatabase();
-    database
-      .prepare("DELETE FROM document_tags WHERE document_id = ? AND tag_id = ?")
-      .run(documentId, tagId);
-    SearchService.updateTag(database, tagId);
-    SearchService.updateDocument(database, documentId);
-  },
-);
+ipcMain.handle("tag:removeTagFromDocument", (_, documentId: string, tagId: string) => {
+  const database = getDatabase();
+  database
+    .prepare("DELETE FROM document_tags WHERE document_id = ? AND tag_id = ?")
+    .run(documentId, tagId);
+  SearchService.updateTag(database, tagId);
+  SearchService.updateDocument(database, documentId);
+});
 
 ipcMain.handle("tag:getDocumentTags", (_, documentId: string) => {
   const database = getDatabase();
@@ -442,9 +395,7 @@ ipcMain.handle("tag:findDocumentsByTagId", (_, tagId: string) => {
     .all(tagId) as unknown as DocRow[];
   return docs.map((doc) => {
     const questions = database
-      .prepare(
-        "SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order",
-      )
+      .prepare("SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order")
       .all(doc.id) as unknown as QuestionRow[];
     const answers = database
       .prepare(
@@ -533,14 +484,7 @@ ipcMain.handle("document:saveDocument", (_, doc: DocumentInput) => {
     .prepare(
       "INSERT INTO documents (id, title, created_at, updated_at, is_deleted, deleted_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at",
     )
-    .run(
-      doc.id,
-      doc.title,
-      doc.createdAt ?? now,
-      doc.updatedAt ?? now,
-      0,
-      null,
-    );
+    .run(doc.id, doc.title, doc.createdAt ?? now, doc.updatedAt ?? now, 0, null);
   SearchService.updateDocument(database, doc.id);
 });
 
@@ -561,15 +505,13 @@ ipcMain.handle("document:deleteDocument", (_, id: string) => {
   database.prepare("DELETE FROM documents WHERE id = ?").run(id);
 });
 
-ipcMain.handle(
-  "question:saveAllQuestions",
-  (_, docId: string, questions: QuestionInput[]) => {
-    const database = getDatabase();
-    const now = new Date().toISOString();
-    for (const q of questions) {
-      database
-        .prepare(
-          `INSERT INTO questions (id, document_id, text, sort_order, created_at, updated_at, is_deleted, deleted_at)
+ipcMain.handle("question:saveAllQuestions", (_, docId: string, questions: QuestionInput[]) => {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  for (const q of questions) {
+    database
+      .prepare(
+        `INSERT INTO questions (id, document_id, text, sort_order, created_at, updated_at, is_deleted, deleted_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET
            text = excluded.text,
@@ -577,21 +519,20 @@ ipcMain.handle(
            updated_at = excluded.updated_at,
            is_deleted = excluded.is_deleted,
            deleted_at = excluded.deleted_at`,
-        )
-        .run(
-          q.id,
-          docId,
-          q.text,
-          q.order,
-          q.createdAt ?? now,
-          q.updatedAt ?? now,
-          q.isDeleted ? 1 : 0,
-          q.deletedAt ?? null,
-        );
-      SearchService.updateQuestion(database, q.id);
-    }
-  },
-);
+      )
+      .run(
+        q.id,
+        docId,
+        q.text,
+        q.order,
+        q.createdAt ?? now,
+        q.updatedAt ?? now,
+        q.isDeleted ? 1 : 0,
+        q.deletedAt ?? null,
+      );
+    SearchService.updateQuestion(database, q.id);
+  }
+});
 
 ipcMain.handle("question:deleteAllQuestions", (_, ids: string[]) => {
   const database = getDatabase();
@@ -602,47 +543,38 @@ ipcMain.handle("question:deleteAllQuestions", (_, ids: string[]) => {
   }
 });
 
-ipcMain.handle(
-  "answer:saveAllAnswers",
-  (_, docId: string, answers: AnswerInput[]) => {
-    const database = getDatabase();
-    const now = new Date().toISOString();
+ipcMain.handle("answer:saveAllAnswers", (_, docId: string, answers: AnswerInput[]) => {
+  const database = getDatabase();
+  const now = new Date().toISOString();
 
-    // Get all question IDs for this document
-    const questionIds = database
-      .prepare("SELECT id FROM questions WHERE document_id = ?")
-      .all(docId) as Array<{ id: string }>;
-    const validQuestionIds = new Set(questionIds.map((q) => q.id));
+  // Get all question IDs for this document
+  const questionIds = database
+    .prepare("SELECT id FROM questions WHERE document_id = ?")
+    .all(docId) as Array<{ id: string }>;
+  const validQuestionIds = new Set(questionIds.map((q) => q.id));
 
-    // Delete answers for questions not in the new set
-    const answerQuestionIds = answers.map((a) => a.questionId);
-    for (const qid of validQuestionIds) {
-      if (!answerQuestionIds.includes(qid)) {
-        database.prepare("DELETE FROM answers WHERE question_id = ?").run(qid);
-      }
+  // Delete answers for questions not in the new set
+  const answerQuestionIds = answers.map((a) => a.questionId);
+  for (const qid of validQuestionIds) {
+    if (!answerQuestionIds.includes(qid)) {
+      database.prepare("DELETE FROM answers WHERE question_id = ?").run(qid);
     }
+  }
 
-    // Upsert all answers
-    for (const a of answers) {
-      database
-        .prepare(
-          `INSERT INTO answers (id, question_id, content, created_at, updated_at)
+  // Upsert all answers
+  for (const a of answers) {
+    database
+      .prepare(
+        `INSERT INTO answers (id, question_id, content, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET
            content = excluded.content,
            updated_at = excluded.updated_at`,
-        )
-        .run(
-          a.id,
-          a.questionId,
-          a.content,
-          a.createdAt ?? now,
-          a.updatedAt ?? now,
-        );
-      SearchService.updateAnswer(database, a.id);
-    }
-  },
-);
+      )
+      .run(a.id, a.questionId, a.content, a.createdAt ?? now, a.updatedAt ?? now);
+    SearchService.updateAnswer(database, a.id);
+  }
+});
 
 ipcMain.handle("answer:deleteAllAnswers", (_, ids: string[]) => {
   const database = getDatabase();
@@ -785,9 +717,9 @@ app.whenReady().then(() => {
   createMenu();
 
   // 检查是否需要重建索引（首次安装或索引为空时）
-  const countResult = db
-    .prepare("SELECT COUNT(*) as count FROM search_fts")
-    .get() as { count: number };
+  const countResult = db.prepare("SELECT COUNT(*) as count FROM search_fts").get() as {
+    count: number;
+  };
   if (countResult.count === 0) {
     log.info("Search index is empty, rebuilding...");
     SearchService.rebuildIndex(db)

@@ -44,20 +44,12 @@ const frontmatterList = computed(() => {
         class="markdown-renderer__frontmatter-item"
       >
         <span class="markdown-renderer__frontmatter-key">{{ item.key }}</span>
-        <span
-          v-if="item.isArray"
-          class="markdown-renderer__frontmatter-tags"
-        >
-          <span
-            v-for="tag in item.items"
-            :key="tag"
-            class="markdown-renderer__frontmatter-tag"
-          >{{ tag }}</span>
+        <span v-if="item.isArray" class="markdown-renderer__frontmatter-tags">
+          <span v-for="tag in item.items" :key="tag" class="markdown-renderer__frontmatter-tag">{{
+            tag
+          }}</span>
         </span>
-        <span
-          v-else
-          class="markdown-renderer__frontmatter-value"
-        >{{ item.items[0] }}</span>
+        <span v-else class="markdown-renderer__frontmatter-value">{{ item.items[0] }}</span>
       </div>
     </div>
     <div v-html="renderedHtml" />

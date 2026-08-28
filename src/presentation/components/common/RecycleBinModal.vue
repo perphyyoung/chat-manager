@@ -44,9 +44,7 @@ const confirmDialog = ref<{
 });
 
 const sortedItems = computed(() => {
-  return [...props.items].sort(
-    (a, b) => b.deletedAt.getTime() - a.deletedAt.getTime(),
-  );
+  return [...props.items].sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime());
 });
 
 function handleClose() {
@@ -131,12 +129,7 @@ function formatDate(date: Date): string {
 
         <div class="modal-body">
           <div v-if="items.length === 0" class="empty-state">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-            >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path
                 d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
@@ -146,16 +139,10 @@ function formatDate(date: Date): string {
           </div>
 
           <div v-else class="items-list">
-            <div
-              v-for="item in sortedItems"
-              :key="item.id"
-              class="recycle-item"
-            >
+            <div v-for="item in sortedItems" :key="item.id" class="recycle-item">
               <div class="item-info">
                 <span class="item-name">{{ item.name }}</span>
-                <span class="item-date"
-                  >删除于 {{ formatDate(item.deletedAt) }}</span
-                >
+                <span class="item-date">删除于 {{ formatDate(item.deletedAt) }}</span>
               </div>
               <div class="item-actions">
                 <button
@@ -190,11 +177,7 @@ function formatDate(date: Date): string {
       :show="confirmDialog.show"
       :title="confirmDialog.title"
       :message="confirmDialog.message"
-      @confirm="
-        confirmDialog.pendingAction === 'delete'
-          ? onConfirmDelete()
-          : onConfirmClear()
-      "
+      @confirm="confirmDialog.pendingAction === 'delete' ? onConfirmDelete() : onConfirmClear()"
       @cancel="closeConfirmDialog"
     />
   </Teleport>

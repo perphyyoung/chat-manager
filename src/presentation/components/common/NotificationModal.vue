@@ -28,11 +28,7 @@ function handleConfirm() {
         <h4>{{ title }}</h4>
         <p class="notification-message">{{ message }}</p>
         <div v-if="details.length > 0" class="notification-details">
-          <div
-            v-for="(detail, index) in details"
-            :key="index"
-            class="notification-detail-item"
-          >
+          <div v-for="(detail, index) in details" :key="index" class="notification-detail-item">
             {{ detail }}
           </div>
         </div>
