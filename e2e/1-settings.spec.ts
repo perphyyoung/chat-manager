@@ -8,6 +8,7 @@ test("settings menu opens settings modal", async () => {
   const electronApp = await electron.launch({
     args: [join(projectRoot, "out/main/index.js")],
     cwd: projectRoot,
+    env: { ...process.env, E2E: "1" },
   });
 
   const window = await electronApp.firstWindow();
@@ -43,6 +44,7 @@ test("settings shortcut is configured correctly", async () => {
   const electronApp = await electron.launch({
     args: [join(projectRoot, "out/main/index.js")],
     cwd: projectRoot,
+    env: { ...process.env, E2E: "1" },
   });
 
   const window = await electronApp.firstWindow();

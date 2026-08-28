@@ -1,4 +1,13 @@
-import { app, BrowserWindow, Menu, ipcMain, globalShortcut, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  ipcMain,
+  globalShortcut,
+  shell,
+  Tray,
+  nativeImage,
+} from "electron";
 import path from "node:path";
 import { log } from "./logger";
 import { getDatabase, closeDatabase } from "./database";
@@ -10,6 +19,15 @@ import { dataDirManager } from "./DataDirManager";
 
 // 初始化数据目录（确保 py-data 目录存在）
 dataDirManager.init();
+
+// 托盘与退出标识：点关闭时最小化到托盘，仅通过「退出」真正退出
+let tray: Tray | null = null;
+let isQuitting = false;
+
+const MAIN_WINDOW_ICON = path.join(__dirname, "../../public/favicon.ico");
+
+// e2e 环境禁用托盘，保证测试关闭时应用能正常退出
+const IS_E2E = process.env.E2E === "1";
 
 // 请求单实例锁；第二个实例会触发 first-instance 的 second-instance 事件，
 // 由第一个实例新建窗口，实现单进程多窗口。
@@ -610,7 +628,7 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    icon: path.join(__dirname, "../../public/favicon.ico"),
+    icon: MAIN_WINDOW_ICON,
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.cjs"),
       nodeIntegration: false,
@@ -629,11 +647,55 @@ function createWindow() {
     log.error(`Preload error for ${preloadPath}: ${error.message}`);
   });
 
+  // 拦截关闭：非退出操作时最小化到托盘
+  win.on("close", (e) => {
+    if (tray && !isQuitting) {
+      e.preventDefault();
+      win.hide();
+      return;
+    }
+  });
+
   win.on("closed", () => {
     // BrowserWindow 实例会在关闭后自动释放，无需额外处理
   });
 
   return win;
+}
+
+/** 显示主窗口（从托盘恢复） */
+function showMainWindow() {
+  const win = BrowserWindow.getAllWindows()[0];
+  if (win) {
+    if (win.isMinimized()) {
+      win.restore();
+    }
+    win.show();
+    win.focus();
+  }
+}
+
+/** 创建系统托盘：左键显示窗口，右键菜单含显示/退出 */
+function createTray() {
+  if (tray) {
+    return;
+  }
+  tray = new Tray(nativeImage.createFromPath(MAIN_WINDOW_ICON));
+  tray.setToolTip("Chat Manager");
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: "显示主窗口", click: showMainWindow },
+      { type: "separator" },
+      {
+        label: "退出",
+        click: () => {
+          isQuitting = true;
+          app.quit();
+        },
+      },
+    ]),
+  );
+  tray.on("click", showMainWindow);
 }
 
 function createMenu() {
@@ -677,7 +739,13 @@ function createMenu() {
           },
         },
         { type: "separator" },
-        { role: "quit", label: "退出" },
+        {
+          label: "退出",
+          click: () => {
+            isQuitting = true;
+            app.quit();
+          },
+        },
       ],
     },
     {
@@ -720,6 +788,9 @@ app.whenReady().then(() => {
   const db = getDatabase();
   createWindow();
   createMenu();
+  if (!IS_E2E) {
+    createTray();
+  }
 
   // 检查是否需要重建索引（首次安装或索引为空时）
   const countResult = db.prepare("SELECT COUNT(*) as count FROM search_fts").get() as {
@@ -755,10 +826,14 @@ app.whenReady().then(() => {
 app.on("will-quit", () => {
   globalShortcut.unregisterAll();
   closeDatabase();
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
+  if (process.platform !== "darwin" && (!tray || isQuitting)) {
     app.quit();
   }
 });

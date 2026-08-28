@@ -274,6 +274,7 @@ export const test = base.extend<TestFixtures>({
       const electronApp = await electron.launch({
         args: [join(projectRoot, "out/main/index.js")],
         cwd: projectRoot,
+        env: { ...process.env, E2E: "1" },
       });
 
       // 提供给测试使用
