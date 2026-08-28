@@ -5,14 +5,12 @@ import SettingsModal from "./components/Settings/SettingsModal.vue";
 import SearchModal from "./components/Search/SearchModal.vue";
 import NotificationModal from "./components/common/NotificationModal.vue";
 import ToastModal from "./components/common/ToastModal.vue";
-import AboutDialog from "./components/common/AboutDialog.vue";
 import { useDocumentStore } from "./stores/document";
 import { useSettingsStore } from "./stores/settings";
 
 const documentStore = useDocumentStore();
 const settingsStore = useSettingsStore();
 const isSettingsOpen = ref(false);
-const isAboutOpen = ref(false);
 
 // 通知弹窗状态
 const notification = ref<{
@@ -48,10 +46,6 @@ function hideNotification() {
 
 function openSettings() {
   isSettingsOpen.value = true;
-}
-
-function openAbout() {
-  isAboutOpen.value = true;
 }
 
 async function handleSearchSelect(data: {
@@ -172,11 +166,6 @@ onMounted(() => {
     window.electronAPI.renderLog("error", "window.electronAPI.onOpenSettings not available");
   }
 
-  // 监听 About 菜单事件
-  if (window.electronAPI.onOpenAbout) {
-    window.electronAPI.onOpenAbout(openAbout);
-  }
-
   // 监听导入完成事件
   if (window.electronAPI.onImportComplete) {
     window.electronAPI.onImportComplete((result) => {
@@ -243,7 +232,6 @@ function handleGlobalKeydown(e: KeyboardEvent) {
   <ThreeColumnLayout />
   <SettingsModal :is-open="isSettingsOpen" @close="isSettingsOpen = false" />
   <SearchModal @select="handleSearchSelect" />
-  <AboutDialog :show="isAboutOpen" @close="isAboutOpen = false" />
 
   <NotificationModal
     :show="notification.show"

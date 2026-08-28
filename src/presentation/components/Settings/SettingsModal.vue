@@ -13,9 +13,11 @@ const emit = defineEmits<{
 }>();
 
 const dataPath = ref("");
+const appVersion = ref("");
 
 onMounted(async () => {
   dataPath.value = await window.electronAPI.getDataPath();
+  appVersion.value = await window.electronAPI.getVersion();
 });
 
 function handleClose() {
@@ -32,6 +34,7 @@ async function handleOpenDataDir() {
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h2>设置</h2>
+        <div class="header-center">Chat Manager v{{ appVersion }}</div>
         <button class="close-btn" @click="handleClose">×</button>
       </div>
       <div class="modal-body">
@@ -83,6 +86,7 @@ async function handleOpenDataDir() {
 }
 
 .modal-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -94,6 +98,15 @@ async function handleOpenDataDir() {
   margin: 0;
   font-size: 20px;
   color: var(--color-text);
+}
+
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
 }
 
 .close-btn {

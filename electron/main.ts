@@ -62,15 +62,8 @@ ipcMain.handle("render-log", (_, level: string, message: string) => {
   logMethod(message);
 });
 
-// 版本信息 IPC handler
-ipcMain.handle("get-versions", () => {
-  return {
-    app: app.getVersion(),
-    electron: process.versions.electron,
-    node: process.versions.node,
-    chrome: process.versions.chrome,
-  };
-});
+// 版本信息 IPC handler（仅应用版本号）
+ipcMain.handle("get-version", () => app.getVersion());
 
 // 数据目录 IPC handler
 ipcMain.handle("get-data-path", () => dataDirManager.getDbDir());
@@ -796,18 +789,6 @@ function createMenu() {
     {
       label: "Window",
       submenu: [{ role: "minimize" }, { role: "close" }],
-    },
-    {
-      label: "Help",
-      submenu: [
-        {
-          label: "About",
-          click: () => {
-            const window = BrowserWindow.getFocusedWindow();
-            window?.webContents.send("open-about");
-          },
-        },
-      ],
     },
   ];
 

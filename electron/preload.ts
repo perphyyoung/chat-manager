@@ -8,12 +8,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       callback();
     });
   },
-  onOpenAbout: (callback: () => void) => {
-    ipcRenderer.on("open-about", () => {
-      callback();
-    });
-  },
-  getVersions: () => ipcRenderer.invoke("get-versions"),
+  getVersion: () => ipcRenderer.invoke("get-version"),
   getDataPath: () => ipcRenderer.invoke("get-data-path"),
   openDataDir: () => ipcRenderer.invoke("open-data-dir"),
   onOpenSearch: (callback: () => void) => {

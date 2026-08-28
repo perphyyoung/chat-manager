@@ -16,16 +16,10 @@ import type { SearchResults } from "./search";
 
 export interface ElectronAPI {
   onOpenSettings: (callback: () => void) => void;
-  onOpenAbout: (callback: () => void) => void;
   onOpenSearch: (callback: () => void) => void;
   openSearch: () => void;
   renderLog: (level: string, message: string) => void;
-  getVersions: () => Promise<{
-    app: string;
-    electron: string;
-    node: string;
-    chrome: string;
-  }>;
+  getVersion: () => Promise<string>;
   getDataPath: () => Promise<string>;
   openDataDir: () => Promise<string>;
   db: {
