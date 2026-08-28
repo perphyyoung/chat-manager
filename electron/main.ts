@@ -709,7 +709,14 @@ function createTray() {
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: "显示主窗口", click: showMainWindow },
-      { type: "separator" },
+      {
+        label: "重启",
+        click: () => {
+          isQuitting = true;
+          app.relaunch();
+          app.quit();
+        },
+      },
       {
         label: "退出",
         click: () => {
