@@ -3,6 +3,8 @@ import { ref, computed, onMounted, watch, nextTick, inject } from "vue";
 import { useDocumentStore, type QuestionSortField } from "../../stores/document";
 import QuestionItem from "./QuestionItem.vue";
 import RecycleBinModal from "../common/RecycleBinModal.vue";
+import RecycleBinButton from "../common/RecycleBinButton.vue";
+import AddFabButton from "../common/AddFabButton.vue";
 import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
 import DropdownMenu from "../common/DropdownMenu.vue";
 
@@ -354,38 +356,22 @@ onMounted(async () => {
     </div>
 
     <!-- 浮动添加按钮 -->
-    <button
-      class="fab"
+    <AddFabButton
       title="添加问答对"
       :disabled="!documentStore.selectedDocument"
       @click="showAddDialog = true"
-    >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-    </button>
+    />
 
     <!-- 回收站按钮 -->
-    <button
+    <RecycleBinButton
       v-if="documentStore.selectedDocument"
-      class="fab fab--recycle"
+      :count="documentStore.deletedQuestionCount"
       title="回收站"
       @click="
         showRecycleBin = true;
         documentStore.loadDeletedQuestions();
       "
-    >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="3 6 5 6 21 6"></polyline>
-        <path
-          d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-        ></path>
-      </svg>
-      <span v-if="documentStore.deletedQuestionCount > 0" class="recycle-badge">{{
-        documentStore.deletedQuestionCount
-      }}</span>
-    </button>
+    />
 
     <!-- 回收站弹窗 -->
     <RecycleBinModal
@@ -526,81 +512,6 @@ onMounted(async () => {
   justify-content: center;
   color: var(--color-text-secondary);
   font-size: 14px;
-}
-
-/* 浮动操作按钮 */
-.fab {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  width: 48px;
-  height: 48px;
-  border: none;
-  border-radius: 50%;
-  background-color: var(--color-primary);
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  opacity: 0.5;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s,
-    opacity 0.2s;
-}
-
-.fab:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-
-.fab:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.fab:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.fab svg {
-  width: 24px;
-  height: 24px;
-}
-
-/* 回收站按钮 */
-.fab--recycle {
-  right: auto;
-  left: 20px;
-  background-color: var(--color-surface);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-}
-
-.fab--recycle:hover {
-  background-color: var(--color-hover);
-  color: var(--color-text);
-}
-
-.recycle-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  background-color: #ef4444;
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* 对话框样式 */

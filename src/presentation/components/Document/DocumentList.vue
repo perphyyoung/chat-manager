@@ -5,6 +5,7 @@ import { Document } from "../../../domain/entities";
 import DocumentItem from "./DocumentItem.vue";
 import TagFilter from "./TagFilter.vue";
 import RecycleBinButton from "../common/RecycleBinButton.vue";
+import AddFabButton from "../common/AddFabButton.vue";
 import RecycleBinModal from "../common/RecycleBinModal.vue";
 import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
 import DropdownMenu from "../common/DropdownMenu.vue";
@@ -353,12 +354,7 @@ onMounted(() => {
     />
 
     <!-- 浮动添加按钮 -->
-    <button class="fab" title="添加文档" @click="showAddDialog = true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-    </button>
+    <AddFabButton title="添加文档" @click="showAddDialog = true" />
 
     <!-- 添加文档对话框 -->
     <div v-if="showAddDialog" class="add-doc-model">
@@ -466,43 +462,6 @@ onMounted(() => {
 .document-list__items {
   flex: 1;
   overflow-y: auto;
-}
-
-/* 浮动操作按钮 */
-.fab {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  width: 48px;
-  height: 48px;
-  border: none;
-  border-radius: 50%;
-  background-color: var(--color-primary);
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  opacity: 0.5;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-
-.fab:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-
-.fab:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.fab svg {
-  width: 24px;
-  height: 24px;
 }
 
 /* 对话框样式 */
