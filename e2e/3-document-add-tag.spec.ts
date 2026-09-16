@@ -19,7 +19,7 @@ test("add existing tag to document via conversation view", async ({ window }) =>
   await window.locator(".tag-filter__btn-confirm").click();
 
   // 等待输入框消失，确保标签创建完成
-  await window.waitForSelector(".tag-filter__input-wrapper", {
+  await window.waitForSelector(".tag-filter__pop", {
     state: "detached",
     timeout: 2000,
   });
@@ -80,7 +80,7 @@ test("create and add new tag to document via tag filter", async ({ window }) => 
   await window.locator(".tag-filter__btn-confirm").click();
 
   // 等待输入框消失，确保标签创建完成
-  await window.waitForSelector(".tag-filter__input-wrapper", {
+  await window.waitForSelector(".tag-filter__pop", {
     state: "detached",
     timeout: 2000,
   });
@@ -138,7 +138,7 @@ test("remove tag from document via conversation view", async ({ window }) => {
   await window.locator(".tag-filter__btn-confirm").click();
 
   // 等待输入框消失，确保标签创建完成
-  await window.waitForSelector(".tag-filter__input-wrapper", {
+  await window.waitForSelector(".tag-filter__pop", {
     state: "detached",
     timeout: 2000,
   });
@@ -206,7 +206,7 @@ test("tag filter input auto focus when creating new tag", async ({ window }) => 
 
   // 取消创建
   await window.locator(".tag-filter__btn-cancel").click();
-  await window.waitForSelector(".tag-filter__input-wrapper", {
+  await window.waitForSelector(".tag-filter__pop", {
     state: "detached",
     timeout: 2000,
   });
@@ -261,7 +261,7 @@ test("update tag name via tag filter", async ({ window }) => {
   await window.locator(".tag-filter__btn-confirm").click();
 
   // 等待输入框消失，确保标签创建完成
-  await window.waitForSelector(".tag-filter__input-wrapper", {
+  await window.waitForSelector(".tag-filter__pop", {
     state: "detached",
     timeout: 2000,
   });
@@ -301,7 +301,7 @@ test("update tag name via tag filter", async ({ window }) => {
   await window.locator(".context-menu-item", { hasText: "编辑标签" }).click();
 
   // 等待编辑输入框出现
-  await window.waitForSelector(".tag-filter__input-wrapper", { timeout: 2000 });
+  await window.waitForSelector(".tag-filter__pop", { timeout: 2000 });
 
   // 输入新标签名
   const updatedTagName = generateUniqueTagName("renamed");

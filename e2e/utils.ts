@@ -241,7 +241,7 @@ export async function clickDocumentByTitle(page: Page, title: string): Promise<v
  * @param page Playwright Page 对象
  */
 export async function openAddDialog(page: Page): Promise<void> {
-  const fab = page.locator(".question-list > .fab:not(.fab--recycle)");
+  const fab = page.locator(".question-list > .add-fab");
   await fab.click();
   await page.waitForSelector(".add-question-model", { timeout: 2000 });
   await page.waitForSelector(".dialog-input", { timeout: 2000 });
@@ -257,7 +257,7 @@ export async function deleteFirstQuestion(page: Page): Promise<void> {
   await page.waitForSelector(".context-menu", { timeout: 2000 });
   await page.locator(".context-menu-item--danger").click();
   // 等待回收站按钮出现
-  await page.waitForSelector(".fab--recycle", { timeout: 2000 });
+  await page.waitForSelector(".question-list .recycle-bin-btn", { timeout: 2000 });
 }
 
 /**

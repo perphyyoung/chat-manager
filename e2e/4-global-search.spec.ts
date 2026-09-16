@@ -50,14 +50,14 @@ test.describe("全局搜索功能", () => {
     await expect(window.locator(".search-modal")).toBeHidden({ timeout: 2000 });
   });
 
-  test("Esc 关闭面板", async ({ window }) => {
+  test("右上角 x 关闭面板", async ({ window }) => {
     await openSearch(window);
 
     await expect(window.locator(".search-modal")).toBeVisible({
       timeout: 2000,
     });
 
-    await window.keyboard.press("Escape");
+    await window.locator(".search-modal__close").click();
 
     await expect(window.locator(".search-modal")).toBeHidden({ timeout: 2000 });
   });

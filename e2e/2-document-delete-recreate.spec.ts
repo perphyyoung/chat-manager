@@ -10,7 +10,7 @@ test("删除文档后可以重新创建同名文档", async ({ window }) => {
   const docTitle = `e2e-doc-${Date.now()}`;
 
   // 步骤1: 创建新文档
-  const addButton = window.locator(".document-list .fab");
+  const addButton = window.locator(".document-list .add-fab");
   await addButton.click();
 
   // 等待对话框出现

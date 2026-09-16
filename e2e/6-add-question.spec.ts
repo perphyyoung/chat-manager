@@ -58,7 +58,7 @@ test.describe("添加问题功能", () => {
   test("添加问答对后，回收站有内容时再添加新问答对", async ({ window }) => {
     await deleteFirstQuestion(window);
 
-    const recycleBadge = window.locator(".recycle-badge");
+    const recycleBadge = window.locator(".recycle-bin-badge");
     await expect(recycleBadge).toBeVisible();
 
     await openAddDialog(window);
@@ -95,7 +95,7 @@ test.describe("添加问题功能", () => {
     await deleteFirstQuestion(window);
     await deleteFirstQuestion(window);
 
-    const recycleBadge = window.locator(".recycle-badge");
+    const recycleBadge = window.locator(".recycle-bin-badge");
     await expect(recycleBadge).toBeVisible();
     const badgeText = await recycleBadge.textContent();
     expect(parseInt(badgeText ?? "0")).toBeGreaterThanOrEqual(2);
@@ -124,7 +124,7 @@ test.describe("添加问题功能", () => {
   test("回收站有内容时清空，再添加新问答对", async ({ window }) => {
     await deleteFirstQuestion(window);
 
-    const recycleBtn = window.locator(".fab--recycle");
+    const recycleBtn = window.locator(".question-list .recycle-bin-btn");
     await recycleBtn.click();
     await window.waitForSelector(".deleted-questions-modal", { timeout: 2000 });
 
@@ -202,12 +202,12 @@ test.describe("添加问题功能", () => {
   test("从回收站恢复问题", async ({ window }) => {
     await deleteFirstQuestion(window);
 
-    const recycleBadge = window.locator(".recycle-badge");
+    const recycleBadge = window.locator(".recycle-bin-badge");
     await expect(recycleBadge).toBeVisible();
     const badgeTextBefore = await recycleBadge.textContent();
     expect(parseInt(badgeTextBefore ?? "0")).toBe(1);
 
-    const recycleBtn = window.locator(".fab--recycle");
+    const recycleBtn = window.locator(".question-list .recycle-bin-btn");
     await recycleBtn.click();
     await window.waitForSelector(".deleted-questions-modal", { timeout: 2000 });
 
