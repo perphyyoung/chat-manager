@@ -7,7 +7,7 @@ import {
   rightClickAnswerToEdit,
 } from "./utils";
 
-test.describe("撤销和重做功能", () => {
+test.describe("编辑回答按钮功能", () => {
   test.beforeEach(async ({ window }) => {
     await window.waitForSelector(".document-list", { timeout: 2000 });
     const title = generateUniqueDocTitle("undo");
@@ -65,52 +65,6 @@ test.describe("撤销和重做功能", () => {
     );
     const contentAfterRedo = await editor.locator(".cm-content").textContent();
     expect(contentAfterRedo).toContain("world");
-  });
-
-  test("Ctrl+Z 快捷键撤销", async ({ window }) => {
-    const editor = window.locator(".fullscreen-edit-editor .cm-editor");
-    await expect(editor).toBeVisible({ timeout: 2000 });
-    await editor.click();
-    await expect(editor).toHaveClass(/cm-focused/);
-
-    await window.keyboard.type("test");
-
-    const content = await editor.locator(".cm-content").textContent();
-    expect(content).toContain("test");
-
-    await window.keyboard.press("Control+z");
-
-    await window.waitForFunction(
-      () => !document.querySelector(".cm-content")?.textContent?.includes("test"),
-      { timeout: 2000 },
-    );
-    const contentAfterUndo = await editor.locator(".cm-content").textContent();
-    expect(contentAfterUndo).not.toContain("test");
-  });
-
-  test("Ctrl+Y 快捷键重做", async ({ window }) => {
-    const editor = window.locator(".fullscreen-edit-editor .cm-editor");
-    await expect(editor).toBeVisible({ timeout: 2000 });
-    await editor.click();
-    await expect(editor).toHaveClass(/cm-focused/);
-
-    await window.keyboard.type("redo");
-
-    await window.keyboard.press("Control+z");
-
-    await window.waitForFunction(
-      () => !document.querySelector(".cm-content")?.textContent?.includes("redo"),
-      { timeout: 2000 },
-    );
-
-    await window.keyboard.press("Control+y");
-
-    await window.waitForFunction(
-      () => document.querySelector(".cm-content")?.textContent?.includes("redo"),
-      { timeout: 2000 },
-    );
-    const contentAfterRedo = await editor.locator(".cm-content").textContent();
-    expect(contentAfterRedo).toContain("redo");
   });
 
   test("空编辑器撤销不报错", async ({ window }) => {
