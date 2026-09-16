@@ -194,7 +194,7 @@ function formatDate(date: Date): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
+  z-index: var(--z-overlay);
 }
 
 .modal {

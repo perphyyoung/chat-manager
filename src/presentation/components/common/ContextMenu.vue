@@ -110,7 +110,7 @@ const handleClose = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 10001;
+  z-index: var(--z-overlay);
 }
 
 .context-menu {

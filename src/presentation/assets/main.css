@@ -9,6 +9,14 @@
   --color-text-secondary: #6b7280;
   --color-selected-bg: #e3f2fd;
   --color-highlight-bg: #fff3cd;
+  /* z-index 语义分层，详见根目录 design.md 的 z-index 层级小节 */
+  --z-decor: 1; /* 页面内装饰/指示 */
+  --z-editor-internal: 100; /* 编辑器内部浮层 */
+  --z-modal: 1000; /* 局部对话框遮罩 */
+  --z-overlay: 9000; /* 全局全屏遮罩 */
+  --z-panel: 9010; /* 浮层面板体（遮罩 + 10） */
+  --z-fullscreen-editor: 9050; /* 全屏编辑器 */
+  --z-toast: 9100; /* 全局提示，恒最高 */
 }
 
 .dark {

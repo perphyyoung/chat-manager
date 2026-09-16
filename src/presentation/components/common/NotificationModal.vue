@@ -53,7 +53,7 @@ function handleConfirm() {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10001;
+  z-index: var(--z-overlay);
 }
 
 .notification-dialog {

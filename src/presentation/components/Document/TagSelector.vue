@@ -238,9 +238,9 @@ async function createAndAddTag() {
 }
 
 .tag-selector__current {
-  /* 层级高于全屏遮罩(9999)，保证面板打开时 toggle 按钮仍可点击关闭 */
+  /* 层级高于全屏遮罩(--z-overlay)，保证面板打开时 toggle 按钮仍可点击关闭 */
   position: relative;
-  z-index: 10001;
+  z-index: var(--z-panel);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -274,7 +274,7 @@ async function createAndAddTag() {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 9999;
+  z-index: var(--z-overlay);
 }
 
 .tag-selector__dropdown {
@@ -286,7 +286,7 @@ async function createAndAddTag() {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 12px;
-  z-index: 10000;
+  z-index: var(--z-panel);
 }
 
 .tag-selector__section {

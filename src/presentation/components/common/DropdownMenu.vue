@@ -89,7 +89,7 @@ const handleClose = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 10001;
+  z-index: var(--z-overlay);
 }
 
 .dropdown-menu {
@@ -102,7 +102,7 @@ const handleClose = () => {
   min-width: 100px;
   max-height: calc(100vh - 40px);
   overflow-y: auto;
-  z-index: 10002;
+  z-index: var(--z-panel);
 }
 
 .dropdown-menu-item {

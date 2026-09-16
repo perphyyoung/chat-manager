@@ -108,7 +108,7 @@ defineExpose({
   background-color: var(--color-background);
   display: flex;
   flex-direction: column;
-  z-index: 10000;
+  z-index: var(--z-fullscreen-editor);
 }
 
 .fullscreen-edit-container {
@@ -231,7 +231,7 @@ defineExpose({
   top: 16px;
   right: 16px;
   left: auto;
-  z-index: 100;
+  z-index: var(--z-editor-internal);
   width: auto;
 }
 
