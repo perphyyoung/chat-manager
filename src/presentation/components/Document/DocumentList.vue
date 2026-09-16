@@ -361,7 +361,7 @@ onMounted(() => {
     </button>
 
     <!-- 添加文档对话框 -->
-    <div v-if="showAddDialog" class="add-doc-model" @click.self="handleCancel">
+    <div v-if="showAddDialog" class="add-doc-model">
       <div class="dialog">
         <h3>添加文档</h3>
         <input
@@ -386,7 +386,7 @@ onMounted(() => {
     </div>
 
     <!-- 编辑文档对话框 -->
-    <div v-if="showEditDialog" class="add-doc-model" @click.self="handleCancelEdit">
+    <div v-if="showEditDialog" class="add-doc-model">
       <div class="dialog">
         <h3>编辑文档标题</h3>
         <input

@@ -163,7 +163,7 @@ async function createAndAddTag() {
     </div>
 
     <Teleport to="body">
-      <div v-if="isOpen" class="tag-selector-overlay" @click="close" @contextmenu.prevent="close">
+      <div v-if="isOpen" class="tag-selector-overlay" @contextmenu.prevent="close">
         <div class="tag-selector__dropdown" :style="dropdownStyle" @click.stop>
           <div v-if="hasAvailableTags" class="tag-selector__section">
             <div class="tag-selector__section-title">可选标签</div>

@@ -80,7 +80,7 @@ defineExpose({
 
 <template>
   <Teleport to="body">
-    <div v-if="modelValue" class="fullscreen-edit-overlay" @click="handleCancel">
+    <div v-if="modelValue" class="fullscreen-edit-overlay">
       <div class="fullscreen-edit-container" @click.stop @contextmenu="handleContextMenu">
         <div class="fullscreen-edit-header">
           <span class="edit-title">编辑回答</span>

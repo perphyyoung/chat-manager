@@ -410,7 +410,7 @@ onMounted(async () => {
     />
 
     <!-- 添加问答对对话框 -->
-    <div v-if="showAddDialog" class="add-question-model" @click.self="closeAddDialog">
+    <div v-if="showAddDialog" class="add-question-model">
       <div class="dialog">
         <h3>添加问答对</h3>
         <div class="dialog-field">
@@ -455,7 +455,7 @@ onMounted(async () => {
     />
 
     <!-- 编辑问题对话框 -->
-    <div v-if="showEditDialog" class="add-question-model" @click.self="cancelEdit">
+    <div v-if="showEditDialog" class="add-question-model">
       <div class="dialog">
         <h3>编辑问题</h3>
         <div class="dialog-field">
