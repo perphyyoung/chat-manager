@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, nextTick } from "vue";
+import { ref, watch, nextTick } from "vue";
 import { useCodeMirror } from "./useCodeMirror";
 
 interface Props {
@@ -63,6 +63,22 @@ const handleCancel = () => {
   emit("update:modelValue", false);
 };
 
+const showShortcuts = ref(false);
+
+// 快捷键说明项（Windows 上 Mod 即 Ctrl）
+const shortcutItems: { keys: string; desc: string }[] = [
+  { keys: "Ctrl+Z", desc: "撤销" },
+  { keys: "Ctrl+Y", desc: "重做" },
+  { keys: "Ctrl+F", desc: "查找" },
+  { keys: "Ctrl+G / Shift+Ctrl+G", desc: "下一个 / 上一个匹配" },
+  { keys: "Ctrl+/", desc: "切换行注释" },
+  { keys: "Tab / Shift+Tab", desc: "增加 / 减少缩进" },
+  { keys: "Ctrl+A", desc: "全选" },
+  { keys: "Home / End", desc: "行首 / 行尾" },
+  { keys: "PageUp / PageDown", desc: "向上 / 向下翻页" },
+  { keys: "Ctrl+C / X / V", desc: "复制 / 剪切 / 粘贴" },
+];
+
 const handleContextMenu = (event: MouseEvent) => {
   emit("contextmenu", event);
 };
@@ -85,6 +101,13 @@ defineExpose({
         <div class="fullscreen-edit-header">
           <span class="edit-title">编辑回答</span>
           <div class="fullscreen-edit-actions">
+            <button
+              class="btn-action"
+              :title="showShortcuts ? '关闭快捷键说明' : '快捷键说明'"
+              @click="showShortcuts = !showShortcuts"
+            >
+              ?
+            </button>
             <button class="btn-action" @click="undo" title="撤销 (Ctrl+Z)">↩</button>
             <button class="btn-action" @click="redo" title="重做 (Ctrl+Y)">↪</button>
             <button class="btn-cancel" @click="handleCancel">取消</button>
@@ -92,6 +115,25 @@ defineExpose({
           </div>
         </div>
         <div ref="editorContainer" class="fullscreen-edit-editor" />
+        <!-- 快捷键说明浮层 -->
+        <div v-if="showShortcuts" class="shortcuts-overlay" @click="showShortcuts = false">
+          <div class="shortcuts-panel" @click.stop>
+            <div class="shortcuts-panel-header">
+              <span class="shortcuts-panel-title">快捷键说明</span>
+              <button class="shortcuts-close" @click="showShortcuts = false">×</button>
+            </div>
+            <table class="shortcuts-table">
+              <tbody>
+                <tr v-for="item in shortcutItems" :key="item.keys">
+                  <td class="shortcuts-keys">
+                    <kbd>{{ item.keys }}</kbd>
+                  </td>
+                  <td class="shortcuts-desc">{{ item.desc }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </Teleport>
@@ -195,6 +237,88 @@ defineExpose({
   width: 100%;
   overflow: hidden;
   position: relative;
+}
+
+/* 快捷键说明浮层：遮罩高于编辑器遮罩，保证浮于其上层 */
+.shortcuts-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-highest);
+}
+
+.shortcuts-panel {
+  position: fixed;
+  top: 60px;
+  right: 24px;
+  min-width: 320px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  padding: 12px;
+}
+
+.shortcuts-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.shortcuts-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.shortcuts-close {
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shortcuts-close:hover {
+  color: var(--color-text);
+}
+
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.shortcuts-table tr {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.shortcuts-table tr:last-child {
+  border-bottom: none;
+}
+
+.shortcuts-keys {
+  padding: 6px 8px 6px 0;
+  white-space: nowrap;
+}
+
+.shortcuts-desc {
+  padding: 6px 0 6px 8px;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+kbd {
+  font-family: inherit;
+  font-size: 12px;
+  background-color: var(--color-hover);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 2px 6px;
 }
 
 /* CodeMirror 样式调整 */
