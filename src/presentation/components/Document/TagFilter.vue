@@ -8,6 +8,9 @@ import DropdownMenu from "../common/DropdownMenu.vue";
 const documentStore = useDocumentStore();
 const showNewTagInput = ref(false);
 const newTagName = ref("");
+const addBtnRef = ref<HTMLButtonElement | null>(null);
+const newTagInputStyle = ref({ top: "0px", left: "0px" });
+const editTagInputStyle = ref({ top: "0px", left: "0px" });
 
 // 折叠状态，持久化到本地存储
 const isCollapsed = ref(localStorage.getItem("tagFilter:collapsed") === "true");
@@ -58,6 +61,18 @@ watch(showNewTagInput, async (show) => {
     newTagInput.value?.focus();
   }
 });
+
+// 在"+"按钮下方弹出新建标签输入框，避免占用列表布局
+function openNewTagInput() {
+  if (addBtnRef.value) {
+    const rect = addBtnRef.value.getBoundingClientRect();
+    newTagInputStyle.value = {
+      top: `${rect.bottom + 8}px`,
+      left: `${rect.left}px`,
+    };
+  }
+  showNewTagInput.value = true;
+}
 
 // 右键菜单状态
 const contextMenu = ref({
@@ -142,11 +157,16 @@ function requestDeleteTag() {
   showConfirmDialog.value = true;
 }
 
-// 请求编辑标签
+// 请求编辑标签，输入框在右键位置附近弹出，不占用列表布局
 function requestEditTag() {
+  const { x, y } = contextMenu.value;
   hideContextMenu();
   editingTagId.value = currentTag.value.tagId;
   editTagName.value = currentTag.value.tagName;
+  editTagInputStyle.value = {
+    top: `${y + 8}px`,
+    left: `${x}px`,
+  };
   showEditInput.value = true;
 }
 
@@ -205,14 +225,15 @@ function cancelDeleteTag() {
         <span v-if="isCollapsed" class="tag-filter__title-count"> ({{ sortedTags.length }}) </span>
       </button>
       <button
-        v-if="!showNewTagInput && !showEditInput && !isCollapsed"
+        ref="addBtnRef"
+        v-if="!isCollapsed"
         class="tag-filter__add-btn"
-        @click="showNewTagInput = true"
+        @click="openNewTagInput"
         title="新建标签"
       >
         +
       </button>
-      <div v-if="!showNewTagInput && !showEditInput && !isCollapsed" class="sort-field-wrapper">
+      <div v-if="!isCollapsed" class="sort-field-wrapper">
         <button class="sort-field-btn" @click="sortMenuRef?.toggle">
           {{ sortFieldLabels[sortField] }}
           <svg
@@ -239,7 +260,7 @@ function cancelDeleteTag() {
         />
       </div>
       <button
-        v-if="!showNewTagInput && !showEditInput && !isCollapsed"
+        v-if="!isCollapsed"
         class="sort-order-btn"
         :title="sortReverse ? '升序' : '降序'"
         @click="sortReverse = !sortReverse"
@@ -261,36 +282,38 @@ function cancelDeleteTag() {
       </button>
     </div>
 
-    <div v-if="showNewTagInput" class="tag-filter__input-wrapper">
-      <input
-        ref="newTagInput"
-        v-model="newTagName"
-        type="text"
-        placeholder="标签名称"
-        class="tag-filter__input"
-        @keyup.enter="handleCreateTag"
-        @keyup.esc="handleCancel"
-      />
-      <div class="tag-filter__input-actions">
-        <button class="tag-filter__btn-confirm" @click="handleCreateTag">确定</button>
-        <button class="tag-filter__btn-cancel" @click="handleCancel">取消</button>
+    <Teleport to="body">
+      <div v-if="showNewTagInput" class="tag-filter__pop" :style="newTagInputStyle">
+        <input
+          ref="newTagInput"
+          v-model="newTagName"
+          type="text"
+          placeholder="标签名称"
+          class="tag-filter__input"
+          @keyup.enter="handleCreateTag"
+          @keyup.esc="handleCancel"
+        />
+        <div class="tag-filter__pop-actions">
+          <button class="tag-filter__btn-confirm" @click="handleCreateTag">确定</button>
+          <button class="tag-filter__btn-cancel" @click="handleCancel">取消</button>
+        </div>
       </div>
-    </div>
 
-    <div v-if="showEditInput" class="tag-filter__input-wrapper">
-      <input
-        v-model="editTagName"
-        type="text"
-        placeholder="新标签名称"
-        class="tag-filter__input"
-        @keyup.enter="handleEditTag"
-        @keyup.esc="handleEditCancel"
-      />
-      <div class="tag-filter__input-actions">
-        <button class="tag-filter__btn-confirm" @click="handleEditTag">保存</button>
-        <button class="tag-filter__btn-cancel" @click="handleEditCancel">取消</button>
+      <div v-if="showEditInput" class="tag-filter__pop" :style="editTagInputStyle">
+        <input
+          v-model="editTagName"
+          type="text"
+          placeholder="新标签名称"
+          class="tag-filter__input"
+          @keyup.enter="handleEditTag"
+          @keyup.esc="handleEditCancel"
+        />
+        <div class="tag-filter__pop-actions">
+          <button class="tag-filter__btn-confirm" @click="handleEditTag">保存</button>
+          <button class="tag-filter__btn-cancel" @click="handleEditCancel">取消</button>
+        </div>
       </div>
-    </div>
+    </Teleport>
 
     <div v-if="!isCollapsed" class="tag-filter__list">
       <button
@@ -419,8 +442,16 @@ function cancelDeleteTag() {
   color: var(--color-text);
 }
 
-.tag-filter__input-wrapper {
-  margin-bottom: 8px;
+/* 新建/编辑标签浮层，fixed 定位不占文档流布局 */
+.tag-filter__pop {
+  position: fixed;
+  z-index: var(--z-panel);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 10px;
+  min-width: 220px;
 }
 
 .tag-filter__input {
@@ -440,7 +471,7 @@ function cancelDeleteTag() {
   border-color: var(--color-primary);
 }
 
-.tag-filter__input-actions {
+.tag-filter__pop-actions {
   display: flex;
   gap: 8px;
 }
