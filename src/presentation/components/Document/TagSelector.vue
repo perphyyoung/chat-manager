@@ -158,7 +158,7 @@ async function createAndAddTag() {
         @click="toggle"
         :disabled="!documentStore.selectedDocument"
       >
-        {{ isOpen ? "关闭" : "+ 标签" }}
+        + 标签
       </button>
     </div>
 
@@ -201,13 +201,16 @@ async function createAndAddTag() {
             </div>
           </div>
 
-          <button
-            v-if="!showNewTagInput"
-            class="tag-selector__create-btn"
-            @click="showNewTagInput = true"
-          >
-            + 创建新标签
-          </button>
+          <div class="tag-selector__footer">
+            <button class="tag-selector__close-btn" @click="close">关闭</button>
+            <button
+              v-if="!showNewTagInput"
+              class="tag-selector__create-btn"
+              @click="showNewTagInput = true"
+            >
+              + 创建新标签
+            </button>
+          </div>
         </div>
       </div>
     </Teleport>
@@ -238,9 +241,6 @@ async function createAndAddTag() {
 }
 
 .tag-selector__current {
-  /* 层级高于全屏遮罩(--z-overlay)，保证面板打开时 toggle 按钮仍可点击关闭 */
-  position: relative;
-  z-index: var(--z-panel);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -385,9 +385,8 @@ async function createAndAddTag() {
 }
 
 .tag-selector__create-btn {
-  width: 100%;
+  flex: 1;
   padding: 8px;
-  margin-top: 8px;
   border: 1px dashed var(--color-border);
   border-radius: 6px;
   background: transparent;
@@ -398,6 +397,28 @@ async function createAndAddTag() {
 }
 
 .tag-selector__create-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.tag-selector__footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tag-selector__close-btn {
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tag-selector__close-btn:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
