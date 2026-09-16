@@ -178,10 +178,6 @@ function handleKeydown(e: KeyboardEvent) {
   if (!isOpen.value) return;
 
   switch (e.key) {
-    case "Escape":
-      e.preventDefault();
-      close();
-      break;
     case "ArrowDown":
       e.preventDefault();
       if (selectedIndex.value < flatResults.value.length - 1) {
@@ -246,8 +242,9 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div v-if="isOpen" class="search-modal" @click.self="close">
+    <div v-if="isOpen" class="search-modal">
       <div class="search-modal__container">
+        <button class="search-modal__close" @click="close" title="关闭">×</button>
         <SearchInput ref="inputRef" :value="query" @search="handleSearch" @close="close" />
 
         <div v-if="isLoading" class="search-modal__loading">搜索中...</div>
@@ -287,9 +284,7 @@ onUnmounted(() => {
 
         <div v-else-if="query.trim()" class="search-modal__empty">未找到匹配结果</div>
 
-        <div class="search-modal__hint">
-          <span>↑↓</span> 导航 <span>Enter</span> 跳转 <span>Esc</span> 关闭
-        </div>
+        <div class="search-modal__hint"><span>↑↓</span> 导航 <span>Enter</span> 跳转</div>
       </div>
     </div>
   </Teleport>
@@ -310,6 +305,7 @@ onUnmounted(() => {
 }
 
 .search-modal__container {
+  position: relative;
   width: 90vw;
   height: 90vh;
   background: var(--color-surface);
@@ -319,6 +315,30 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* 右上角关闭按钮，absolute 不占布局空间 */
+.search-modal__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--color-hover);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-modal__close:hover {
+  background: var(--color-border);
+  color: var(--color-text);
 }
 
 .search-modal__loading,

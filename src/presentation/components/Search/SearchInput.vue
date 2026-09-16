@@ -44,7 +44,7 @@ onMounted(() => {
       :value="value"
       @input="handleInput"
     />
-    <button v-if="value" class="search-input__clear" @click="handleClear">×</button>
+    <button v-if="value" class="search-input__clear" @click="handleClear">清空</button>
   </div>
 </template>
 
@@ -52,7 +52,8 @@ onMounted(() => {
 .search-input {
   display: flex;
   align-items: center;
-  padding: 24px 32px;
+  /* 右侧留出关闭按钮空间 */
+  padding: 24px 40px 24px 32px;
   border-bottom: 2px solid var(--color-border);
 }
 
@@ -75,18 +76,14 @@ onMounted(() => {
 }
 
 .search-input__clear {
-  width: 32px;
-  height: 32px;
+  padding: 4px 10px;
   border: none;
   background: var(--color-hover);
-  border-radius: 50%;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 20px;
-  line-height: 1;
+  font-size: 13px;
   color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  white-space: nowrap;
 }
 
 .search-input__clear:hover {
