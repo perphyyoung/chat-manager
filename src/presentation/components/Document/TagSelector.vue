@@ -84,6 +84,13 @@ function close() {
   newTagName.value = "";
 }
 
+// 点击遮罩关闭面板，但新建标签输入时保留输入内容不关闭
+function handleOverlayClick() {
+  if (!showNewTagInput.value) {
+    close();
+  }
+}
+
 async function addTag(tagId: string) {
   if (!documentStore.selectedDocument) return;
   await documentStore.addTagToDocument(documentStore.selectedDocument.id, tagId);
@@ -163,10 +170,18 @@ async function createAndAddTag() {
     </div>
 
     <Teleport to="body">
-      <div v-if="isOpen" class="tag-selector-overlay" @contextmenu.prevent="close">
+      <div
+        v-if="isOpen"
+        class="tag-selector-overlay"
+        @click="handleOverlayClick"
+        @contextmenu.prevent="close"
+      >
         <div class="tag-selector__dropdown" :style="dropdownStyle" @click.stop>
+          <div class="tag-selector__header">
+            <span class="tag-selector__header-title">可选标签</span>
+            <button class="tag-selector__close-x" @click="close" title="关闭">×</button>
+          </div>
           <div v-if="hasAvailableTags" class="tag-selector__section">
-            <div class="tag-selector__section-title">可选标签</div>
             <div class="tag-selector__list">
               <button
                 v-for="tag in availableTags"
@@ -201,16 +216,13 @@ async function createAndAddTag() {
             </div>
           </div>
 
-          <div class="tag-selector__footer">
-            <button class="tag-selector__close-btn" @click="close">关闭</button>
-            <button
-              v-if="!showNewTagInput"
-              class="tag-selector__create-btn"
-              @click="showNewTagInput = true"
-            >
-              + 创建新标签
-            </button>
-          </div>
+          <button
+            v-if="!showNewTagInput"
+            class="tag-selector__create-btn"
+            @click="showNewTagInput = true"
+          >
+            + 创建新标签
+          </button>
         </div>
       </div>
     </Teleport>
@@ -297,13 +309,36 @@ async function createAndAddTag() {
   margin-bottom: 0;
 }
 
-.tag-selector__section-title {
+.tag-selector__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.tag-selector__header-title {
   font-size: 11px;
   font-weight: 600;
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
+}
+
+.tag-selector__close-x {
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.tag-selector__close-x:hover {
+  background-color: var(--color-hover);
+  color: var(--color-text);
 }
 
 .tag-selector__list {
@@ -385,8 +420,9 @@ async function createAndAddTag() {
 }
 
 .tag-selector__create-btn {
-  flex: 1;
+  width: 100%;
   padding: 8px;
+  margin-top: 8px;
   border: 1px dashed var(--color-border);
   border-radius: 6px;
   background: transparent;
@@ -397,28 +433,6 @@ async function createAndAddTag() {
 }
 
 .tag-selector__create-btn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.tag-selector__footer {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.tag-selector__close-btn {
-  padding: 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tag-selector__close-btn:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
