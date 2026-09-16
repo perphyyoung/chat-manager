@@ -298,7 +298,6 @@ async function createAndAddTag() {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 12px;
-  z-index: var(--z-panel);
 }
 
 .tag-selector__section {

@@ -454,10 +454,10 @@ function cancelDeleteTag() {
   color: var(--color-text);
 }
 
-/* 新建/编辑标签浮层，fixed 定位不占文档流布局 */
+/* 新建/编辑标签浮层，fixed 定位不占文档流布局，无遮罩父级，直接使用遮罩层级 */
 .tag-filter__pop {
   position: fixed;
-  z-index: var(--z-panel);
+  z-index: var(--z-overlay);
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;

@@ -102,7 +102,6 @@ const handleClose = () => {
   min-width: 100px;
   max-height: calc(100vh - 40px);
   overflow-y: auto;
-  z-index: var(--z-panel);
 }
 
 .dropdown-menu-item {
