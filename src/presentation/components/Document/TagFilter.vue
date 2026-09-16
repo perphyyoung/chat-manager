@@ -54,6 +54,9 @@ const sortedTags = computed(() => {
 // 新标签输入框 ref，用于自动聚焦
 const newTagInput = ref<HTMLInputElement | null>(null);
 
+// 编辑标签输入框 ref，用于自动聚焦
+const editTagInput = ref<HTMLInputElement | null>(null);
+
 // 显示新标签输入框时自动聚焦
 watch(showNewTagInput, async (show) => {
   if (show) {
@@ -107,6 +110,14 @@ const showConfirmDialog = ref(false);
 const showEditInput = ref(false);
 const editTagName = ref("");
 const editingTagId = ref("");
+
+// 显示编辑标签输入框时自动聚焦
+watch(showEditInput, async (show) => {
+  if (show) {
+    await nextTick();
+    editTagInput.value?.focus();
+  }
+});
 
 // 确认弹窗消息
 const confirmMessage = computed(() => {
@@ -301,6 +312,7 @@ function cancelDeleteTag() {
 
       <div v-if="showEditInput" class="tag-filter__pop" :style="editTagInputStyle">
         <input
+          ref="editTagInput"
           v-model="editTagName"
           type="text"
           placeholder="新标签名称"
