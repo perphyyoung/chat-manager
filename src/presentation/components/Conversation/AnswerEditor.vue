@@ -110,8 +110,8 @@ defineExpose({
             >
               ?
             </button>
-            <button class="btn-action" @click="undo" title="撤销 (Ctrl+Z)">↩</button>
-            <button class="btn-action" @click="redo" title="重做 (Ctrl+Y)">↪</button>
+            <button class="btn-action btn-undo" @click="undo" title="撤销 (Ctrl+Z)">↩</button>
+            <button class="btn-action btn-redo" @click="redo" title="重做 (Ctrl+Y)">↪</button>
             <button class="btn-cancel" @click="handleCancel">取消</button>
             <button class="btn-save" @click="handleSave">保存</button>
           </div>

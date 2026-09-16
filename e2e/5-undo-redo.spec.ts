@@ -28,7 +28,7 @@ test.describe("撤销和重做功能", () => {
     const content = await editor.locator(".cm-content").textContent();
     expect(content).toContain("hello");
 
-    const undoBtn = window.locator(".btn-action").first();
+    const undoBtn = window.locator(".btn-undo");
     await undoBtn.click();
 
     await window.waitForFunction(
@@ -48,7 +48,7 @@ test.describe("撤销和重做功能", () => {
 
     await window.keyboard.type("world");
 
-    const undoBtn = window.locator(".btn-action").first();
+    const undoBtn = window.locator(".btn-undo");
     await undoBtn.click();
 
     await window.waitForFunction(
@@ -56,7 +56,7 @@ test.describe("撤销和重做功能", () => {
       { timeout: 2000 },
     );
 
-    const redoBtn = window.locator(".btn-action").nth(1);
+    const redoBtn = window.locator(".btn-redo");
     await redoBtn.click();
 
     await window.waitForFunction(
@@ -114,7 +114,7 @@ test.describe("撤销和重做功能", () => {
   });
 
   test("空编辑器撤销不报错", async ({ window }) => {
-    const undoBtn = window.locator(".btn-action").first();
+    const undoBtn = window.locator(".btn-undo");
     await undoBtn.click();
 
     // 等待撤销操作完成（编辑器应该仍然可见）
