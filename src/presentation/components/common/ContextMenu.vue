@@ -110,7 +110,8 @@ const handleClose = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: var(--z-overlay);
+  /* 挂载点可能早于其他浮层（如全屏编辑器遮罩），必须用最高档保证浮于其上 */
+  z-index: var(--z-highest);
 }
 
 .context-menu {

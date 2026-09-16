@@ -72,7 +72,7 @@ function handleClose() {
     0 0 20px rgba(0, 255, 136, 0.4),
     inset 0 0 10px rgba(0, 255, 136, 0.1);
   font-size: 14px;
-  z-index: var(--z-toast);
+  z-index: var(--z-highest);
   cursor: pointer;
 }
 
