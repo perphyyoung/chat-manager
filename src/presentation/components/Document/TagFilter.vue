@@ -314,6 +314,7 @@ function cancelDeleteTag() {
           @keyup.esc="handleCancel"
         />
         <div class="tag-filter__pop-actions">
+          <button class="tag-filter__btn-cancel" @click="handleCancel">取消</button>
           <button
             class="tag-filter__btn-confirm"
             :disabled="!newTagName.trim()"
@@ -321,7 +322,6 @@ function cancelDeleteTag() {
           >
             确定
           </button>
-          <button class="tag-filter__btn-cancel" @click="handleCancel">取消</button>
         </div>
       </div>
 
@@ -336,6 +336,7 @@ function cancelDeleteTag() {
           @keyup.esc="handleEditCancel"
         />
         <div class="tag-filter__pop-actions">
+          <button class="tag-filter__btn-cancel" @click="handleEditCancel">取消</button>
           <button
             class="tag-filter__btn-confirm"
             :disabled="!editTagName.trim()"
@@ -343,7 +344,6 @@ function cancelDeleteTag() {
           >
             保存
           </button>
-          <button class="tag-filter__btn-cancel" @click="handleEditCancel">取消</button>
         </div>
       </div>
     </Teleport>

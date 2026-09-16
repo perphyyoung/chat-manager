@@ -216,15 +216,15 @@ async function createAndAddTag() {
               ref="newTagInput"
             />
             <div class="tag-selector__actions">
+              <button class="tag-selector__btn-cancel" @click="showNewTagInput = false">
+                取消
+              </button>
               <button
                 class="tag-selector__btn-confirm"
                 :disabled="!newTagName.trim()"
                 @click="createAndAddTag"
               >
                 创建
-              </button>
-              <button class="tag-selector__btn-cancel" @click="showNewTagInput = false">
-                取消
               </button>
             </div>
           </div>

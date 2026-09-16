@@ -589,9 +589,13 @@ onMounted(async () => {
 
 .dialog-actions {
   display: flex;
-  justify-content: flex-end;
   gap: 12px;
   margin-top: 20px;
+}
+
+.dialog-actions .btn-primary,
+.dialog-actions .btn-secondary {
+  flex: 1;
 }
 
 .btn-secondary {

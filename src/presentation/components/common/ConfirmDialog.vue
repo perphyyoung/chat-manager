@@ -75,8 +75,12 @@ function handleCancel() {
 
 .confirm-actions {
   display: flex;
-  justify-content: flex-end;
   gap: 12px;
+}
+
+.confirm-actions .btn-secondary,
+.confirm-actions .btn-danger {
+  flex: 1;
 }
 
 .btn-secondary {
