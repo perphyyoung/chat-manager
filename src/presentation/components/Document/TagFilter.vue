@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick, inject } from "vue";
 import { useDocumentStore } from "../../stores/document";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
 import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
 import DropdownMenu from "../common/DropdownMenu.vue";
 
 const documentStore = useDocumentStore();
+const showToast = inject("showToast") as (message: string) => void;
 const showNewTagInput = ref(false);
 const newTagName = ref("");
 const addBtnRef = ref<HTMLButtonElement | null>(null);
@@ -135,7 +136,11 @@ function handleTagClick(tagId: string | null) {
 }
 
 async function handleCreateTag() {
-  if (!newTagName.value.trim()) return;
+  if (!newTagName.value.trim()) {
+    // 空标签名不允许提交，提示并保持输入框打开
+    showToast("标签名称不能为空");
+    return;
+  }
   await documentStore.createTag(newTagName.value.trim());
   newTagName.value = "";
   showNewTagInput.value = false;
@@ -183,6 +188,10 @@ function requestEditTag() {
 
 async function handleEditTag() {
   if (!editTagName.value.trim() || !editingTagId.value) {
+    // 空标签名不允许保存，提示并保持输入框打开
+    if (!editTagName.value.trim()) {
+      showToast("标签名称不能为空");
+    }
     return;
   }
   await documentStore.updateTagName(editingTagId.value, editTagName.value.trim());
@@ -305,7 +314,13 @@ function cancelDeleteTag() {
           @keyup.esc="handleCancel"
         />
         <div class="tag-filter__pop-actions">
-          <button class="tag-filter__btn-confirm" @click="handleCreateTag">确定</button>
+          <button
+            class="tag-filter__btn-confirm"
+            :disabled="!newTagName.trim()"
+            @click="handleCreateTag"
+          >
+            确定
+          </button>
           <button class="tag-filter__btn-cancel" @click="handleCancel">取消</button>
         </div>
       </div>
@@ -321,7 +336,13 @@ function cancelDeleteTag() {
           @keyup.esc="handleEditCancel"
         />
         <div class="tag-filter__pop-actions">
-          <button class="tag-filter__btn-confirm" @click="handleEditTag">保存</button>
+          <button
+            class="tag-filter__btn-confirm"
+            :disabled="!editTagName.trim()"
+            @click="handleEditTag"
+          >
+            保存
+          </button>
           <button class="tag-filter__btn-cancel" @click="handleEditCancel">取消</button>
         </div>
       </div>
@@ -510,9 +531,14 @@ function cancelDeleteTag() {
   border: 1px solid var(--color-border);
 }
 
-.tag-filter__btn-confirm:hover,
+.tag-filter__btn-confirm:hover:not(:disabled),
 .tag-filter__btn-cancel:hover {
   opacity: 0.9;
+}
+
+.tag-filter__btn-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .tag-filter__list {

@@ -115,6 +115,8 @@ async function handleCreateQA() {
   const answerText = newAnswerContent.value.trim();
 
   if (!questionText || !answerText) {
+    // 问题或回答为空不允许创建，提示并保持对话框打开
+    showToast?.(questionText ? "回答不能为空" : "问题不能为空");
     return;
   }
 
@@ -195,7 +197,13 @@ function handleEditClick() {
 }
 
 async function confirmEdit() {
-  if (!currentQuestion.value.questionId || !editQuestionText.value.trim()) return;
+  if (!currentQuestion.value.questionId || !editQuestionText.value.trim()) {
+    // 空问题不允许保存，提示并保持对话框打开
+    if (!editQuestionText.value.trim()) {
+      showToast?.("问题不能为空");
+    }
+    return;
+  }
 
   isEditing.value = true;
   try {

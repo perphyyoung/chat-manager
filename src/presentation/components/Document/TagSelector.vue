@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick, inject } from "vue";
 import { useDocumentStore } from "../../stores/document";
 import TagBadge from "../common/TagBadge.vue";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
 import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
 
 const documentStore = useDocumentStore();
+const showToast = inject("showToast") as (message: string) => void;
 const isOpen = ref(false);
 const showNewTagInput = ref(false);
 const newTagName = ref("");
@@ -139,7 +140,13 @@ function cancelUnlinkTag() {
 }
 
 async function createAndAddTag() {
-  if (!newTagName.value.trim() || !documentStore.selectedDocument) return;
+  if (!newTagName.value.trim() || !documentStore.selectedDocument) {
+    // 空标签名不允许创建，提示并保持输入框打开
+    if (!newTagName.value.trim()) {
+      showToast("标签名称不能为空");
+    }
+    return;
+  }
   const tag = await documentStore.createTag(newTagName.value.trim());
   if (tag) {
     await documentStore.addTagToDocument(documentStore.selectedDocument.id, tag.id);
@@ -209,7 +216,13 @@ async function createAndAddTag() {
               ref="newTagInput"
             />
             <div class="tag-selector__actions">
-              <button class="tag-selector__btn-confirm" @click="createAndAddTag">创建</button>
+              <button
+                class="tag-selector__btn-confirm"
+                :disabled="!newTagName.trim()"
+                @click="createAndAddTag"
+              >
+                创建
+              </button>
               <button class="tag-selector__btn-cancel" @click="showNewTagInput = false">
                 取消
               </button>
@@ -410,6 +423,11 @@ async function createAndAddTag() {
 .tag-selector__btn-confirm {
   background-color: var(--color-primary);
   color: white;
+}
+
+.tag-selector__btn-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .tag-selector__btn-cancel {

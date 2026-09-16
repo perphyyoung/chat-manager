@@ -76,7 +76,11 @@ const sortFieldLabels: Record<SortField, string> = {
 };
 
 async function handleCreateDocument() {
-  if (!newDocumentTitle.value.trim()) return;
+  if (!newDocumentTitle.value.trim()) {
+    // 空标题不允许创建，提示并保持对话框打开
+    showToast?.("文档标题不能为空");
+    return;
+  }
 
   isCreating.value = true;
   try {
@@ -187,7 +191,13 @@ function handleEditDocument() {
 }
 
 async function handleUpdateDocument() {
-  if (!editDocumentTitle.value.trim() || !editingDocumentId.value) return;
+  if (!editDocumentTitle.value.trim() || !editingDocumentId.value) {
+    // 空标题不允许保存，提示并保持对话框打开
+    if (!editDocumentTitle.value.trim()) {
+      showToast?.("文档标题不能为空");
+    }
+    return;
+  }
 
   isEditing.value = true;
   try {

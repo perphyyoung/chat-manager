@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue";
+import { ref, watch, nextTick, inject } from "vue";
 import { useCodeMirror } from "./useCodeMirror";
+
+const showToast = inject("showToast") as (message: string) => void;
 
 interface Props {
   content: string;
@@ -31,9 +33,12 @@ const {
   initialContent: props.content,
   showLineNumbers: true,
   onContentChange: () => {
-    // 可以在这里添加内容变化处理
+    // 内容变化时同步置空状态，用于禁用保存按钮
+    isContentEmpty.value = !getContent().trim();
   },
 });
+// 回答内容是否为空：空时禁用保存按钮，阻止保存空内容
+const isContentEmpty = ref(!props.content.trim());
 
 // 监听编辑器打开状态和 content 变化
 watch(
@@ -53,9 +58,12 @@ watch(
 
 const handleSave = () => {
   const content = getContent();
-  if (content.trim()) {
-    emit("save", content.trim());
+  if (!content.trim()) {
+    // 置空内容不允许保存：提示并保持编辑器打开，避免静默丢弃
+    showToast("回答内容不能为空");
+    return;
   }
+  emit("save", content.trim());
   emit("update:modelValue", false);
 };
 
@@ -113,7 +121,7 @@ defineExpose({
             <button class="btn-action btn-undo" @click="undo" title="撤销 (Ctrl+Z)">↩</button>
             <button class="btn-action btn-redo" @click="redo" title="重做 (Ctrl+Y)">↪</button>
             <button class="btn-cancel" @click="handleCancel">取消</button>
-            <button class="btn-save" @click="handleSave">保存</button>
+            <button class="btn-save" :disabled="isContentEmpty" @click="handleSave">保存</button>
           </div>
         </div>
         <div ref="editorContainer" class="fullscreen-edit-editor" />
@@ -217,10 +225,15 @@ defineExpose({
   color: white;
 }
 
-.btn-save:hover {
+.btn-save:hover:not(:disabled) {
   opacity: 0.9;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-cancel {
