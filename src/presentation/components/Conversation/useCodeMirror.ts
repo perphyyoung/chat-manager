@@ -3,7 +3,13 @@ import { EditorView, keymap, lineNumbers } from "@codemirror/view";
 import { EditorState, Compartment } from "@codemirror/state";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+  deleteLine,
+} from "@codemirror/commands";
 import { languages } from "@codemirror/language-data";
 import {
   search,
@@ -115,8 +121,14 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
           markdown({ codeLanguages: languages }),
           oneDark,
           search({ top: true }), // 官方搜索面板，显示在顶部
-          // Tab/Shift+Tab 缩进不在 defaultKeymap 中，需显式加入
-          keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
+          // 自定义快捷键：Ctrl+D 删除当前行（defaultKeymap 未绑定），置于数组首位优先匹配
+          keymap.of([
+            { key: "Ctrl-d", run: deleteLine },
+            ...defaultKeymap,
+            ...historyKeymap,
+            ...searchKeymap,
+            indentWithTab,
+          ]),
           highlightSelectionMatches(), // 高亮选中的匹配
           EditorView.updateListener.of((update) => {
             if (update.docChanged && options.onContentChange) {

@@ -70,6 +70,8 @@ const shortcutItems: { keys: string; desc: string }[] = [
   { keys: "Ctrl+Z", desc: "撤销" },
   { keys: "Ctrl+Y", desc: "重做" },
   { keys: "Ctrl+F", desc: "查找" },
+  { keys: "Ctrl+D", desc: "删除当前行" },
+  { keys: "Alt+↑ / Alt+↓", desc: "上移 / 下移当前行" },
   { keys: "Ctrl+G / Shift+Ctrl+G", desc: "下一个 / 上一个匹配" },
   { keys: "Ctrl+/", desc: "切换行注释" },
   { keys: "Tab / Shift+Tab", desc: "增加 / 减少缩进" },
