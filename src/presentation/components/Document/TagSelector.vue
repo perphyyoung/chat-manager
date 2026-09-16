@@ -238,6 +238,9 @@ async function createAndAddTag() {
 }
 
 .tag-selector__current {
+  /* 层级高于全屏遮罩(9999)，保证面板打开时 toggle 按钮仍可点击关闭 */
+  position: relative;
+  z-index: 10001;
   display: flex;
   align-items: center;
   gap: 6px;
