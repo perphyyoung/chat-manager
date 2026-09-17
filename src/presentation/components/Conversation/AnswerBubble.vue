@@ -95,7 +95,8 @@ function closeContextMenu() {
 
 function addLanguageIdentifiers() {
   // 为代码块添加语言标识
-  const codeBlockRegex = /```([^\s`]+)?\n([\s\S]*?)```/g;
+  // 兼容 ``` 与语言名间的空格/Tab，以及 CRLF/LF：仅匹配 ```lang 或 ```\n 会导致常见写法 ``` json 识别失败
+  const codeBlockRegex = /```[ \t]*([^\s`]*)?[ \t]*\r?\n([\s\S]*?)```/g;
   let result = props.content;
   let match;
 
