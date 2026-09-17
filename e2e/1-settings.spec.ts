@@ -25,12 +25,8 @@ test("settings menu opens settings modal", async () => {
     }
   });
 
-  await window.waitForTimeout(500);
-
   const settingsModal = window.locator(".modal-content");
-  const isVisible = await settingsModal.isVisible().catch(() => false);
-
-  expect(isVisible).toBe(true);
+  await expect(settingsModal).toBeVisible({ timeout: 2000 });
 
   const modalText = await settingsModal.textContent();
   expect(modalText).toContain("设置");

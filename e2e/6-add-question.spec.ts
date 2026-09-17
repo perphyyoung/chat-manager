@@ -19,12 +19,6 @@ test.describe("添加问题功能", () => {
   });
 
   test("正常添加问答对", async ({ window }) => {
-    // 监听控制台日志
-    const consoleLogs: string[] = [];
-    window.on("console", (msg) => {
-      consoleLogs.push(`[${msg.type()}] ${msg.text()}`);
-    });
-
     await openAddDialog(window);
 
     const questionText = `测试问题_${Date.now()}`;
@@ -34,9 +28,6 @@ test.describe("添加问题功能", () => {
     await window.locator(".dialog-textarea").fill(answerText);
 
     await window.locator(".btn-primary").click();
-
-    // 等待一段时间让控制台日志输出
-    await window.waitForTimeout(500);
 
     try {
       await window.waitForSelector(".add-question-model", {
