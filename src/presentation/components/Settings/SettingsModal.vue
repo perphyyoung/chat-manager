@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useSettingsStore } from "../../stores/settings";
 
 const settingsStore = useSettingsStore();
@@ -11,6 +11,55 @@ defineProps<{
 const emit = defineEmits<{
   close: [];
 }>();
+
+// 候选字体表：value 为可直接写入 font-family 的 CSS 值，空串表示跟随系统默认栈
+const FONT_CANDIDATES = {
+  standard: [
+    { value: "", label: "跟随系统" },
+    { value: '"Segoe UI", sans-serif', label: "Segoe UI" },
+    { value: '"Microsoft YaHei", sans-serif', label: "微软雅黑 (Microsoft YaHei)" },
+    { value: '"PingFang SC", sans-serif', label: "苹方 (PingFang SC)" },
+    { value: "Roboto, sans-serif", label: "Roboto" },
+    { value: "Arial, sans-serif", label: "Arial" },
+    { value: '"Helvetica Neue", sans-serif', label: "Helvetica Neue" },
+    { value: '"Noto Sans SC", sans-serif', label: "思源黑体 (Noto Sans SC)" },
+  ],
+  mono: [
+    { value: "", label: "跟随系统" },
+    { value: "Consolas, monospace", label: "Consolas" },
+    { value: '"Courier New", monospace', label: "Courier New" },
+    { value: '"Cascadia Code", monospace', label: "Cascadia Code" },
+    { value: '"JetBrains Mono", monospace', label: "JetBrains Mono" },
+    { value: '"Fira Code", monospace', label: "Fira Code" },
+    { value: '"Source Code Pro", monospace', label: "Source Code Pro" },
+    { value: "Menlo, monospace", label: "Menlo" },
+    { value: "Monaco, monospace", label: "Monaco" },
+  ],
+};
+
+// 检测字体是否本机已安装；跟随系统项始终可用
+function isFontAvailable(cssValue: string): boolean {
+  if (!cssValue) {
+    return true;
+  }
+  const match = cssValue.match(/"([^"]+)"|^([^,\s]+)/);
+  const family = match?.[1] ?? match?.[2];
+  return family ? document.fonts.check(`16px "${family}"`) : true;
+}
+
+// 仅列出本机已安装字体
+const standardFonts = computed(() =>
+  FONT_CANDIDATES.standard.filter((f) => isFontAvailable(f.value)),
+);
+const monoFonts = computed(() => FONT_CANDIDATES.mono.filter((f) => isFontAvailable(f.value)));
+
+function handleFontChange(event: Event) {
+  settingsStore.setFontFamily((event.target as HTMLSelectElement).value);
+}
+
+function handleMonoFontChange(event: Event) {
+  settingsStore.setMonoFontFamily((event.target as HTMLSelectElement).value);
+}
 
 const dataPath = ref("");
 const appVersion = ref("");
@@ -48,6 +97,26 @@ async function handleOpenDataDir() {
             />
             <span class="slider"></span>
           </label>
+        </div>
+        <div class="setting-item setting-item--column">
+          <span class="font-label">标准字体</span>
+          <select class="font-select" :value="settingsStore.fontFamily" @change="handleFontChange">
+            <option v-for="font in standardFonts" :key="font.value" :value="font.value">
+              {{ font.label }}
+            </option>
+          </select>
+        </div>
+        <div class="setting-item setting-item--column">
+          <span class="font-label">等宽字体</span>
+          <select
+            class="font-select"
+            :value="settingsStore.monoFontFamily"
+            @change="handleMonoFontChange"
+          >
+            <option v-for="font in monoFonts" :key="font.value" :value="font.value">
+              {{ font.label }}
+            </option>
+          </select>
         </div>
         <div class="setting-item">
           <div class="dir-info">
@@ -132,6 +201,32 @@ async function handleOpenDataDir() {
 
 .setting-item + .setting-item {
   margin-top: 24px;
+}
+
+.setting-item--column {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.font-label {
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.font-select {
+  margin-top: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.font-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
 }
 
 .dir-info {

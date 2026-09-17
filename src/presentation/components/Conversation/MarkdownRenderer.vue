@@ -126,7 +126,7 @@ const frontmatterList = computed(() => {
   background-color: var(--color-border);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: "Monaco", "Menlo", "Consolas", monospace;
+  font-family: var(--font-mono, "Monaco", "Menlo", "Consolas", monospace);
   font-size: 12px;
   color: var(--color-text);
 }
@@ -144,7 +144,7 @@ const frontmatterList = computed(() => {
   display: block;
   padding: 16px;
   overflow-x: auto;
-  font-family: "Monaco", "Menlo", "Consolas", monospace;
+  font-family: var(--font-mono, "Monaco", "Menlo", "Consolas", monospace);
   font-size: 13px;
   line-height: 1.5;
   background-color: transparent;

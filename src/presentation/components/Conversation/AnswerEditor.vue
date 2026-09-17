@@ -340,7 +340,7 @@ kbd {
 .fullscreen-edit-editor :deep(.cm-editor) {
   height: 100%;
   font-size: 15px;
-  font-family: "Monaco", "Menlo", "Consolas", "Courier New", monospace;
+  font-family: var(--font-mono, "Monaco", "Menlo", "Consolas", "Courier New", monospace);
 }
 
 .fullscreen-edit-editor :deep(.cm-scroller) {
