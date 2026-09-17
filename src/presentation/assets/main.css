@@ -9,6 +9,10 @@
   --color-text-secondary: #6b7280;
   --color-selected-bg: #e3f2fd;
   --color-highlight-bg: #fff3cd;
+  /* 字体默认栈：设置页"全部字体"/"等宽字体"覆盖同名变量，未设置时回落此处 */
+  --font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Monaco", "Menlo", "Consolas", "Courier New", monospace;
   /* z-index 语义分层，详见根目录 design.md 的 z-index 层级小节 */
   --z-decor: 1; /* 页面内装饰/指示 */
   --z-editor-internal: 100; /* 编辑器内部浮层 */
@@ -39,16 +43,7 @@
 }
 
 body {
-  font-family: var(
-    --font-family,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    Arial,
-    sans-serif
-  );
+  font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-background);

@@ -573,7 +573,6 @@ onMounted(async () => {
   background-color: var(--color-background);
   color: var(--color-text);
   box-sizing: border-box;
-  font-family: inherit;
 }
 
 .dialog-textarea {

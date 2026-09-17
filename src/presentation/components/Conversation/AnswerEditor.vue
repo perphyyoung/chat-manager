@@ -327,7 +327,7 @@ defineExpose({
 }
 
 kbd {
-  font-family: inherit;
+  font-family: var(--font-mono);
   font-size: 12px;
   background-color: var(--color-hover);
   color: var(--color-text);
@@ -340,11 +340,12 @@ kbd {
 .fullscreen-edit-editor :deep(.cm-editor) {
   height: 100%;
   font-size: 15px;
-  font-family: var(--font-mono, "Monaco", "Menlo", "Consolas", "Courier New", monospace);
 }
 
 .fullscreen-edit-editor :deep(.cm-scroller) {
   overflow: auto;
+  /* CodeMirror baseTheme 在 .cm-scroller 硬编码 font-family: monospace，必须在此层覆盖才能应用设置字体 */
+  font-family: var(--font-mono);
 }
 
 /* 行号样式 */

@@ -446,6 +446,6 @@ onUnmounted(() => {
   background: var(--color-hover);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono);
 }
 </style>
