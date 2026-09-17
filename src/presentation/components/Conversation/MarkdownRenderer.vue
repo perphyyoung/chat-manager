@@ -33,6 +33,23 @@ const frontmatterList = computed(() => {
     return { key, isArray: false as const, items: [String(value)] };
   });
 });
+
+// 复制代码按钮为 v-html 注入，无法绑定事件，用根容器事件委托处理
+const onContentClick = async (e: MouseEvent) => {
+  const btn = (e.target as HTMLElement).closest(".code-copy-btn");
+  if (!btn) return;
+  const code = btn.closest("pre")?.querySelector("code");
+  if (!code) return;
+  try {
+    // textContent 不含伪元素生成的行号，复制的是纯代码
+    await navigator.clipboard.writeText(code.textContent ?? "");
+    btn.textContent = "已复制";
+    setTimeout(() => (btn.textContent = "复制"), 1500);
+  } catch (err) {
+    // 剪贴板写入失败不静默：统一写入 cm.log
+    window.electronAPI.renderLog("error", `复制代码失败: ${String(err)}`);
+  }
+};
 </script>
 
 <template>
@@ -52,7 +69,7 @@ const frontmatterList = computed(() => {
         <span v-else class="markdown-renderer__frontmatter-value">{{ item.items[0] }}</span>
       </div>
     </div>
-    <div v-html="renderedHtml" />
+    <div v-html="renderedHtml" @click="onContentClick" />
   </div>
 </template>
 
@@ -138,35 +155,71 @@ const frontmatterList = computed(() => {
   border-radius: 8px;
   overflow: hidden;
   background-color: #2d2d2d;
-  /* 语言徽标 absolute 定位的锚点 */
+  /* 语言徽标/复制按钮 absolute 定位的锚点 */
   position: relative;
 }
 
 .markdown-renderer :deep(pre code) {
   display: block;
-  padding: 16px;
+  /* 顶部留出徽标与复制按钮的空间，行号列由 .code-line grid 承担，无需左 padding */
+  padding: 32px 16px 16px 0;
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.0;
   background-color: transparent;
+  /* 行号 counter 起点 */
+  counter-reset: code-line;
 }
 
-/* 带语言徽标的代码块给徽标让位，避免遮挡首行代码 */
-.markdown-renderer :deep(pre.has-lang code) {
-  padding-top: 32px;
+/* 逐行容器：块级独占一行；行号用 inline-block 固定宽，避免 grid 布局把 token span 当 grid item 打散 */
+.markdown-renderer :deep(.code-line) {
+  display: block;
+  min-height: 1.0em;
+}
+
+.markdown-renderer :deep(.code-line::before) {
+  content: counter(code-line);
+  counter-increment: code-line;
+  display: inline-block;
+  width: 3.5em;
+  text-align: right;
+  padding-right: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  user-select: none;
 }
 
 /* 语言徽标：渲染层读取代码块声明的 lang 显示在左上角（markdown.ts 生成） */
 .markdown-renderer :deep(.code-block-lang) {
   position: absolute;
   top: 6px;
-  left: 10px;
+  left: 16px;
   font-size: 11px;
   line-height: 1;
   color: rgba(255, 255, 255, 0.55);
   user-select: none;
   pointer-events: none;
+}
+
+/* 复制代码按钮：右上角，位于滚动容器之外，不随代码滚动 */
+.markdown-renderer :deep(.code-copy-btn) {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.markdown-renderer :deep(.code-copy-btn:hover) {
+  background-color: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
 .markdown-renderer :deep(ul),

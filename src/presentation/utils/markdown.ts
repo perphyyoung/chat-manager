@@ -73,10 +73,18 @@ renderer.code = function ({
   // 将 class="language-xxx" 中的语言名替换为映射后的名称
   const html = rawHtml.replace(/class="language-[^"]*"/g, `class="language-${mappedLang}"`);
   // 语言徽标：渲染层直接读取代码块已声明的 lang，不改源码；无语言（``` 后为空）时不显示
-  const badge = lang
-    ? `<span class="code-block-lang">${escapeHtml(lang)}</span>`
-    : "";
-  return html.replace(/<pre>/, `<pre${lang ? ' class="has-lang"' : ""}>${badge}`);
+  const badge = lang ? `<span class="code-block-lang">${escapeHtml(lang)}</span>` : "";
+  // 行号：高亮 HTML 按 \n 拆成逐行 span（Prism token 不跨行，可安全拆分），行号由 CSS counter 伪元素生成，不占 textContent
+  const numberedCode = text
+    .replace(/\n$/, "")
+    .split("\n")
+    .map((line) => `<span class="code-line">${line || ""}</span>`)
+    .join("\n");
+  const htmlWithLines = html.replace(/(<code[^>]*>)([\s\S]*)(<\/code>)/, `$1${numberedCode}$3`);
+  return htmlWithLines.replace(
+    /<pre>/,
+    `<pre${lang ? ' class="has-lang"' : ""}>${badge}<button class="code-copy-btn" type="button">复制</button>`,
+  );
 };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 marked.setOptions({ renderer } as any);
