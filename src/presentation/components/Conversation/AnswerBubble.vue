@@ -43,11 +43,6 @@ const contextMenuItems = computed<MenuItem[]>(() => [
     visible: !contextMenu.value.isEditing,
   },
   {
-    text: "添加语言标识",
-    action: addLanguageIdentifiers,
-    visible: !contextMenu.value.isEditing,
-  },
-  {
     icon: editorRef.value?.showLineNumbers ? "☑" : "☐",
     text: "显示行号",
     action: () => editorRef.value?.toggleLineNumbers(),
@@ -91,39 +86,6 @@ function handleContextMenu(e: MouseEvent) {
 
 function closeContextMenu() {
   contextMenu.value.show = false;
-}
-
-function addLanguageIdentifiers() {
-  // 为代码块添加语言标识
-  // 兼容 ``` 与语言名间的空格/Tab，以及 CRLF/LF：仅匹配 ```lang 或 ```\n 会导致常见写法 ``` json 识别失败
-  const codeBlockRegex = /```[ \t]*([^\s`]*)?[ \t]*\r?\n([\s\S]*?)```/g;
-  let result = props.content;
-  let match;
-
-  while ((match = codeBlockRegex.exec(props.content)) !== null) {
-    const lang = match[1] || "plaintext";
-    const code = match[2] ?? "";
-    if (!code) continue;
-
-    // 检查是否已添加语言标识（第一行是否包含 // language:）
-    const lines = code.split("\n");
-    // 找到第一个非空行
-    const firstNonEmptyLine = lines.find((line) => line.trim());
-    if (!firstNonEmptyLine || !firstNonEmptyLine.trim().startsWith("// language:")) {
-      // 获取第一行的缩进，给注释添加相同缩进
-      const firstLine = lines[0] ?? "";
-      const indentMatch = firstLine.match(/^(\s*)/);
-      const indent = indentMatch ? indentMatch[1] : "";
-      const newCode = `${indent}// language: ${lang}\n${code}`;
-      result = result.replace(match[0], `\`\`\`${lang}\n${newCode}\`\`\``);
-    }
-  }
-
-  if (result !== props.content) {
-    emit("beforeUpdate");
-    emit("update", props.answerId, result);
-  }
-  closeContextMenu();
 }
 </script>
 
