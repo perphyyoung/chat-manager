@@ -138,6 +138,8 @@ const frontmatterList = computed(() => {
   border-radius: 8px;
   overflow: hidden;
   background-color: #2d2d2d;
+  /* 语言徽标 absolute 定位的锚点 */
+  position: relative;
 }
 
 .markdown-renderer :deep(pre code) {
@@ -148,6 +150,23 @@ const frontmatterList = computed(() => {
   font-size: 13px;
   line-height: 1.5;
   background-color: transparent;
+}
+
+/* 带语言徽标的代码块给徽标让位，避免遮挡首行代码 */
+.markdown-renderer :deep(pre.has-lang code) {
+  padding-top: 32px;
+}
+
+/* 语言徽标：渲染层读取代码块声明的 lang 显示在左上角（markdown.ts 生成） */
+.markdown-renderer :deep(.code-block-lang) {
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  font-size: 11px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.55);
+  user-select: none;
+  pointer-events: none;
 }
 
 .markdown-renderer :deep(ul),

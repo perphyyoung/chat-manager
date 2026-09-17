@@ -71,7 +71,12 @@ renderer.code = function ({
   const mappedLang = LANGUAGE_ALIASES[lang || ""] || lang || "plaintext";
   const rawHtml = originalCode({ text, lang: mappedLang, escaped });
   // 将 class="language-xxx" 中的语言名替换为映射后的名称
-  return rawHtml.replace(/class="language-[^"]*"/g, `class="language-${mappedLang}"`);
+  const html = rawHtml.replace(/class="language-[^"]*"/g, `class="language-${mappedLang}"`);
+  // 语言徽标：渲染层直接读取代码块已声明的 lang，不改源码；无语言（``` 后为空）时不显示
+  const badge = lang
+    ? `<span class="code-block-lang">${escapeHtml(lang)}</span>`
+    : "";
+  return html.replace(/<pre>/, `<pre${lang ? ' class="has-lang"' : ""}>${badge}`);
 };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 marked.setOptions({ renderer } as any);
