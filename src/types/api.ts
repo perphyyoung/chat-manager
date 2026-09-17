@@ -21,6 +21,7 @@ export interface ElectronAPI {
   renderLog: (level: string, message: string) => void;
   getVersion: () => Promise<string>;
   getDataPath: () => Promise<string>;
+  getFontNameMap: () => Promise<Record<string, string>>;
   openDataDir: () => Promise<string>;
   db: {
     transaction: {

@@ -9,6 +9,7 @@ import {
   nativeImage,
 } from "electron";
 import path from "node:path";
+import fs from "node:fs";
 import { log } from "./logger";
 import { getDatabase, closeDatabase } from "./database";
 import { SearchService } from "../src/infrastructure/search/SearchService";
@@ -69,6 +70,75 @@ ipcMain.handle("get-version", () => app.getVersion());
 ipcMain.handle("get-data-path", () => dataDirManager.getDbDir());
 
 ipcMain.handle("open-data-dir", () => shell.openPath(dataDirManager.getDbDir()));
+
+// 默认字体中文名映射：首次生成 font-name-map.toml 时写入，用户可自行维护
+const DEFAULT_FONT_NAME_MAP: Record<string, string> = {
+  "Microsoft YaHei": "微软雅黑",
+  "Microsoft YaHei UI": "微软雅黑 UI",
+  "PingFang SC": "苹方",
+  "Hiragino Sans GB": "冬青黑体",
+  "Noto Sans SC": "思源黑体",
+  "Noto Serif SC": "思源宋体",
+  "Source Han Sans SC": "思源黑体",
+  "Source Han Serif SC": "思源宋体",
+  SimSun: "宋体",
+  NSimSun: "新宋体",
+  SimHei: "黑体",
+  KaiTi: "楷体",
+  FangSong: "仿宋",
+  DengXian: "等线",
+  "Sarasa Mono SC": "更纱黑体",
+  "Sarasa UI SC": "更纱黑体",
+  "Sarasa Term SC": "更纱黑体",
+  "Sarasa Gothic SC": "更纱黑体",
+};
+
+// 逐行解析字体映射 toml：注释、空行与不规范行直接跳过，单个坏行不影响其余行
+function parseFontNameMap(content: string): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) {
+      continue;
+    }
+    const match = line.match(/^"?([^"=]+?)"?\s*=\s*"([^"]*)"$/);
+    if (!match) {
+      continue;
+    }
+    const key = match[1].trim().replace(/^"|"$/g, "");
+    const value = match[2];
+    if (key && value) {
+      map[key] = value;
+    }
+  }
+  return map;
+}
+
+// 读取字体中文名映射：文件不存在时写入默认模板；读取失败时回退默认映射
+ipcMain.handle("read-font-name-map", () => {
+  const filePath = path.join(dataDirManager.getDbDir(), "font-name-map.toml");
+  try {
+    if (!fs.existsSync(filePath)) {
+      const lines = Object.entries(DEFAULT_FONT_NAME_MAP).map(
+        ([key, value]) => `"${key}" = "${value}"`,
+      );
+      fs.writeFileSync(
+        filePath,
+        [
+          "# 字体英文 family → 中文显示名映射",
+          '# 每行一个映射，语法："英文族名" = "中文名"',
+          "# 不规范的行会被跳过，不影响其他行",
+          ...lines,
+          "",
+        ].join("\n"),
+      );
+    }
+    return parseFontNameMap(fs.readFileSync(filePath, "utf8"));
+  } catch (error) {
+    log.error(`read font-name-map failed: ${String(error)}`);
+    return { ...DEFAULT_FONT_NAME_MAP };
+  }
+});
 
 // Document IPC handlers
 ipcMain.handle("document:findAllDocuments", (_, options?: { isDeleted?: boolean }) => {

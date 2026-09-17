@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   getVersion: () => ipcRenderer.invoke("get-version"),
   getDataPath: () => ipcRenderer.invoke("get-data-path"),
+  getFontNameMap: () => ipcRenderer.invoke("read-font-name-map"),
   openDataDir: () => ipcRenderer.invoke("open-data-dir"),
   onOpenSearch: (callback: () => void) => {
     ipcRenderer.on("shortcut:open-search", () => {

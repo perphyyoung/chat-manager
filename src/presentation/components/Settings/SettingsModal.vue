@@ -42,6 +42,15 @@ interface FontOption {
   label: string;
 }
 
+// 字体英文 family → 中文显示名映射：来自数据目录 font-name-map.toml（主进程读取）
+let fontDisplayNames: Record<string, string> = {};
+
+// 字体显示名：优先中文名，附英文原文便于识别；无映射保持英文
+function displayName(family: string): string {
+  const zh = fontDisplayNames[family];
+  return zh ? `${zh} (${family})` : family;
+}
+
 // 本机字体列表：queryLocalFonts 成功时动态枚举，失败时回退候选表
 const standardFonts = ref<FontOption[]>([]);
 const monoFonts = ref<FontOption[]>([]);
@@ -132,6 +141,8 @@ const appVersion = ref("");
 onMounted(async () => {
   dataPath.value = await window.electronAPI.getDataPath();
   appVersion.value = await window.electronAPI.getVersion();
+  // 先加载字体中文名映射，再构建字体列表，避免列表构建时映射未就绪
+  fontDisplayNames = await window.electronAPI.getFontNameMap().catch(() => ({}));
   // 官方 Local Font Access API：动态枚举本机字体并按等宽性分类；拒绝授权或不可用时回退候选表
   const winWithFonts = window as unknown as {
     queryLocalFonts?: () => Promise<Array<{ family: string }>>;
@@ -146,9 +157,9 @@ onMounted(async () => {
       const monos: FontOption[] = [{ value: "", label: "跟随系统" }];
       for (const family of families) {
         if (isMonoFamily(family)) {
-          monos.push({ value: `"${family}", monospace`, label: family });
+          monos.push({ value: `"${family}", monospace`, label: displayName(family) });
         } else {
-          standards.push({ value: `"${family}", sans-serif`, label: family });
+          standards.push({ value: `"${family}", sans-serif`, label: displayName(family) });
         }
       }
       standardFonts.value = standards;
