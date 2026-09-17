@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import { useSettingsStore } from "../../stores/settings";
 
 const settingsStore = useSettingsStore();
@@ -37,21 +37,86 @@ const FONT_CANDIDATES = {
   ],
 };
 
-// 检测字体是否本机已安装；跟随系统项始终可用
-function isFontAvailable(cssValue: string): boolean {
-  if (!cssValue) {
-    return true;
-  }
-  const match = cssValue.match(/"([^"]+)"|^([^,\s]+)/);
-  const family = match?.[1] ?? match?.[2];
-  return family ? document.fonts.check(`16px "${family}"`) : true;
+interface FontOption {
+  value: string;
+  label: string;
 }
 
-// 仅列出本机已安装字体
-const standardFonts = computed(() =>
-  FONT_CANDIDATES.standard.filter((f) => isFontAvailable(f.value)),
-);
-const monoFonts = computed(() => FONT_CANDIDATES.mono.filter((f) => isFontAvailable(f.value)));
+// 本机字体列表：queryLocalFonts 成功时动态枚举，失败时回退候选表
+const standardFonts = ref<FontOption[]>([]);
+const monoFonts = ref<FontOption[]>([]);
+
+// Canvas 测量法结果缓存
+const measureCache = new Map<string, boolean>();
+const monoCache = new Map<string, boolean>();
+
+// 提取 cssValue 中的第一个字体族名（兼容带引号与不带引号）
+function extractFamily(cssValue: string): string | null {
+  const match = cssValue.match(/"([^"]+)"|^([^,\s]+)/);
+  return match?.[1] ?? match?.[2] ?? null;
+}
+
+// Canvas 测量法：字体存在时三个基准都渲染目标字体、宽度相等；
+// 不存在时回退到三个不同基准、宽度互异。官方 FontFaceSet.check 对不存在的字体也返回 true，不可用。
+function isInstalledByMeasure(family: string): boolean {
+  const cached = measureCache.get(family);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return true;
+  }
+  const text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const fontSpec = `72px "${family}"`;
+  ctx.font = `${fontSpec}, serif`;
+  const wSerif = ctx.measureText(text).width;
+  ctx.font = `${fontSpec}, sans-serif`;
+  const wSans = ctx.measureText(text).width;
+  ctx.font = `${fontSpec}, monospace`;
+  const wMono = ctx.measureText(text).width;
+  const installed = wSerif === wSans && wSans === wMono;
+  measureCache.set(family, installed);
+  return installed;
+}
+
+// 等宽判断：等宽字体中窄字符与宽字符渲染宽度相同
+function isMonoFamily(family: string): boolean {
+  const cached = monoCache.get(family);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return false;
+  }
+  ctx.font = `16px "${family}"`;
+  const narrow = ctx.measureText("iiiiiiiiii").width;
+  const wide = ctx.measureText("MMMMMMMMMM").width;
+  const mono = narrow === wide;
+  monoCache.set(family, mono);
+  return mono;
+}
+
+// 回退列表：queryLocalFonts 不可用时，候选表按 Canvas 测量法过滤可用项
+function buildFallbackLists() {
+  standardFonts.value = FONT_CANDIDATES.standard.filter((f) => {
+    if (!f.value) {
+      return true;
+    }
+    const family = extractFamily(f.value);
+    return family ? isInstalledByMeasure(family) : true;
+  });
+  monoFonts.value = FONT_CANDIDATES.mono.filter((f) => {
+    if (!f.value) {
+      return true;
+    }
+    const family = extractFamily(f.value);
+    return family ? isInstalledByMeasure(family) : true;
+  });
+}
 
 function handleFontChange(event: Event) {
   settingsStore.setFontFamily((event.target as HTMLSelectElement).value);
@@ -67,6 +132,33 @@ const appVersion = ref("");
 onMounted(async () => {
   dataPath.value = await window.electronAPI.getDataPath();
   appVersion.value = await window.electronAPI.getVersion();
+  // 官方 Local Font Access API：动态枚举本机字体并按等宽性分类；拒绝授权或不可用时回退候选表
+  const winWithFonts = window as unknown as {
+    queryLocalFonts?: () => Promise<Array<{ family: string }>>;
+  };
+  if (typeof winWithFonts.queryLocalFonts === "function") {
+    try {
+      const fonts = await winWithFonts.queryLocalFonts();
+      const families = [...new Set(fonts.map((f) => f.family))].sort((a, b) =>
+        a.localeCompare(b, "zh-Hans-CN"),
+      );
+      const standards: FontOption[] = [{ value: "", label: "跟随系统" }];
+      const monos: FontOption[] = [{ value: "", label: "跟随系统" }];
+      for (const family of families) {
+        if (isMonoFamily(family)) {
+          monos.push({ value: `"${family}", monospace`, label: family });
+        } else {
+          standards.push({ value: `"${family}", sans-serif`, label: family });
+        }
+      }
+      standardFonts.value = standards;
+      monoFonts.value = monos;
+      return;
+    } catch {
+      // 权限被拒或受限环境，走候选表回退
+    }
+  }
+  buildFallbackLists();
 });
 
 function handleClose() {
