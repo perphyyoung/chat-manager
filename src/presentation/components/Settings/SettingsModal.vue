@@ -127,15 +127,23 @@ async function isMonoFamily(family: string): Promise<boolean> {
   return mono;
 }
 
-// 回退列表：queryLocalFonts 不可用时，候选表按 Canvas 测量法过滤可用项
+// 回退列表：queryLocalFonts 不可用时，候选表按 Canvas 测量法过滤可用项。
+// "全部字体"含等宽候选，非代码区域也可选用等宽字体
 function buildFallbackLists() {
-  standardFonts.value = FONT_CANDIDATES.standard.filter((f) => {
-    if (!f.value) {
-      return true;
+  const all: FontOption[] = [];
+  for (const list of [FONT_CANDIDATES.standard, FONT_CANDIDATES.mono]) {
+    for (const font of list) {
+      if (!font.value) {
+        all.push(font);
+        continue;
+      }
+      const family = extractFamily(font.value);
+      if (family && isInstalledByMeasure(family)) {
+        all.push(font);
+      }
     }
-    const family = extractFamily(f.value);
-    return family ? isInstalledByMeasure(family) : true;
-  });
+  }
+  standardFonts.value = all;
   monoFonts.value = FONT_CANDIDATES.mono.filter((f) => {
     if (!f.value) {
       return true;
@@ -178,10 +186,11 @@ onMounted(async () => {
         families.map(async (family) => await isMonoFamily(family)),
       );
       families.forEach((family, index) => {
-        if (monoFlags[index]) {
+        const isMono = monoFlags[index];
+        // "全部字体"：标准与等宽都列出，非代码区域也可选用等宽字体
+        standards.push({ value: `"${family}", sans-serif`, label: displayName(family) });
+        if (isMono) {
           monos.push({ value: `"${family}", monospace`, label: displayName(family) });
-        } else {
-          standards.push({ value: `"${family}", sans-serif`, label: displayName(family) });
         }
       });
       standardFonts.value = standards;
@@ -224,7 +233,8 @@ async function handleOpenDataDir() {
           </label>
         </div>
         <div class="setting-item setting-item--column">
-          <span class="font-label">标准字体</span>
+          <span class="font-label">全部字体</span>
+          <span class="font-desc">界面正文等非代码区域，可选等宽字体</span>
           <select class="font-select" :value="settingsStore.fontFamily" @change="handleFontChange">
             <option v-for="font in standardFonts" :key="font.value" :value="font.value">
               {{ font.label }}
@@ -233,6 +243,7 @@ async function handleOpenDataDir() {
         </div>
         <div class="setting-item setting-item--column">
           <span class="font-label">等宽字体</span>
+          <span class="font-desc">编辑器与代码块等代码区域</span>
           <select
             class="font-select"
             :value="settingsStore.monoFontFamily"
@@ -336,6 +347,12 @@ async function handleOpenDataDir() {
 .font-label {
   font-size: 14px;
   color: var(--color-text);
+}
+
+.font-desc {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
 }
 
 .font-select {
