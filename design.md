@@ -25,10 +25,11 @@ z-index 一律使用语义变量，禁止魔法数字。变量定义于 `src/pre
 | --- | --- | --- | --- |
 | `--z-decor` | 1 | 页面内装饰/指示 | 拖拽放置指示条 |
 | `--z-editor-internal` | 100 | 编辑器内部浮层 | CodeMirror 搜索面板 |
-| `--z-modal` | 1000 | 局部对话框遮罩 | 文档/问答对/设置对话框 |
+| `--z-modal` | 1000 | 局部对话框遮罩 | 文档/问答对对话框 |
 | `--z-overlay` | 9000 | 全局全屏遮罩 | 标签/回收站/确认/通知/下拉遮罩及其面板体 |
 | `--z-fullscreen-editor` | 9050 | 全屏编辑器遮罩，高于普通全屏遮罩 | 回答编辑器 |
 | `--z-global-search` | 9500 | 全局搜索，高于全屏编辑器 | 全局搜索面板 |
+| `--z-settings` | 9600 | 设置弹窗，高于全局搜索与全屏编辑器，便于调整字体等设置时即时预览 | 设置对话框 |
 | `--z-highest` | 10000 | 全局提示/右键菜单，恒最高 | Toast / 右键菜单 |
 
 ### 组件归属
@@ -37,9 +38,10 @@ z-index 一律使用语义变量，禁止魔法数字。变量定义于 `src/pre
 | --- | --- | --- |
 | `--z-decor` | QuestionItem.vue | `.question-item--drop-target::before` |
 | `--z-fullscreen-editor` | AnswerEditor.vue | `.fullscreen-edit-overlay` |
-| `--z-modal` | QuestionList.vue / DocumentList.vue / SettingsModal.vue | 对话框遮罩 |
+| `--z-modal` | QuestionList.vue / DocumentList.vue | 对话框遮罩 |
 | `--z-overlay` | TagSelector / RecycleBinModal / DropdownMenu / ConfirmDialog / NotificationModal / TagFilter | 全屏遮罩及面板体（面板体为遮罩子元素；TagFilter 独立浮层直接用此层级） |
 | `--z-global-search` | SearchModal.vue | 全局搜索面板 |
+| `--z-settings` | SettingsModal.vue | 对话框遮罩 |
 | `--z-highest` | ContextMenu.vue / ToastModal.vue | `.context-menu-overlay` / `.toast` |
 
 > `--z-editor-internal` 属编辑器内部浮层（AnswerEditor `.cm-panels`），不影响全局层级，故不列入全局归属。

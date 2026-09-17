@@ -293,7 +293,7 @@ async function handleOpenDataDir() {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: var(--z-modal);
+  z-index: var(--z-settings);
 }
 
 .modal-content {
