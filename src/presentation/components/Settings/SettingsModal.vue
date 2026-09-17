@@ -232,24 +232,38 @@ async function handleOpenDataDir() {
             <span class="slider"></span>
           </label>
         </div>
-        <div class="setting-item setting-item--column">
-          <span class="font-label">全部字体</span>
-          <span class="font-desc">界面正文等非代码区域，可选等宽字体</span>
+        <div class="setting-item">
+          <div class="font-info">
+            <span class="font-label">全部字体</span>
+            <span class="font-desc">界面正文等非代码区域，可选等宽字体</span>
+          </div>
           <select class="font-select" :value="settingsStore.fontFamily" @change="handleFontChange">
-            <option v-for="font in standardFonts" :key="font.value" :value="font.value">
+            <option
+              v-for="font in standardFonts"
+              :key="font.value"
+              :value="font.value"
+              :title="font.label"
+            >
               {{ font.label }}
             </option>
           </select>
         </div>
-        <div class="setting-item setting-item--column">
-          <span class="font-label">等宽字体</span>
-          <span class="font-desc">编辑器与代码块等代码区域</span>
+        <div class="setting-item">
+          <div class="font-info">
+            <span class="font-label">等宽字体</span>
+            <span class="font-desc">编辑器与代码块等代码区域</span>
+          </div>
           <select
             class="font-select"
             :value="settingsStore.monoFontFamily"
             @change="handleMonoFontChange"
           >
-            <option v-for="font in monoFonts" :key="font.value" :value="font.value">
+            <option
+              v-for="font in monoFonts"
+              :key="font.value"
+              :value="font.value"
+              :title="font.label"
+            >
               {{ font.label }}
             </option>
           </select>
@@ -285,7 +299,7 @@ async function handleOpenDataDir() {
 .modal-content {
   background-color: var(--color-surface);
   border-radius: 10px;
-  width: 520px;
+  width: 640px;
   max-width: 90%;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -344,6 +358,12 @@ async function handleOpenDataDir() {
   align-items: stretch;
 }
 
+.font-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .font-label {
   font-size: 14px;
   color: var(--color-text);
@@ -352,11 +372,11 @@ async function handleOpenDataDir() {
 .font-desc {
   font-size: 12px;
   color: var(--color-text-secondary);
-  margin-bottom: 4px;
 }
 
 .font-select {
-  margin-top: 8px;
+  width: 300px;
+  flex-shrink: 0;
   padding: 6px 10px;
   font-size: 13px;
   border: 1px solid var(--color-border);
