@@ -348,6 +348,11 @@ kbd {
   font-family: var(--font-family);
 }
 
+/* 围栏/缩进代码块：装饰器标记的 .cm-code-font 设等宽，语言着色由 oneDark 单独负责，互不干扰 */
+.fullscreen-edit-editor :deep(.cm-code-font) {
+  font-family: var(--font-mono);
+}
+
 /* 行号样式 */
 .fullscreen-edit-editor :deep(.cm-lineNumbers) {
   min-width: 40px;

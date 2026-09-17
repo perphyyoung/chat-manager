@@ -1,6 +1,6 @@
 import { ref, shallowRef, nextTick } from "vue";
-import { EditorView, keymap, lineNumbers } from "@codemirror/view";
-import { EditorState, Compartment } from "@codemirror/state";
+import { EditorView, keymap, lineNumbers, Decoration } from "@codemirror/view";
+import { EditorState, Compartment, type Range } from "@codemirror/state";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
 import {
@@ -11,7 +11,7 @@ import {
   deleteLine,
 } from "@codemirror/commands";
 import { languages } from "@codemirror/language-data";
-import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { syntaxTree, HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import {
   search,
@@ -24,6 +24,21 @@ import {
 const codeFontHighlighting = HighlightStyle.define([
   { tag: tags.monospace, fontFamily: "var(--font-mono)" },
 ]);
+
+// 围栏/缩进代码块启用 codeLanguages 后，内容由语言解析器嵌套解析，节点 tag 变为语言 tag（不含 monospace），
+// 上面的 HighlightStyle 匹配不到；改用装饰器按语法节点区间标记 .cm-code-font，与语言着色并存
+const codeFontMark = Decoration.mark({ class: "cm-code-font" });
+const codeFontDecorations = EditorView.decorations.compute(["doc"], (state) => {
+  const ranges: Range<Decoration>[] = [];
+  syntaxTree(state).iterate({
+    enter: (node) => {
+      if (node.name === "FencedCode" || node.name === "CodeBlock") {
+        ranges.push(codeFontMark.range(node.from, node.to));
+      }
+    },
+  });
+  return Decoration.set(ranges, true);
+});
 
 interface UseCodeMirrorOptions {
   initialContent: string;
@@ -127,7 +142,8 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
           wordWrap.value ? EditorView.lineWrapping : [], // 长文本换行
           markdown({ codeLanguages: languages }),
           oneDark,
-          syntaxHighlighting(codeFontHighlighting), // 语法级字体：代码等宽、正文界面字体
+          syntaxHighlighting(codeFontHighlighting), // 语法级字体：行内代码等宽、正文界面字体
+          codeFontDecorations, // 围栏/缩进代码块等宽字体标记（与语言着色并存）
           search({ top: true }), // 官方搜索面板，显示在顶部
           // 自定义快捷键：Ctrl+D 删除当前行（defaultKeymap 未绑定），置于数组首位优先匹配
           keymap.of([
