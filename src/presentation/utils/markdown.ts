@@ -1,35 +1,10 @@
 import { load } from "js-yaml";
 import { Marked } from "marked";
-import { markedHighlight } from "marked-highlight";
-import Prism from "prismjs";
+import { createHighlighter } from "shiki";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import { escapeHtml, escapeRegex } from "./html";
 
-// 加载常用语言支持
-import "prismjs/components/prism-javascript";
-import "prismjs/components/prism-typescript";
-import "prismjs/components/prism-python";
-import "prismjs/components/prism-java";
-import "prismjs/components/prism-css";
-import "prismjs/components/prism-json";
-import "prismjs/components/prism-markdown";
-import "prismjs/components/prism-bash";
-import "prismjs/components/prism-sql";
-import "prismjs/components/prism-yaml";
-import "prismjs/components/prism-rust";
-import "prismjs/components/prism-go";
-import "prismjs/components/prism-jsx";
-import "prismjs/components/prism-tsx";
-import "prismjs/components/prism-scss";
-import "prismjs/components/prism-docker";
-import "prismjs/components/prism-nginx";
-import "prismjs/components/prism-c";
-import "prismjs/components/prism-cpp";
-
-// 注册 Vue 语言支持（基于 HTML）
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(Prism.languages as Record<string, any>).vue = Prism.languages.extend("html", {});
-
-// 语言别名映射：将常见的非标准语言标识符映射到 Prism 支持的语言名
+// 语言别名映射：将常见的非标准语言标识符映射到 Shiki 语言 id，未识别的语言回退 "text"
 const LANGUAGE_ALIASES: Record<string, string> = {
   "c++": "cpp",
   "c#": "csharp",
@@ -42,50 +17,65 @@ const LANGUAGE_ALIASES: Record<string, string> = {
   dockerfile: "docker",
 };
 
-// 创建带语法高亮的 marked 实例
-export const marked = new Marked(
-  markedHighlight({
-    emptyLangClass: "language-plaintext",
-    langPrefix: "language-",
-    highlight(code, lang) {
-      const mappedLang = LANGUAGE_ALIASES[lang] || lang;
-      const language = Prism.languages[mappedLang] ? mappedLang : "plaintext";
-      return Prism.highlight(code, Prism.languages[language]!, language);
-    },
-  }),
-);
+// 渲染层代码高亮使用 Shiki（替代 Prism）：
+// - Shiki token 严格按行分组不跨行，规避嵌套语言（vue 的 <script>）跨行 token 被切行拆坏的问题
+// - 纯 JS 正则引擎免 WASM 加载；模块加载时完成初始化，之后 codeToHtml 同步可用
+const highlighter = await createHighlighter({
+  langs: [
+    "javascript",
+    "typescript",
+    "python",
+    "java",
+    "css",
+    "json",
+    "markdown",
+    "bash",
+    "sql",
+    "yaml",
+    "rust",
+    "go",
+    "jsx",
+    "tsx",
+    "scss",
+    "docker",
+    "nginx",
+    "c",
+    "cpp",
+    "csharp",
+    "html",
+    "vue",
+    "ruby",
+    "text",
+  ],
+  // 主题与编辑器 CodeMirror 的 oneDark 视觉呼应
+  themes: ["one-dark-pro"],
+  engine: createJavaScriptRegexEngine(),
+});
 
-// 自定义代码块渲染，使用映射后的语言名作为 class，避免特殊字符（如 c++）导致 CSS 选择器问题
+function resolveLang(lang?: string): string {
+  const mapped = LANGUAGE_ALIASES[lang || ""] || lang;
+  return mapped && highlighter.getLoadedLanguages().includes(mapped as never) ? mapped : "text";
+}
+
+// 自定义代码块渲染：Shiki 高亮 HTML 自带主题内联样式（背景/前景色），保留其 <pre> 属性让主题生效
+export const marked = new Marked();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const renderer = new (marked as any).Renderer();
-const originalCode = renderer.code.bind(renderer);
-renderer.code = function ({
-  text,
-  lang,
-  escaped,
-}: {
-  text: string;
-  lang?: string;
-  escaped?: boolean;
-}) {
-  const mappedLang = LANGUAGE_ALIASES[lang || ""] || lang || "plaintext";
-  const rawHtml = originalCode({ text, lang: mappedLang, escaped });
-  // 将 class="language-xxx" 中的语言名替换为映射后的名称
-  const html = rawHtml.replace(/class="language-[^"]*"/g, `class="language-${mappedLang}"`);
+renderer.code = function ({ text, lang }: { text: string; lang?: string }) {
+  const codeText = text.replace(/\n$/, "");
+  const shikiHtml = highlighter.codeToHtml(codeText, {
+    lang: resolveLang(lang),
+    theme: "one-dark-pro",
+  });
+  const preAttrs = shikiHtml.match(/^<pre([^>]*)>[\s\S]*<\/pre>/)?.[1] ?? "";
+  const inner = shikiHtml.replace(/^<pre[^>]*>/, "").replace(/<\/pre>\s*$/, "");
   // 语言徽标：渲染层直接读取代码块已声明的 lang，不改源码；无语言（``` 后为空）时不显示
   const badge = lang ? `<span class="code-block-lang">${escapeHtml(lang)}</span>` : "";
-  // 行号列与代码列分离：代码保持 Prism 高亮原样不切行（嵌套语言如 vue 的 <script> 存在跨行 token，按 \n 切行会拆坏结构），
-  // 行号列按代码物理行数生成，与代码列横向并排，横向滚动时固定在左侧
-  const codeText = text.replace(/\n$/, "");
+  // 行号列与代码列分离：行号按代码物理行数生成（Shiki token 不跨行，物理行数 = 源码行数），与代码列横向并排
   const lineCount = codeText.split("\n").length;
   const lineNumbers = Array.from({ length: lineCount }, (_, i) => i + 1).join("\n");
   const lines = `<span class="code-lines" aria-hidden="true">${lineNumbers}</span>`;
-  return html
-    .replace(/(<code[^>]*>)([\s\S]*)(<\/code>)/, `$1${codeText}$3`)
-    .replace(
-      /<pre>/,
-      `<pre${lang ? ' class="has-lang"' : ""}>${badge}<button class="code-copy-btn" type="button">复制</button>${lines}`,
-    );
+  return `<pre${preAttrs}>${badge}<button class="code-copy-btn" type="button">复制</button>${lines}${inner}</pre>`;
 };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 marked.setOptions({ renderer } as any);

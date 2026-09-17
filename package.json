@@ -1,6 +1,6 @@
 {
   "name": "chat-manager",
-  "version": "0.6.6",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "main": "out/main/index.js",
@@ -34,9 +34,8 @@
     "codemirror": "^6.0.2",
     "electron-log": "^5.4.4",
     "marked": "^18.0.3",
-    "marked-highlight": "^2.2.4",
     "pinia": "^3.0.4",
-    "prismjs": "^1.30.0",
+    "shiki": "^4.4.3",
     "vue": "^3.5.32",
     "vue-router": "^5.0.4"
   },
@@ -46,7 +45,6 @@
     "@types/js-yaml": "^4.0.9",
     "@types/jsdom": "^28.0.1",
     "@types/node": "^24.12.2",
-    "@types/prismjs": "^1.26.6",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vitest/eslint-plugin": "^1.6.16",
     "@vue/eslint-config-typescript": "^14.7.0",
