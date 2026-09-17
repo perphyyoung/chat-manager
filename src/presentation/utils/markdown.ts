@@ -74,17 +74,18 @@ renderer.code = function ({
   const html = rawHtml.replace(/class="language-[^"]*"/g, `class="language-${mappedLang}"`);
   // 语言徽标：渲染层直接读取代码块已声明的 lang，不改源码；无语言（``` 后为空）时不显示
   const badge = lang ? `<span class="code-block-lang">${escapeHtml(lang)}</span>` : "";
-  // 行号：高亮 HTML 按 \n 拆成逐行 span（Prism token 不跨行，可安全拆分），行号由 CSS counter 伪元素生成，不占 textContent
-  const numberedCode = text
-    .replace(/\n$/, "")
-    .split("\n")
-    .map((line) => `<span class="code-line">${line || ""}</span>`)
-    .join("\n");
-  const htmlWithLines = html.replace(/(<code[^>]*>)([\s\S]*)(<\/code>)/, `$1${numberedCode}$3`);
-  return htmlWithLines.replace(
-    /<pre>/,
-    `<pre${lang ? ' class="has-lang"' : ""}>${badge}<button class="code-copy-btn" type="button">复制</button>`,
-  );
+  // 行号列与代码列分离：代码保持 Prism 高亮原样不切行（嵌套语言如 vue 的 <script> 存在跨行 token，按 \n 切行会拆坏结构），
+  // 行号列按代码物理行数生成，与代码列横向并排，横向滚动时固定在左侧
+  const codeText = text.replace(/\n$/, "");
+  const lineCount = codeText.split("\n").length;
+  const lineNumbers = Array.from({ length: lineCount }, (_, i) => i + 1).join("\n");
+  const lines = `<span class="code-lines" aria-hidden="true">${lineNumbers}</span>`;
+  return html
+    .replace(/(<code[^>]*>)([\s\S]*)(<\/code>)/, `$1${codeText}$3`)
+    .replace(
+      /<pre>/,
+      `<pre${lang ? ' class="has-lang"' : ""}>${badge}<button class="code-copy-btn" type="button">复制</button>${lines}`,
+    );
 };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 marked.setOptions({ renderer } as any);

@@ -157,34 +157,35 @@ const onContentClick = async (e: MouseEvent) => {
   background-color: #2d2d2d;
   /* 语言徽标/复制按钮 absolute 定位的锚点 */
   position: relative;
+  /* 行号列与代码列横向并排 */
+  display: flex;
+  align-items: stretch;
+}
+
+/* 行号列与代码列共用：字号、字体、行高必须一致（行高即行距，调行距只改这里，两列同步不错位） */
+.markdown-renderer :deep(pre code),
+.markdown-renderer :deep(.code-lines) {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .markdown-renderer :deep(pre code) {
-  display: block;
-  /* 顶部留出徽标与复制按钮的空间，行号列由 .code-line grid 承担，无需左 padding */
+  /* 行号列固定不动，代码列占剩余宽度并横向滚动 */
+  flex: 1 1 auto;
+  min-width: 0;
+  /* 顶部留出徽标与复制按钮的空间，行号由独立行号列承担，无需左 padding */
   padding: 32px 16px 16px 0;
   overflow-x: auto;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.0;
   background-color: transparent;
-  /* 行号 counter 起点 */
-  counter-reset: code-line;
 }
 
-/* 逐行容器：块级独占一行；行号用 inline-block 固定宽，避免 grid 布局把 token span 当 grid item 打散 */
-.markdown-renderer :deep(.code-line) {
-  display: block;
-  min-height: 1.0em;
-}
-
-.markdown-renderer :deep(.code-line::before) {
-  content: counter(code-line);
-  counter-increment: code-line;
-  display: inline-block;
-  width: 3.5em;
+/* 行号列：与代码列分离，代码横向滚动时行号列固定在左侧；行高与代码行一致保证逐行对齐 */
+.markdown-renderer :deep(.code-lines) {
+  flex: 0 0 auto;
+  padding: 32px 12px 16px 0;
   text-align: right;
-  padding-right: 12px;
+  white-space: pre;
   color: rgba(255, 255, 255, 0.4);
   user-select: none;
 }
