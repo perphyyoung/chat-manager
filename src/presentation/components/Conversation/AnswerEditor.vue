@@ -344,8 +344,8 @@ kbd {
 
 .fullscreen-edit-editor :deep(.cm-scroller) {
   overflow: auto;
-  /* CodeMirror baseTheme 在 .cm-scroller 硬编码 font-family: monospace，必须在此层覆盖才能应用设置字体 */
-  font-family: var(--font-mono);
+  /* 正文默认界面字体，代码节点由 syntaxHighlighting 的 monospace 规则覆盖为等宽 */
+  font-family: var(--font-family);
 }
 
 /* 行号样式 */

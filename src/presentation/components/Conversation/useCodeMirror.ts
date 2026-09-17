@@ -11,12 +11,19 @@ import {
   deleteLine,
 } from "@codemirror/commands";
 import { languages } from "@codemirror/language-data";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { tags } from "@lezer/highlight";
 import {
   search,
   searchKeymap,
   highlightSelectionMatches,
   getSearchQuery,
 } from "@codemirror/search";
+
+// 正文内代码节点（行内代码/围栏代码文本）应用等宽字体，其余正文继承界面字体（见字体相关开发经验.md）
+const codeFontHighlighting = HighlightStyle.define([
+  { tag: tags.monospace, fontFamily: "var(--font-mono)" },
+]);
 
 interface UseCodeMirrorOptions {
   initialContent: string;
@@ -120,6 +127,7 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
           wordWrap.value ? EditorView.lineWrapping : [], // 长文本换行
           markdown({ codeLanguages: languages }),
           oneDark,
+          syntaxHighlighting(codeFontHighlighting), // 语法级字体：代码等宽、正文界面字体
           search({ top: true }), // 官方搜索面板，显示在顶部
           // 自定义快捷键：Ctrl+D 删除当前行（defaultKeymap 未绑定），置于数组首位优先匹配
           keymap.of([
