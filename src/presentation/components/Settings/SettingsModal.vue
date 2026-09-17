@@ -90,21 +90,39 @@ function isInstalledByMeasure(family: string): boolean {
   return installed;
 }
 
-// 等宽判断：等宽字体中窄字符与宽字符渲染宽度相同
-function isMonoFamily(family: string): boolean {
+// 等宽字体名特征词：命中即判等宽，不依赖渲染（解决 canvas 对未激活字体的回退误判）
+const MONO_KEYWORDS = [
+  "Mono",
+  "Menlo",
+  "Consolas",
+  "Courier",
+  "Code",
+  "Console",
+  "JetBrains",
+  "Fira",
+  "Cascadia",
+  "Term",
+];
+
+// 等宽判定：关键词命中直接判等宽；否则预加载字体后采样多字符宽度（等宽字体所有字符宽度相同）
+async function isMonoFamily(family: string): Promise<boolean> {
+  if (MONO_KEYWORDS.some((keyword) => family.includes(keyword))) {
+    return true;
+  }
   const cached = monoCache.get(family);
   if (cached !== undefined) {
     return cached;
   }
+  // 预加载字体，避免 canvas 回退默认字体导致误判
+  await document.fonts.load(`16px "${family}"`).catch(() => {});
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     return false;
   }
   ctx.font = `16px "${family}"`;
-  const narrow = ctx.measureText("iiiiiiiiii").width;
-  const wide = ctx.measureText("MMMMMMMMMM").width;
-  const mono = narrow === wide;
+  const widths = ["i", "W", "0", "l"].map((c) => ctx.measureText(c).width);
+  const mono = widths.every((w) => w === widths[0]);
   monoCache.set(family, mono);
   return mono;
 }
@@ -155,13 +173,17 @@ onMounted(async () => {
       );
       const standards: FontOption[] = [{ value: "", label: "跟随系统" }];
       const monos: FontOption[] = [{ value: "", label: "跟随系统" }];
-      for (const family of families) {
-        if (isMonoFamily(family)) {
+      // 并行判定等宽性（含字体预加载），再按顺序构建列表
+      const monoFlags = await Promise.all(
+        families.map(async (family) => await isMonoFamily(family)),
+      );
+      families.forEach((family, index) => {
+        if (monoFlags[index]) {
           monos.push({ value: `"${family}", monospace`, label: displayName(family) });
         } else {
           standards.push({ value: `"${family}", sans-serif`, label: displayName(family) });
         }
-      }
+      });
       standardFonts.value = standards;
       monoFonts.value = monos;
       return;
