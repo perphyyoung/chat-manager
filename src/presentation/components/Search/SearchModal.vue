@@ -38,6 +38,8 @@ const isOpen = ref(false);
 const query = ref("");
 // 正则模式：开启后查询按正则表达式匹配所有字段原文
 const isRegex = ref(false);
+// 搜索说明 popover 是否显示
+const showHelp = ref(false);
 // 正则表达式非法或查询失败时的提示
 const searchError = ref("");
 const results = ref<SearchResults>({
@@ -178,6 +180,7 @@ function open() {
     tags: [],
   };
   selectedIndex.value = -1;
+  showHelp.value = false;
   setTimeout(() => {
     inputRef.value?.focus();
   }, 50);
@@ -260,7 +263,7 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div v-if="isOpen" class="search-modal">
+    <div v-if="isOpen" class="search-modal" @click.self="showHelp = false">
       <div class="search-modal__container">
         <button class="search-modal__close" @click="close" title="关闭">×</button>
         <SearchInput
@@ -270,7 +273,77 @@ onUnmounted(() => {
           @search="handleSearch"
           @close="close"
           @toggle-regex="isRegex = !isRegex"
+          @toggle-help="showHelp = !showHelp"
         />
+
+        <div v-if="showHelp" class="search-modal__help">
+          <h4>何时用正则搜索</h4>
+          <ul>
+            <li>找特定前缀或结构：<code>^//</code> 行首注释、<code>^TODO</code></li>
+            <li>找含符号的精确片段：<code>// language</code></li>
+            <li>找日期/编号等格式：<code>\d{4}-\d{2}-\d{2}</code></li>
+            <li>排除式匹配：<code>TODO(?!:)</code> 匹配 TODO 但不是 "TODO:"</li>
+          </ul>
+          <h4>何时用普通搜索</h4>
+          <ul>
+            <li>模糊找相关内容：多个词都出现即可，忽略标点与大小写</li>
+          </ul>
+          <h4>常用语法</h4>
+          <table class="search-modal__help-table">
+            <tbody>
+              <tr>
+                <td><code>^</code></td>
+                <td>行首</td>
+                <td><code>^//</code> 行首的 //</td>
+              </tr>
+              <tr>
+                <td><code>$</code></td>
+                <td>行尾</td>
+                <td><code>end$</code> 行尾的 end</td>
+              </tr>
+              <tr>
+                <td><code>.</code></td>
+                <td>任意单个字符</td>
+                <td><code>a.c</code> → abc、a1c</td>
+              </tr>
+              <tr>
+                <td><code>*</code></td>
+                <td>前项出现 0 次或多次</td>
+                <td><code>a*</code> → 空、a、aa</td>
+              </tr>
+              <tr>
+                <td><code>+</code></td>
+                <td>前项出现 1 次或多次</td>
+                <td><code>a+</code> → a、aa</td>
+              </tr>
+              <tr>
+                <td><code>?</code></td>
+                <td>前项出现 0 或 1 次</td>
+                <td><code>colou?r</code> → color、colour</td>
+              </tr>
+              <tr>
+                <td><code>\d \s \w</code></td>
+                <td>数字 / 空白 / 词字符</td>
+                <td><code>\d+</code> 连续数字</td>
+              </tr>
+              <tr>
+                <td><code>[abc]</code></td>
+                <td>字符集</td>
+                <td><code>[0-9]</code> 数字</td>
+              </tr>
+              <tr>
+                <td><code>(a|b)</code></td>
+                <td>分组或</td>
+                <td><code>cat|dog</code> → cat 或 dog</td>
+              </tr>
+              <tr>
+                <td><code>(?!...)</code></td>
+                <td>负向前瞻</td>
+                <td><code>TODO(?!:)</code> 排除 "TODO:"</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
         <div v-if="searchError" class="search-modal__error">{{ searchError }}</div>
 
@@ -386,6 +459,72 @@ onUnmounted(() => {
   background: var(--color-danger-bg, rgba(255, 77, 79, 0.12));
   color: var(--color-danger, #ff4d4f);
   font-size: 14px;
+}
+
+.search-modal__help {
+  position: absolute;
+  top: 72px;
+  right: 40px;
+  width: 640px;
+  max-height: calc(100% - 100px);
+  overflow-y: auto;
+  padding: 16px 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: var(--z-modal);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.search-modal__help h4 {
+  margin: 10px 0 4px;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.search-modal__help h4:first-child {
+  margin-top: 0;
+}
+
+.search-modal__help ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.search-modal__help li {
+  color: var(--color-text-secondary);
+}
+
+.search-modal__help code {
+  font-family: var(--font-mono);
+  background: var(--color-hover);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--color-text);
+}
+
+.search-modal__help-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.search-modal__help-table td {
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.search-modal__help-table td:first-child {
+  width: 130px;
+  font-family: var(--font-mono);
+}
+
+.search-modal__help-table td:last-child {
+  font-family: var(--font-mono);
+  color: var(--color-text);
+  text-align: right;
 }
 
 .search-modal__history {
