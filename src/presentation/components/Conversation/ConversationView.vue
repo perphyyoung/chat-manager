@@ -55,12 +55,11 @@ function scrollToQuestion(questionId: string) {
   });
 }
 
-// 监听回答变化，只在新增回答时滚动到底部
+// 监听回答变化，只在同一文档内新增回答时滚动到底部；切换文档（id 变化）不触发
 watch(
-  () => documentStore.selectedDocument?.answers.length,
-  (newLength, oldLength) => {
-    // 只有在新增回答时才滚动到底部
-    if (newLength && oldLength && newLength > oldLength) {
+  () => [documentStore.selectedDocument?.id, documentStore.selectedDocument?.answers.length],
+  ([newId, newLength], [oldId, oldLength]) => {
+    if (oldId && newId === oldId && newLength && oldLength && newLength > oldLength) {
       scrollToBottom();
     }
   },
