@@ -71,8 +71,8 @@ ipcMain.handle("get-data-path", () => dataDirManager.getDbDir());
 
 ipcMain.handle("open-data-dir", () => shell.openPath(dataDirManager.getDbDir()));
 
-// 默认字体中文名映射：首次生成 font-name-map.toml 时写入，用户可自行维护
-const DEFAULT_FONT_NAME_MAP: Record<string, string> = {
+// 默认字体中文名映射：首次生成 font-family-map.toml 时写入，用户可自行维护
+const DEFAULT_FONT_FAMILY_MAP: Record<string, string> = {
   "Microsoft YaHei": "微软雅黑",
   "Microsoft YaHei UI": "微软雅黑 UI",
   "PingFang SC": "苹方",
@@ -94,7 +94,7 @@ const DEFAULT_FONT_NAME_MAP: Record<string, string> = {
 };
 
 // 逐行解析字体映射 toml：注释、空行与不规范行直接跳过，单个坏行不影响其余行
-function parseFontNameMap(content: string): Record<string, string> {
+function parseFontFamilyMap(content: string): Record<string, string> {
   const map: Record<string, string> = {};
   for (const rawLine of content.split(/\r?\n/)) {
     const line = rawLine.trim();
@@ -115,11 +115,11 @@ function parseFontNameMap(content: string): Record<string, string> {
 }
 
 // 读取字体中文名映射：文件不存在时写入默认模板；读取失败时回退默认映射
-ipcMain.handle("read-font-name-map", () => {
-  const filePath = path.join(dataDirManager.getDbDir(), "font-name-map.toml");
+ipcMain.handle("read-font-family-map", () => {
+  const filePath = path.join(dataDirManager.getDbDir(), "font-family-map.toml");
   try {
     if (!fs.existsSync(filePath)) {
-      const lines = Object.entries(DEFAULT_FONT_NAME_MAP).map(
+      const lines = Object.entries(DEFAULT_FONT_FAMILY_MAP).map(
         ([key, value]) => `"${key}" = "${value}"`,
       );
       fs.writeFileSync(
@@ -133,10 +133,10 @@ ipcMain.handle("read-font-name-map", () => {
         ].join("\n"),
       );
     }
-    return parseFontNameMap(fs.readFileSync(filePath, "utf8"));
+    return parseFontFamilyMap(fs.readFileSync(filePath, "utf8"));
   } catch (error) {
-    log.error(`read font-name-map failed: ${String(error)}`);
-    return { ...DEFAULT_FONT_NAME_MAP };
+    log.error(`read font-family-map failed: ${String(error)}`);
+    return { ...DEFAULT_FONT_FAMILY_MAP };
   }
 });
 
