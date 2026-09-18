@@ -125,6 +125,14 @@ function clearHistory() {
   saveHistory([]);
 }
 
+// 切换正则模式；若搜索框已有内容，立即按新模式重新搜索
+function toggleRegex() {
+  isRegex.value = !isRegex.value;
+  if (query.value.trim()) {
+    handleSearch(query.value);
+  }
+}
+
 async function handleSearch(searchText: string) {
   query.value = searchText;
 
@@ -272,7 +280,7 @@ onUnmounted(() => {
           :regex-mode="isRegex"
           @search="handleSearch"
           @close="close"
-          @toggle-regex="isRegex = !isRegex"
+          @toggle-regex="toggleRegex"
           @toggle-help="showHelp = !showHelp"
         />
 
