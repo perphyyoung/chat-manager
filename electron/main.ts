@@ -543,6 +543,11 @@ ipcMain.handle("search:querySearch", async (_, query: string) => {
   const searchService = new SearchService(database);
   return await searchService.querySearch(query);
 });
+ipcMain.handle("search:querySearchRegex", async (_, query: string) => {
+  const database = getDatabase();
+  const searchService = new SearchService(database);
+  return await searchService.querySearchRegex(query);
+});
 
 // Transaction IPC handlers for DDD repository pattern
 const activeTransactions = new Map<string, ReturnType<typeof getDatabase>>();

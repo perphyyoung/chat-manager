@@ -426,4 +426,81 @@ describe("SearchService", () => {
       expect(result.count).toBeGreaterThan(0);
     });
   });
+
+  describe("querySearchRegex", () => {
+    beforeEach(() => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS documents (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          is_deleted INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS questions (
+          id TEXT PRIMARY KEY,
+          document_id TEXT NOT NULL,
+          text TEXT NOT NULL,
+          is_deleted INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS answers (
+          id TEXT PRIMARY KEY,
+          question_id TEXT NOT NULL,
+          content TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS tags (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS document_tags (
+          document_id TEXT NOT NULL,
+          tag_id TEXT NOT NULL
+        );
+
+        INSERT INTO documents VALUES ('doc-1', '// language 使用说明', 0);
+        INSERT INTO documents VALUES ('doc-2', '普通标题', 0);
+        INSERT INTO questions VALUES ('q-1', 'doc-1', '// language 是什么？', 0);
+        INSERT INTO questions VALUES ('q-2', 'doc-1', '普通问题', 0);
+        INSERT INTO answers VALUES ('a-1', 'q-1', '// language 是注释示例');
+        INSERT INTO tags VALUES ('tag-1', 'notes');
+        INSERT INTO document_tags VALUES ('doc-1', 'tag-1');
+      `);
+    });
+
+    it("should return empty results for empty search text", async () => {
+      const result = await service.querySearchRegex("");
+      expect(result).toEqual({
+        documents: [],
+        questions: [],
+        answers: [],
+        tags: [],
+      });
+    });
+
+    it("should match prefix pattern across all fields", async () => {
+      const result = await service.querySearchRegex("^//");
+      expect(result.documents.map((d) => d.id)).toEqual(["doc-1"]);
+      expect(result.questions.map((q) => q.id)).toEqual(["q-1"]);
+      expect(result.answers.map((a) => a.id)).toEqual(["a-1"]);
+      expect(result.tags).toHaveLength(0);
+    });
+
+    it("should keep literal symbols in snippet with mark tag", async () => {
+      const result = await service.querySearchRegex("^//");
+      const question = result.questions[0];
+      expect(question?.snippet).toContain("<mark>//</mark> language 是什么？");
+    });
+
+    it("should not match when pattern does not exist", async () => {
+      const result = await service.querySearchRegex("^//TODO");
+      expect(result).toEqual({
+        documents: [],
+        questions: [],
+        answers: [],
+        tags: [],
+      });
+    });
+
+    it("should throw on invalid regular expression", async () => {
+      await expect(service.querySearchRegex("(")).rejects.toThrow(/Invalid regular expression/);
+    });
+  });
 });

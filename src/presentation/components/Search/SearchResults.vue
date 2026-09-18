@@ -22,6 +22,7 @@ const props = defineProps<{
   flatResults: SearchResult[];
   selectedIndex: number;
   query: string;
+  regexMode: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -29,11 +30,22 @@ const emit = defineEmits<{
   (e: "hover", index: number): void;
 }>();
 
-function highlight(text: string, query: string): string {
-  if (!query.trim()) return escapeHtml(text);
-  const escapedQuery = escapeHtml(query);
-  const regex = new RegExp(`(${escapeRegex(escapedQuery)})`, "gi");
-  return text.replace(regex, "<mark>$1</mark>");
+function highlight(text: string, query: string, regexMode: boolean): string {
+  if (!regexMode) {
+    if (!query.trim()) return escapeHtml(text);
+    const escapedQuery = escapeHtml(query);
+    const regex = new RegExp(`(${escapeRegex(escapedQuery)})`, "gi");
+    return text.replace(regex, "<mark>$1</mark>");
+  }
+  // 正则模式：snippet 已在服务端按命中位置包 <mark>，避免用正则对标签文本二次匹配，直接返回
+  if (text.includes("<mark>")) return text;
+  // 无 snippet 的字段（文档标题/标签名等）用用户正则直接高亮，匹配片段转义防注入
+  try {
+    const regex = new RegExp(query, "gi");
+    return text.replace(regex, (match) => `<mark>${escapeHtml(match)}</mark>`);
+  } catch {
+    return escapeHtml(text);
+  }
 }
 
 function getTypeIcon(type: string): string {
@@ -209,7 +221,7 @@ function handleClick(item: SearchResult) {
         >
           <div
             class="search-results__item-content"
-            v-html="highlight(getDisplayContent(item, type), query)"
+            v-html="highlight(getDisplayContent(item, type), query, regexMode)"
           ></div>
           <div class="search-results__item-metadata">
             {{ getMetadata(item, type) }}

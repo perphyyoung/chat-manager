@@ -3,11 +3,13 @@ import { ref, onMounted } from "vue";
 
 defineProps<{
   value: string;
+  regexMode: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: "search", query: string): void;
   (e: "close"): void;
+  (e: "toggle-regex"): void;
 }>();
 
 const inputRef = ref<HTMLInputElement | null>(null);
@@ -44,6 +46,15 @@ onMounted(() => {
       :value="value"
       @input="handleInput"
     />
+    <button
+      type="button"
+      class="search-input__regex"
+      :class="{ 'search-input__regex--active': regexMode }"
+      :title="regexMode ? '当前为正则匹配' : '切换为正则匹配'"
+      @click="emit('toggle-regex')"
+    >
+      正则
+    </button>
     <button v-if="value" class="search-input__clear" @click="handleClear">清空</button>
   </div>
 </template>
@@ -73,6 +84,32 @@ onMounted(() => {
 
 .search-input__field::placeholder {
   color: var(--color-text-secondary);
+}
+
+.search-input__regex {
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  margin-right: 8px;
+}
+
+.search-input__regex--active {
+  background: var(--color-primary, #1e5eff);
+  border-color: var(--color-primary, #1e5eff);
+  color: #fff;
+}
+
+.search-input__regex:hover {
+  background: var(--color-hover);
+}
+
+.search-input__regex--active:hover {
+  background: var(--color-primary, #1e5eff);
 }
 
 .search-input__clear {

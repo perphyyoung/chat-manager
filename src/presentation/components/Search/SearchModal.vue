@@ -36,6 +36,10 @@ function saveHistory(history: string[]) {
 
 const isOpen = ref(false);
 const query = ref("");
+// 正则模式：开启后查询按正则表达式匹配所有字段原文
+const isRegex = ref(false);
+// 正则表达式非法或查询失败时的提示
+const searchError = ref("");
 const results = ref<SearchResults>({
   documents: [],
   questions: [],
@@ -134,16 +138,30 @@ async function handleSearch(searchText: string) {
       tags: [],
     };
     selectedIndex.value = -1;
+    searchError.value = "";
     return;
   }
 
   debounceTimer = setTimeout(async () => {
     isLoading.value = true;
     try {
-      results.value = await window.electronAPI.search.querySearch(searchText);
+      results.value = isRegex.value
+        ? await window.electronAPI.search.querySearchRegex(searchText)
+        : await window.electronAPI.search.querySearch(searchText);
+      searchError.value = "";
       selectedIndex.value = flatResults.value.length > 0 ? 0 : -1;
     } catch (error) {
-      console.error("Search failed:", error);
+      // 禁止静默失败：非法正则等错误必须在界面可见
+      searchError.value = isRegex.value
+        ? `正则表达式无效：${searchText}`
+        : `搜索失败：${String(error)}`;
+      results.value = {
+        documents: [],
+        questions: [],
+        answers: [],
+        tags: [],
+      };
+      selectedIndex.value = -1;
     } finally {
       isLoading.value = false;
     }
@@ -245,7 +263,16 @@ onUnmounted(() => {
     <div v-if="isOpen" class="search-modal">
       <div class="search-modal__container">
         <button class="search-modal__close" @click="close" title="关闭">×</button>
-        <SearchInput ref="inputRef" :value="query" @search="handleSearch" @close="close" />
+        <SearchInput
+          ref="inputRef"
+          :value="query"
+          :regex-mode="isRegex"
+          @search="handleSearch"
+          @close="close"
+          @toggle-regex="isRegex = !isRegex"
+        />
+
+        <div v-if="searchError" class="search-modal__error">{{ searchError }}</div>
 
         <div v-if="isLoading" class="search-modal__loading">搜索中...</div>
 
@@ -255,6 +282,7 @@ onUnmounted(() => {
           :flat-results="flatResults"
           :selected-index="selectedIndex"
           :query="query"
+          :regex-mode="isRegex"
           @select="handleSelect"
           @hover="(index) => (selectedIndex = index)"
         />
@@ -351,6 +379,13 @@ onUnmounted(() => {
   text-align: center;
   color: var(--color-text-secondary);
   font-size: 16px;
+}
+
+.search-modal__error {
+  padding: 12px 32px;
+  background: var(--color-danger-bg, rgba(255, 77, 79, 0.12));
+  color: var(--color-danger, #ff4d4f);
+  font-size: 14px;
 }
 
 .search-modal__history {
