@@ -65,6 +65,30 @@ watch(
   },
 );
 
+// 按文档 id 记忆中间面板滚动位置：切换时保存，返回时恢复（双 rAF 等渲染稳定后设置）
+const docScrollPositions = new Map<string, number>();
+
+watch(
+  () => documentStore.selectedDocument?.id,
+  (newId, oldId) => {
+    if (oldId && messagesContainer.value) {
+      docScrollPositions.set(oldId, messagesContainer.value.scrollTop);
+    }
+    if (newId) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const el = messagesContainer.value;
+          if (!el) return;
+          const saved = docScrollPositions.get(newId);
+          if (saved !== undefined) {
+            el.scrollTop = Math.min(saved, Math.max(0, el.scrollHeight - el.clientHeight));
+          }
+        });
+      });
+    }
+  },
+);
+
 // 监听 activeQuestionId 变化，滚动到对应问题
 watch(
   () => documentStore.activeQuestionId,
