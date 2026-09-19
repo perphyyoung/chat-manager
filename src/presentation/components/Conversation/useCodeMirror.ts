@@ -254,6 +254,17 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
   };
 
   /**
+   * 整文替换（保留撤销栈，一次 dispatch 视为一次可撤销操作）
+   */
+  const setContent = (content: string) => {
+    const view = editorView.value;
+    if (!view) return;
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: content },
+    });
+  };
+
+  /**
    * 撤销操作
    */
   const undo = () => {
@@ -307,6 +318,7 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
     toggleLineNumbers,
     toggleWordWrap,
     getContent,
+    setContent,
     undo,
     redo,
     focus,

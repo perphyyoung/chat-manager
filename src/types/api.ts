@@ -22,6 +22,7 @@ export interface ElectronAPI {
   getVersion: () => Promise<string>;
   getDataPath: () => Promise<string>;
   getFontFamilyMap: () => Promise<Record<string, string>>;
+  formatMarkdown: (content: string) => Promise<string>;
   openDataDir: () => Promise<string>;
   db: {
     transaction: {

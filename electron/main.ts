@@ -17,6 +17,7 @@ import type { DocRow, QuestionRow, AnswerRow, ExistsRow, TagRow } from "../src/t
 import type { DocumentInput, QuestionInput, AnswerInput } from "../src/types/dto";
 import { exportData, importData } from "./importExport";
 import { dataDirManager } from "./DataDirManager";
+import { formatMarkdown } from "./formatMarkdown";
 
 // 初始化数据目录（确保 py-data 目录存在）
 dataDirManager.init();
@@ -65,6 +66,11 @@ ipcMain.handle("render-log", (_, level: string, message: string) => {
 
 // 版本信息 IPC handler（仅应用版本号）
 ipcMain.handle("get-version", () => app.getVersion());
+
+// markdown 格式化 IPC：按 .markdownlint.jsonc 规则 fix 回答内容
+ipcMain.handle("answer:formatMarkdown", async (_event, content: string) => {
+  return formatMarkdown(content);
+});
 
 // 数据目录 IPC handler
 ipcMain.handle("get-data-path", () => dataDirManager.getDbDir());

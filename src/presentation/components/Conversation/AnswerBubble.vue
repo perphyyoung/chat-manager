@@ -43,18 +43,42 @@ const contextMenuItems = computed<MenuItem[]>(() => [
     visible: !contextMenu.value.isEditing,
   },
   {
-    icon: editorRef.value?.showLineNumbers ? "☑" : "☐",
     text: "显示行号",
     action: () => editorRef.value?.toggleLineNumbers(),
     visible: contextMenu.value.isEditing,
   },
   {
-    icon: editorRef.value?.wordWrap ? "☑" : "☐",
     text: "长文本换行",
     action: () => editorRef.value?.toggleWordWrap(),
     visible: contextMenu.value.isEditing,
   },
+  {
+    text: "格式化",
+    action: formatContent,
+    visible: contextMenu.value.isEditing,
+  },
 ]);
+
+async function formatContent() {
+  const content = editorRef.value?.getContent() ?? "";
+  if (!content.trim()) {
+    closeContextMenu();
+    return;
+  }
+  try {
+    const formatted = await window.electronAPI.formatMarkdown(content);
+    if (formatted !== content) {
+      editorRef.value?.setContent(formatted);
+      showToast("已按 markdownlint 规则格式化");
+    } else {
+      showToast("内容已符合规则，无需格式化");
+    }
+  } catch (err) {
+    // 格式化失败（如 cli2 执行异常）：明确提示，不静默
+    showToast(`格式化失败：${String(err)}`);
+  }
+  closeContextMenu();
+}
 
 async function copyContent() {
   await navigator.clipboard.writeText(props.content);

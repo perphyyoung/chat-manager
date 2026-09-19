@@ -27,6 +27,7 @@ const {
   toggleLineNumbers,
   toggleWordWrap,
   getContent,
+  setContent,
   undo,
   redo,
 } = useCodeMirror({
@@ -101,6 +102,8 @@ defineExpose({
   redo,
   showLineNumbers,
   wordWrap,
+  getContent,
+  setContent,
 });
 </script>
 
