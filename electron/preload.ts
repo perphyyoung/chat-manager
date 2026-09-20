@@ -34,6 +34,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   document: {
     findAllDocuments: (options?: { isDeleted?: boolean }) =>
       ipcRenderer.invoke("document:findAllDocuments", options),
+    listDocuments: (options?: { isDeleted?: boolean }) =>
+      ipcRenderer.invoke("document:listDocuments", options),
     findDocumentById: (id: string) => ipcRenderer.invoke("document:findDocumentById", id),
     saveDocument: (doc: DocumentInput) => ipcRenderer.invoke("document:saveDocument", doc),
     deleteDocument: (id: string) => ipcRenderer.invoke("document:deleteDocument", id),

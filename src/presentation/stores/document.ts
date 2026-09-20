@@ -10,6 +10,7 @@ import { SqliteAnswerRepository } from "@/infrastructure/storage/SqliteAnswerRep
 import { SqliteTagRepository } from "@/infrastructure/storage/SqliteTagRepository";
 import { globalEventBus } from "@/domain/events";
 import { mockDocuments } from "@/infrastructure/data/mockData";
+import type { DocumentListItem } from "@/types/dto";
 
 // 先创建所有 Repository
 const questionRepo = new SqliteQuestionRepository();
@@ -80,9 +81,15 @@ function saveSortPreferences(preferences: SortPreferences) {
 }
 
 export const useDocumentStore = defineStore("document", () => {
-  const documents = ref<Document[]>([]);
+  // 列表使用轻量摘要数组（不含 answers/questions 长文本，性能优化 A 档）
+  const documents = ref<DocumentListItem[]>([]);
   const selectedDocumentId = ref<string | null>(null);
   const activeQuestionId = ref<string | null>(null);
+
+  // 当前选中文档的完整详情（与列表摘要分离）
+  const currentDocument = ref<Document | null>(null);
+  // 详情缓存：避免反复加载同一文档的长文本（D 档 renderer 缓存）
+  const detailCache = new Map<string, Document>();
 
   // 标签相关状态
   const allTags = ref<Tag[]>([]);
@@ -106,9 +113,7 @@ export const useDocumentStore = defineStore("document", () => {
   const questionSortField = ref<QuestionSortField>(savedPreferences.questionSortField);
   const questionSortOrder = ref<SortOrder>(savedPreferences.questionSortOrder);
 
-  const selectedDocument = computed(() => {
-    return documents.value.find((doc) => doc.id === selectedDocumentId.value) || null;
-  });
+  const selectedDocument = computed(() => currentDocument.value);
 
   const selectedDocumentQuestions = computed(() => {
     const questions = selectedDocument.value?.activeQuestions || [];
@@ -126,11 +131,75 @@ export const useDocumentStore = defineStore("document", () => {
     return sortDocuments(filteredDocs, documentSortField.value, documentSortOrder.value);
   });
 
-  function selectDocument(id: string) {
+  // Document → 列表摘要（写回后同步刷新列表条目）
+  function toListItem(doc: Document): DocumentListItem {
+    return {
+      id: doc.id,
+      title: doc.title,
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
+      questionCount: doc.activeQuestions.length,
+      tags: doc.tags.map((t) => ({
+        id: t.id,
+        name: t.name,
+        createdAt: t.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  // 统一写回逻辑：取最新文档（命中主进程详情缓存），同步详情缓存、当前选中与列表摘要
+  async function refreshDocument(docId: string): Promise<void> {
+    const doc = await documentService.getDocument(docId);
+    if (!doc) {
+      return;
+    }
+    detailCache.set(docId, doc);
+    if (selectedDocumentId.value === docId) {
+      currentDocument.value = doc;
+    }
+    const summary = toListItem(doc);
+    const index = documents.value.findIndex((d) => d.id === docId);
+    if (index !== -1) {
+      documents.value.splice(index, 1, summary);
+    } else {
+      documents.value.push(summary);
+    }
+  }
+
+  // 选中相邻文档进行后台预取缓存（D 档），失败静默
+  function prefetchNext(id: string): void {
+    const sorted = sortedDocuments.value;
+    const index = sorted.findIndex((d) => d.id === id);
+    const next = index !== -1 ? sorted[index + 1] : undefined;
+    if (next && !detailCache.has(next.id)) {
+      documentService
+        .getDocument(next.id)
+        .then((doc) => {
+          if (doc) {
+            detailCache.set(next.id, doc);
+          }
+        })
+        .catch(() => {});
+    }
+  }
+
+  // 选中文档：优先取 renderer 详情缓存，未命中才加载并写入缓存；随后预取相邻文档
+  async function selectDocument(id: string) {
     selectedDocumentId.value = id;
     activeQuestionId.value = null;
     documentService.selectDocument(id).catch(() => {});
     loadDeletedQuestions().catch(() => {});
+    const cached = detailCache.get(id);
+    if (cached) {
+      currentDocument.value = cached;
+    } else {
+      const doc = await documentService.getDocument(id);
+      if (doc) {
+        detailCache.set(id, doc);
+        currentDocument.value = doc;
+      }
+    }
+    prefetchNext(id);
   }
 
   function setActiveQuestion(id: string | null) {
@@ -158,44 +227,37 @@ export const useDocumentStore = defineStore("document", () => {
     }
   }
 
-  function initDocuments(docs: Document[]) {
+  function initDocuments(docs: DocumentListItem[]) {
     documents.value = docs;
   }
 
   async function loadDocuments() {
-    const docs = await documentService.loadAllDocuments();
-    if (docs.length === 0) {
+    let summaries = await documentService.loadAllSummaries();
+    if (summaries.length === 0) {
       for (const mock of mockDocuments) {
         await documentRepo.saveDocument(mock);
       }
-      documents.value = mockDocuments;
-    } else {
-      documents.value = docs;
+      summaries = await documentService.loadAllSummaries();
     }
+    documents.value = summaries;
     // 自动选中排序后的第一个文档
     const sorted = sortDocuments(documents.value, documentSortField.value, documentSortOrder.value);
     if (sorted.length > 0 && !selectedDocumentId.value) {
-      selectDocument(sorted[0]!.id);
+      await selectDocument(sorted[0]!.id);
     }
   }
 
   async function createDocument(title: string): Promise<void> {
     const doc = await documentService.createDocument(title);
-    documents.value.push(doc);
-    selectDocument(doc.id);
+    documents.value.push(toListItem(doc));
+    detailCache.set(doc.id, doc);
+    // 复用 selectDocument，命中 cache 直接选中，同时触发选中事件与回收站刷新
+    await selectDocument(doc.id);
   }
 
   async function updateDocumentTitle(documentId: string, newTitle: string): Promise<void> {
     await documentService.updateDocumentTitle(documentId, newTitle);
-    // 刷新文档列表
-    const updatedDoc = await documentService.getDocument(documentId);
-    if (updatedDoc) {
-      const index = documents.value.findIndex((d) => d.id === documentId);
-      if (index !== -1) {
-        // 使用 splice 替换元素以触发响应式更新
-        documents.value.splice(index, 1, updatedDoc);
-      }
-    }
+    await refreshDocument(documentId);
   }
 
   async function deleteDocument(documentId: string): Promise<void> {
@@ -240,13 +302,7 @@ export const useDocumentStore = defineStore("document", () => {
     }
     await answerService.addAnswer(docId, newQuestion.id, answerContent);
     // 刷新当前文档数据
-    const finalDoc = await documentService.getDocument(docId);
-    if (finalDoc) {
-      const index = documents.value.findIndex((d) => d.id === docId);
-      if (index !== -1) {
-        documents.value[index] = finalDoc;
-      }
-    }
+    await refreshDocument(docId);
     setActiveQuestion(newQuestion.id);
   }
 
@@ -256,14 +312,7 @@ export const useDocumentStore = defineStore("document", () => {
     }
     const docId = selectedDocumentId.value;
     await answerService.updateAnswer(docId, answerId, content);
-    // 刷新当前文档数据
-    const updatedDoc = await documentService.getDocument(docId);
-    if (updatedDoc) {
-      const index = documents.value.findIndex((d) => d.id === docId);
-      if (index !== -1) {
-        documents.value.splice(index, 1, updatedDoc);
-      }
-    }
+    await refreshDocument(docId);
   }
 
   // 删除问题及其对应的回答
@@ -290,14 +339,7 @@ export const useDocumentStore = defineStore("document", () => {
     // 再删除问题
     await documentService.deleteQuestion(docId, questionId);
 
-    // 刷新当前文档数据
-    const updatedDoc = await documentService.getDocument(docId);
-    if (updatedDoc) {
-      const index = documents.value.findIndex((d) => d.id === docId);
-      if (index !== -1) {
-        documents.value.splice(index, 1, updatedDoc);
-      }
-    }
+    await refreshDocument(docId);
 
     // 如果删除的是当前选中的问题，清空选中状态
     if (activeQuestionId.value === questionId) {
@@ -312,14 +354,7 @@ export const useDocumentStore = defineStore("document", () => {
     }
     const docId = selectedDocumentId.value;
     await documentService.updateQuestionText(docId, questionId, newText);
-    // 刷新当前文档数据
-    const updatedDoc = await documentService.getDocument(docId);
-    if (updatedDoc) {
-      const index = documents.value.findIndex((d) => d.id === docId);
-      if (index !== -1) {
-        documents.value.splice(index, 1, updatedDoc);
-      }
-    }
+    await refreshDocument(docId);
   }
 
   // 排序相关函数
@@ -430,14 +465,7 @@ export const useDocumentStore = defineStore("document", () => {
     // 软删除问题
     await questionRepo.softDeleteQuestion(docId, questionId);
 
-    // 刷新当前文档数据
-    const updatedDoc = await documentService.getDocument(docId);
-    if (updatedDoc) {
-      const index = documents.value.findIndex((d) => d.id === docId);
-      if (index !== -1) {
-        documents.value.splice(index, 1, updatedDoc);
-      }
-    }
+    await refreshDocument(docId);
 
     // 如果删除的是当前选中的问题，清空选中状态
     if (activeQuestionId.value === questionId) {
@@ -461,14 +489,7 @@ export const useDocumentStore = defineStore("document", () => {
 
     await questionRepo.restoreQuestion(docId, questionId);
 
-    // 刷新当前文档数据
-    const updatedDoc = await documentService.getDocument(docId);
-    if (updatedDoc) {
-      const index = documents.value.findIndex((d) => d.id === docId);
-      if (index !== -1) {
-        documents.value.splice(index, 1, updatedDoc);
-      }
-    }
+    await refreshDocument(docId);
 
     // 刷新回收站列表
     await loadDeletedQuestions();
@@ -500,10 +521,7 @@ export const useDocumentStore = defineStore("document", () => {
     // 重新加载当前文档，确保内存中的文档对象与数据库同步
     const updatedDoc = await documentService.getDocument(docId);
     if (updatedDoc) {
-      const index = documents.value.findIndex((d) => d.id === docId);
-      if (index !== -1) {
-        documents.value[index] = updatedDoc;
-      }
+      refreshDocument(docId);
       // 如果当前有选中的问题，检查它是否仍然有效
       if (activeQuestionId.value && !updatedDoc.hasQuestion(activeQuestionId.value)) {
         activeQuestionId.value = null;
@@ -543,26 +561,12 @@ export const useDocumentStore = defineStore("document", () => {
 
   async function addTagToDocument(documentId: string, tagId: string): Promise<void> {
     await tagService.addTagToDocument(documentId, tagId);
-    // 刷新文档数据
-    const updatedDoc = await documentService.getDocument(documentId);
-    if (updatedDoc) {
-      const index = documents.value.findIndex((d) => d.id === documentId);
-      if (index !== -1) {
-        documents.value[index] = updatedDoc;
-      }
-    }
+    await refreshDocument(documentId);
   }
 
   async function removeTagFromDocument(documentId: string, tagId: string): Promise<void> {
     await tagService.removeTagFromDocument(documentId, tagId);
-    // 刷新文档数据
-    const updatedDoc = await documentService.getDocument(documentId);
-    if (updatedDoc) {
-      const index = documents.value.findIndex((d) => d.id === documentId);
-      if (index !== -1) {
-        documents.value[index] = updatedDoc;
-      }
-    }
+    await refreshDocument(documentId);
   }
 
   // 获取标签关联的文档数量
@@ -608,13 +612,7 @@ export const useDocumentStore = defineStore("document", () => {
     }
 
     // 刷新当前文档数据
-    const updatedDoc = await documentService.getDocument(docId);
-    if (updatedDoc) {
-      const index = documents.value.findIndex((d) => d.id === docId);
-      if (index !== -1) {
-        documents.value.splice(index, 1, updatedDoc);
-      }
-    }
+    await refreshDocument(docId);
   }
 
   // 重新排序所有文档的问题（设置入口）：sort_order 强制从 1 起连续编号，一次性迁移存量数据
@@ -670,13 +668,7 @@ export const useDocumentStore = defineStore("document", () => {
     }
 
     // 刷新当前文档数据
-    const updatedDoc = await documentService.getDocument(docId);
-    if (updatedDoc) {
-      const index = documents.value.findIndex((d) => d.id === docId);
-      if (index !== -1) {
-        documents.value.splice(index, 1, updatedDoc);
-      }
-    }
+    await refreshDocument(docId);
   }
 
   // 移动问题到另一个文档
@@ -697,22 +689,10 @@ export const useDocumentStore = defineStore("document", () => {
     await documentRepo.moveQuestionToDocument(questionId, targetDocumentId);
 
     // 刷新源文档（问题已移除）
-    const sourceDoc = await documentService.getDocument(sourceDocId);
-    if (sourceDoc) {
-      const sourceIndex = documents.value.findIndex((d) => d.id === sourceDocId);
-      if (sourceIndex !== -1) {
-        documents.value.splice(sourceIndex, 1, sourceDoc);
-      }
-    }
+    await refreshDocument(sourceDocId);
 
     // 刷新目标文档（问题已添加）
-    const targetDoc = await documentService.getDocument(targetDocumentId);
-    if (targetDoc) {
-      const targetIndex = documents.value.findIndex((d) => d.id === targetDocumentId);
-      if (targetIndex !== -1) {
-        documents.value.splice(targetIndex, 1, targetDoc);
-      }
-    }
+    await refreshDocument(targetDocumentId);
 
     // 如果当前选中的问题被移走，清空选中状态
     if (activeQuestionId.value === questionId) {
@@ -785,8 +765,8 @@ export const useDocumentStore = defineStore("document", () => {
 interface SortableDocument {
   id: string;
   title: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 interface SortableQuestion {
@@ -795,6 +775,10 @@ interface SortableQuestion {
   createdAt: Date;
   updatedAt: Date;
   order: number;
+}
+
+function toMs(value: Date | string): number {
+  return value instanceof Date ? value.getTime() : new Date(value).getTime();
 }
 
 function sortDocuments<T extends SortableDocument>(
@@ -806,10 +790,10 @@ function sortDocuments<T extends SortableDocument>(
     let result = 0;
     switch (field) {
       case "createdAt":
-        result = a.createdAt.getTime() - b.createdAt.getTime();
+        result = toMs(a.createdAt) - toMs(b.createdAt);
         break;
       case "updatedAt":
-        result = a.updatedAt.getTime() - b.updatedAt.getTime();
+        result = toMs(a.updatedAt) - toMs(b.updatedAt);
         break;
       case "title":
         result = a.title.localeCompare(b.title, "zh-CN");

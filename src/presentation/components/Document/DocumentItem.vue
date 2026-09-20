@@ -9,16 +9,8 @@ interface TagProp {
 interface DocumentProp {
   id: string;
   title: string;
-  questions: readonly {
-    id: string;
-    text: string;
-    order: number;
-  }[];
-  activeQuestions: readonly {
-    id: string;
-    text: string;
-    order: number;
-  }[];
+  // 列表摘要不携带完整问题，仅计数（性能优化 A 档）
+  questionCount: number;
   tags?: readonly TagProp[];
 }
 
@@ -80,8 +72,8 @@ function handleDrop(event: DragEvent) {
     <div class="document-item__content">
       <div class="document-item__title-row">
         <span class="document-item__title">{{ document.title }}</span>
-        <span v-if="document.activeQuestions.length" class="document-item__count">
-          {{ document.activeQuestions.length }}
+        <span v-if="document.questionCount" class="document-item__count">
+          {{ document.questionCount }}
         </span>
       </div>
       <div v-if="document.tags?.length" class="document-item__tags">

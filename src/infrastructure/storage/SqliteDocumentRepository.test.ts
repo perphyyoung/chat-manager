@@ -24,6 +24,7 @@ interface MockElectronAPI {
   };
   document: {
     findAllDocuments: MockFn;
+    listDocuments: MockFn;
     findDocumentById: MockFn;
     saveDocument: MockFn;
     deleteDocument: MockFn;
@@ -59,6 +60,7 @@ describe("SqliteDocumentRepository", () => {
       },
       document: {
         findAllDocuments: vi.fn(),
+        listDocuments: vi.fn(),
         findDocumentById: vi.fn(),
         saveDocument: vi.fn(),
         deleteDocument: vi.fn(),

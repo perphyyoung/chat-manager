@@ -1,6 +1,7 @@
 import type { DocumentRepository } from "../../domain/repositories";
 import type { EventBus } from "../../domain/events/EventBus";
 import { Document } from "../../domain/entities";
+import type { DocumentListItem } from "../../types/dto";
 import {
   DocumentSelectedEvent,
   DocumentsLoadedEvent,
@@ -34,6 +35,11 @@ export class DocumentApplicationService {
       ),
     );
     return documents;
+  }
+
+  // 列表摘要加载：仅获取轻量摘要，不携带 answers/questions 长文本
+  async loadAllSummaries(): Promise<DocumentListItem[]> {
+    return this.documentRepo.listSummaries();
   }
 
   async selectDocument(documentId: string): Promise<void> {

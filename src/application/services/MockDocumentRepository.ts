@@ -1,9 +1,25 @@
 import type { DocumentRepository } from "../../domain/repositories";
 import { Document } from "../../domain/entities";
+import type { DocumentListItem } from "../../types/dto";
 
 export class MockDocumentRepository implements DocumentRepository {
   private documents: Map<string, Document> = new Map();
   private documentTags: Map<string, Set<string>> = new Map();
+
+  async listSummaries(): Promise<DocumentListItem[]> {
+    return Array.from(this.documents.values()).map((d) => ({
+      id: d.id,
+      title: d.title,
+      createdAt: d.createdAt.toISOString(),
+      updatedAt: d.updatedAt.toISOString(),
+      questionCount: d.activeQuestions.length,
+      tags: d.tags.map((t) => ({
+        id: t.id,
+        name: t.name,
+        createdAt: t.createdAt.toISOString(),
+      })),
+    }));
+  }
 
   async findAllDocuments(): Promise<Document[]> {
     return Array.from(this.documents.values());

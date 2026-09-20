@@ -73,3 +73,13 @@ export interface TagDTO {
   name: string;
   createdAt: string;
 }
+
+// 文档列表摘要 DTO（性能优化：列表加载不携带 answers/questions 长文本）
+export interface DocumentListItem {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  questionCount: number;
+  tags: TagDTO[];
+}

@@ -22,6 +22,7 @@ describe("AnswerApplicationService", () => {
     mockDocumentRepo = {
       findAllDocuments: vi.fn<() => Promise<Document[]>>(),
       findAllDeletedDocuments: vi.fn<() => Promise<Document[]>>(),
+      listSummaries: vi.fn(),
       findDocumentById: vi.fn<() => Promise<Document | null>>(),
       findByTagId: vi.fn<() => Promise<Document[]>>(),
       saveDocument: vi.fn<() => Promise<void>>(),

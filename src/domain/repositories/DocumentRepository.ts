@@ -1,7 +1,10 @@
 import type { Document } from "../entities";
+import type { DocumentListItem } from "../../types/dto";
 
 export interface DocumentRepository {
   findAllDocuments(): Promise<Document[]>;
+  // 列表摘要查询：返回不含 answers/questions 长文本的轻量数据，避免列表加载全量文档
+  listSummaries(): Promise<DocumentListItem[]>;
   findAllDeletedDocuments(): Promise<Document[]>;
   findDocumentById(id: string): Promise<Document | null>;
   findByTagId(tagId: string): Promise<Document[]>;

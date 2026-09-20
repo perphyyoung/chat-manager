@@ -14,7 +14,7 @@ import { log } from "./logger";
 import { getDatabase, closeDatabase } from "./database";
 import { SearchService } from "../src/infrastructure/search/SearchService";
 import type { DocRow, QuestionRow, AnswerRow, ExistsRow, TagRow } from "../src/types/db";
-import type { DocumentInput, QuestionInput, AnswerInput } from "../src/types/dto";
+import type { DocumentInput, QuestionInput, AnswerInput, DocumentDTO } from "../src/types/dto";
 import { exportData, importData } from "./importExport";
 import { dataDirManager } from "./DataDirManager";
 import { formatMarkdown } from "./formatMarkdown";
@@ -146,56 +146,135 @@ ipcMain.handle("read-font-family-map", () => {
   }
 });
 
-// Document IPC handlers
-ipcMain.handle("document:findAllDocuments", (_, options?: { isDeleted?: boolean }) => {
-  const database = getDatabase();
+type DatabaseType = ReturnType<typeof getDatabase>;
+
+// 批量加载全部文档并分组子数据，将 findAllDocuments 的 N+1 查询收敛为 3 条批量查询（性能优化）
+function loadDocumentBatch(
+  database: DatabaseType,
+  isDeleted?: boolean,
+): {
+  docs: DocRow[];
+  questionsByDoc: Map<string, QuestionRow[]>;
+  answersByQuestion: Map<string, AnswerRow[]>;
+  tagsByDoc: Map<string, Array<{ id: string; name: string; created_at: string }>>;
+} {
   const docs = database
     .prepare(
-      options?.isDeleted === undefined
+      isDeleted === undefined
         ? "SELECT * FROM documents ORDER BY updated_at DESC"
         : "SELECT * FROM documents WHERE is_deleted = ? ORDER BY updated_at DESC",
     )
-    .all(
-      ...(options?.isDeleted === undefined ? [] : [options.isDeleted ? 1 : 0]),
-    ) as unknown as DocRow[];
+    .all(...(isDeleted === undefined ? [] : [isDeleted ? 1 : 0])) as unknown as DocRow[];
 
-  return docs.map((doc) => {
-    const questions = database
-      .prepare("SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order")
-      .all(doc.id) as unknown as QuestionRow[];
-    const answers = database
-      .prepare(
-        "SELECT * FROM answers WHERE question_id IN (SELECT id FROM questions WHERE document_id = ?)",
-      )
-      .all(doc.id) as unknown as AnswerRow[];
-    const tags = database
-      .prepare(
-        "SELECT t.* FROM tags t JOIN document_tags dt ON t.id = dt.tag_id WHERE dt.document_id = ?",
-      )
-      .all(doc.id) as unknown as TagRow[];
-    return {
-      id: doc.id,
-      title: doc.title,
-      createdAt: doc.created_at,
-      updatedAt: doc.updated_at,
-      deletedAt: doc.deleted_at,
-      questions: questions.map((q) => ({
-        id: q.id,
-        text: q.text,
-        order: q.sort_order,
-        createdAt: q.created_at,
-        updatedAt: q.updated_at,
-        isDeleted: q.is_deleted,
-        deletedAt: q.deleted_at,
-      })),
-      answers: answers.map((a) => ({
+  const whereDeleted = isDeleted === undefined ? "" : " WHERE d.is_deleted = ?";
+  const params = isDeleted === undefined ? [] : [isDeleted ? 1 : 0];
+
+  const questionRows = database
+    .prepare("SELECT q.* FROM questions q JOIN documents d ON q.document_id = d.id" + whereDeleted)
+    .all(...params) as unknown as QuestionRow[];
+  const answerRows = database
+    .prepare(
+      "SELECT a.* FROM answers a JOIN questions q ON a.question_id = q.id JOIN documents d ON q.document_id = d.id" +
+        whereDeleted,
+    )
+    .all(...params) as unknown as AnswerRow[];
+  const tagRows = database
+    .prepare(
+      "SELECT t.id, t.name, t.created_at, dt.document_id FROM tags t JOIN document_tags dt ON t.id = dt.tag_id JOIN documents d ON dt.document_id = d.id" +
+        whereDeleted,
+    )
+    .all(...params) as unknown as Array<{
+    id: string;
+    name: string;
+    created_at: string;
+    document_id: string;
+  }>;
+
+  const questionsByDoc = new Map<string, QuestionRow[]>();
+  for (const q of questionRows) {
+    const list = questionsByDoc.get(q.document_id);
+    if (list) list.push(q);
+    else questionsByDoc.set(q.document_id, [q]);
+  }
+
+  const answersByQuestion = new Map<string, AnswerRow[]>();
+  for (const a of answerRows) {
+    const list = answersByQuestion.get(a.question_id);
+    if (list) list.push(a);
+    else answersByQuestion.set(a.question_id, [a]);
+  }
+
+  const tagsByDoc = new Map<string, Array<{ id: string; name: string; created_at: string }>>();
+  for (const t of tagRows) {
+    const list = tagsByDoc.get(t.document_id);
+    const tag = { id: t.id, name: t.name, created_at: t.created_at };
+    if (list) list.push(tag);
+    else tagsByDoc.set(t.document_id, [tag]);
+  }
+
+  return { docs, questionsByDoc, answersByQuestion, tagsByDoc };
+}
+
+// 由批量分组 map 组装单文档完整 DTO
+function toDocumentDTO(doc: DocRow, batch: ReturnType<typeof loadDocumentBatch>): DocumentDTO {
+  const questions = (batch.questionsByDoc.get(doc.id) ?? []).map((q) => ({
+    id: q.id,
+    text: q.text,
+    order: q.sort_order,
+    createdAt: q.created_at,
+    updatedAt: q.updated_at,
+    isDeleted: q.is_deleted,
+    deletedAt: q.deleted_at,
+  }));
+  const questionIds = new Set(questions.map((q) => q.id));
+  const answers = questions
+    .flatMap((q) =>
+      (batch.answersByQuestion.get(q.id) ?? []).map((a) => ({
         id: a.id,
         questionId: a.question_id,
         content: a.content,
         createdAt: a.created_at,
         updatedAt: a.updated_at,
       })),
-      tags: tags.map((t) => ({
+    )
+    .filter((a) => questionIds.has(a.questionId));
+  const tags = (batch.tagsByDoc.get(doc.id) ?? []).map((t) => ({
+    id: t.id,
+    name: t.name,
+    createdAt: t.created_at,
+  }));
+  return {
+    id: doc.id,
+    title: doc.title,
+    createdAt: doc.created_at,
+    updatedAt: doc.updated_at,
+    deletedAt: doc.deleted_at,
+    questions,
+    answers,
+    tags,
+  };
+}
+
+// Document IPC handlers
+ipcMain.handle("document:findAllDocuments", (_, options?: { isDeleted?: boolean }) => {
+  const database = getDatabase();
+  const batch = loadDocumentBatch(database, options?.isDeleted);
+  return batch.docs.map((doc) => toDocumentDTO(doc, batch));
+});
+
+// 列表摘要 IPC：不携带 answers/questions 长文本，仅供文档列表加载使用（性能优化 A 档）
+ipcMain.handle("document:listDocuments", (_, options?: { isDeleted?: boolean }) => {
+  const database = getDatabase();
+  const batch = loadDocumentBatch(database, options?.isDeleted);
+  return batch.docs.map((doc) => {
+    const questions = batch.questionsByDoc.get(doc.id) ?? [];
+    return {
+      id: doc.id,
+      title: doc.title,
+      createdAt: doc.created_at,
+      updatedAt: doc.updated_at,
+      questionCount: questions.filter((q) => !q.is_deleted).length,
+      tags: (batch.tagsByDoc.get(doc.id) ?? []).map((t) => ({
         id: t.id,
         name: t.name,
         createdAt: t.created_at,
@@ -204,15 +283,24 @@ ipcMain.handle("document:findAllDocuments", (_, options?: { isDeleted?: boolean 
   });
 });
 
+// 文档详情缓存：以 documents.updated_at 作指纹，未变更时免于重复组装查询（性能优化 C 档）
+const documentDetailCache = new Map<string, { updatedAt: string; data: DocumentDTO }>();
+
 ipcMain.handle("document:findDocumentById", (_, id: string) => {
   const database = getDatabase();
-  const doc = database.prepare("SELECT * FROM documents WHERE id = ?").get(id) as
-    | DocRow
+  const row = database.prepare("SELECT updated_at FROM documents WHERE id = ?").get(id) as
+    | { updated_at: string }
     | undefined;
-  if (!doc) {
+  if (!row) {
     return null;
   }
 
+  const hit = documentDetailCache.get(id);
+  if (hit && hit.updatedAt === row.updated_at) {
+    return hit.data;
+  }
+
+  const doc = database.prepare("SELECT * FROM documents WHERE id = ?").get(id) as unknown as DocRow;
   const questions = database
     .prepare("SELECT * FROM questions WHERE document_id = ? ORDER BY sort_order")
     .all(doc.id) as unknown as QuestionRow[];
@@ -227,7 +315,7 @@ ipcMain.handle("document:findDocumentById", (_, id: string) => {
     )
     .all(doc.id) as unknown as TagRow[];
 
-  return {
+  const data: DocumentDTO = {
     id: doc.id,
     title: doc.title,
     createdAt: doc.created_at,
@@ -255,6 +343,8 @@ ipcMain.handle("document:findDocumentById", (_, id: string) => {
       createdAt: t.created_at,
     })),
   };
+  documentDetailCache.set(id, { updatedAt: row.updated_at, data });
+  return data;
 });
 
 ipcMain.handle("document:softDeleteDocument", (_, id: string) => {

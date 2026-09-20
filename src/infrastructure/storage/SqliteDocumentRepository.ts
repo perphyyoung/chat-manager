@@ -4,7 +4,7 @@ import type {
   AnswerRepository,
 } from "../../domain/repositories";
 import { Document, Answer, Tag } from "../../domain/entities";
-import type { DocumentDTO } from "../../types/dto";
+import type { DocumentDTO, DocumentListItem } from "../../types/dto";
 import { questionFromDTO } from "./questionFromDTO";
 
 function toDocument(stored: DocumentDTO): Document {
@@ -41,6 +41,11 @@ export class SqliteDocumentRepository implements DocumentRepository {
   setRepositories(questionRepo: QuestionRepository, answerRepo: AnswerRepository) {
     this.questionRepo = questionRepo;
     this.answerRepo = answerRepo;
+  }
+
+  async listSummaries(): Promise<DocumentListItem[]> {
+    // 直接透传主进程摘要 IPC 结果（已是轻量摘要，无需实体转换）
+    return window.electronAPI.document.listDocuments({ isDeleted: false });
   }
 
   async findAllDocuments(): Promise<Document[]> {

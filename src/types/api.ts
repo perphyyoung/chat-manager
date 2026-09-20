@@ -5,6 +5,7 @@
 
 import type {
   DocumentDTO,
+  DocumentListItem,
   TagDTO,
   AnswerDTO,
   DocumentInput,
@@ -33,6 +34,7 @@ export interface ElectronAPI {
   };
   document: {
     findAllDocuments: (options?: { isDeleted?: boolean }) => Promise<DocumentDTO[]>;
+    listDocuments: (options?: { isDeleted?: boolean }) => Promise<DocumentListItem[]>;
     findDocumentById: (id: string) => Promise<DocumentDTO | null>;
     saveDocument: (doc: DocumentInput) => Promise<void>;
     deleteDocument: (id: string) => Promise<void>;
