@@ -157,15 +157,16 @@ function handleDrop(event: DragEvent) {
 }
 
 .question-item__number {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: center; /* 多行文字时序号与整项上下中心对齐 */
   background-color: var(--color-primary);
   color: white;
   border-radius: 50%;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   margin-right: 12px;
   flex-shrink: 0;
@@ -173,8 +174,8 @@ function handleDrop(event: DragEvent) {
 
 .question-item__text {
   flex: 1;
+  line-height: 18px; /* 单行文字行高与序号一致 */
   font-size: 14px;
   color: var(--color-text);
-  line-height: 1.4;
 }
 </style>
