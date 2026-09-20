@@ -4,7 +4,18 @@ import type { SearchResults } from "../src/types/search";
 // 复杂正则搜索的纯函数实现：与 db、类实例解耦，主进程与 worker 线程共用同一份逻辑。
 // worker 无法传输 DatabaseSync 句柄，必须由调用方传入已打开/新建的连接。
 
-// 正则命中片段：以匹配位置为中心截取上下文并包 <mark>，与 FTS5 snippet 输出格式一致
+// 正则命中片段：以匹配位置为中心截取上下文并包 <mark>，与 FTS5 snippet 输出格式一致。
+// 文本片段必须先转义 HTML：回答内容常含 <script>、<template> 等代码，若直接拼入 v-html 会被当作真实标签解析，
+// 导致 <mark> 高亮被吞进标签内部不可见，看起来像"无匹配结果却出现在列表里"。
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function makeSnippet(text: string, match: RegExpMatchArray): string {
   const index = match.index ?? 0;
   const matched = match[0];
@@ -13,7 +24,7 @@ function makeSnippet(text: string, match: RegExpMatchArray): string {
   const end = Math.min(text.length, index + matched.length + radius);
   const prefix = start > 0 ? "..." : "";
   const suffix = end < text.length ? "..." : "";
-  return `${prefix}${text.slice(start, index)}<mark>${matched}</mark>${text.slice(index + matched.length, end)}${suffix}`;
+  return `${prefix}${escapeHtml(text.slice(start, index))}<mark>${escapeHtml(matched)}</mark>${escapeHtml(text.slice(index + matched.length, end))}${suffix}`;
 }
 
 /**

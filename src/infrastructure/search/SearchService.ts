@@ -1,6 +1,7 @@
 import type { DatabaseSync as SqliteDB } from "node:sqlite";
 import type { SearchResults } from "../../types/search";
 import { searchRegexFromDb } from "../../../electron/regexSearch";
+import { escapeHtml } from "../../presentation/utils/html";
 
 interface FtsRow {
   id: string;
@@ -429,11 +430,13 @@ export class SearchService {
     return results;
   }
 
-  // 以命中的子串为中心截取上下文并包 <mark>，与 regexSearch.makeSnippet 输出格式一致
+  // 以命中的子串为中心截取上下文并包 <mark>，与 regexSearch.makeSnippet 输出格式一致。
+  // 文本片段必须先转义 HTML，否则含 <script> 等代码的回答会被 v-html 当作真实标签解析，吞掉 <mark> 高亮。
   private literalSnippet(text: string, pattern: string): string {
     const index = text.toLowerCase().indexOf(pattern.toLowerCase());
     if (index === -1) {
-      return text.slice(0, 80) + (text.length > 80 ? "..." : "");
+      const snippet = text.slice(0, 80);
+      return escapeHtml(snippet) + (text.length > 80 ? "..." : "");
     }
     const matched = text.slice(index, index + pattern.length);
     const radius = 50;
@@ -441,7 +444,7 @@ export class SearchService {
     const end = Math.min(text.length, index + matched.length + radius);
     const prefix = start > 0 ? "..." : "";
     const suffix = end < text.length ? "..." : "";
-    return `${prefix}${text.slice(start, index)}<mark>${matched}</mark>${text.slice(index + matched.length, end)}${suffix}`;
+    return `${prefix}${escapeHtml(text.slice(start, index))}<mark>${escapeHtml(matched)}</mark>${escapeHtml(text.slice(index + matched.length, end))}${suffix}`;
   }
 
   private escapeQuery(query: string): string {

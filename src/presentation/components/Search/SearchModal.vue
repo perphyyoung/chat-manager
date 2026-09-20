@@ -102,6 +102,9 @@ const showHistory = computed(() => {
 });
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+// 搜索请求序号：debounce 只清定时器不取消在途请求，旧请求晚于新请求返回时会覆盖结果；
+// 每次发起搜索递增序号，响应回来时仅当序号仍为最新才写入 results，避免旧结果串台。
+let searchSeq = 0;
 
 function addToHistory(searchText: string) {
   if (!searchText.trim()) return;
@@ -153,14 +156,19 @@ async function handleSearch(searchText: string) {
   }
 
   debounceTimer = setTimeout(async () => {
+    const currentSeq = ++searchSeq;
     isLoading.value = true;
     try {
-      results.value = isRegex.value
+      const res = isRegex.value
         ? await window.electronAPI.search.querySearchRegex(searchText)
         : await window.electronAPI.search.querySearch(searchText);
+      // 仅当本次请求仍是最新时才写入，防止旧请求覆盖新结果
+      if (currentSeq !== searchSeq) return;
+      results.value = res;
       searchError.value = "";
       selectedIndex.value = flatResults.value.length > 0 ? 0 : -1;
     } catch (error) {
+      if (currentSeq !== searchSeq) return;
       // 禁止静默失败：非法正则等错误必须在界面可见
       searchError.value = isRegex.value
         ? `正则表达式无效：${searchText}`
@@ -173,7 +181,9 @@ async function handleSearch(searchText: string) {
       };
       selectedIndex.value = -1;
     } finally {
-      isLoading.value = false;
+      if (currentSeq === searchSeq) {
+        isLoading.value = false;
+      }
     }
   }, 300);
 }
