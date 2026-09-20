@@ -121,6 +121,7 @@ function handleShowInDocumentList(questionId: string) {
           <h2 class="conversation-view__title">
             {{ documentStore.selectedDocument.title }}
           </h2>
+          <TagSelector />
           <button
             class="fullscreen-btn"
             :title="props.isFullscreen ? '退出全屏' : '全屏专注'"
@@ -129,7 +130,6 @@ function handleShowInDocumentList(questionId: string) {
             {{ props.isFullscreen ? "⤣" : "⤢" }}
           </button>
         </div>
-        <TagSelector />
       </div>
       <div ref="messagesContainer" class="conversation-view__messages">
         <div
@@ -192,21 +192,25 @@ function handleShowInDocumentList(questionId: string) {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
 }
 
 .conversation-view__title {
-  flex: 1;
+  flex: 0 1 auto;
+  min-width: 0;
   margin: 0;
   font-size: 18px;
   font-weight: 600;
   color: var(--color-text);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .fullscreen-btn {
   width: 28px;
   height: 28px;
   padding: 0;
+  margin-left: auto;
   border: 1px solid var(--color-border);
   background-color: var(--color-surface);
   color: var(--color-text-secondary);
