@@ -26,7 +26,7 @@ function makeSnippet(text: string, match: RegExpMatchArray): string {
 export function searchRegexFromDb(db: SqliteDB, searchText: string, limit: number): SearchResults {
   let regex: RegExp;
   try {
-    regex = new RegExp(searchText, "iu");
+    regex = new RegExp(searchText, "ium");
   } catch {
     throw new Error(`Invalid regular expression: ${searchText}`);
   }
