@@ -244,12 +244,12 @@ function selectCurrent() {
     if (query.value.trim()) {
       addToHistory(query.value);
     }
-    emit("select", { item, searchText: query.value });
+    emit("select", { item, searchText: query.value, regexMode: isRegex.value });
     close();
   }
 }
 
-function handleSelect(data: { item: SearchResult; searchText: string }) {
+function handleSelect(data: { item: SearchResult; searchText: string; regexMode: boolean }) {
   if (data.searchText.trim()) {
     addToHistory(data.searchText);
   }
@@ -264,7 +264,7 @@ function handleHistoryClick(searchText: string) {
 }
 
 const emit = defineEmits<{
-  (e: "select", data: { item: SearchResult; searchText: string }): void;
+  (e: "select", data: { item: SearchResult; searchText: string; regexMode: boolean }): void;
 }>();
 
 onMounted(() => {

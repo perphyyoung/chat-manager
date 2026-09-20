@@ -15,7 +15,7 @@ const parsed = computed(() => parseMarkdown(props.content));
 const renderedHtml = computed(() => {
   const { html } = parsed.value;
   if (documentStore.highlightText) {
-    return highlightSearchText(html, documentStore.highlightText);
+    return highlightSearchText(html, documentStore.highlightText, documentStore.highlightRegexMode);
   }
   return html;
 });

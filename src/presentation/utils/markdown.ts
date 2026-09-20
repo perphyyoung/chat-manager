@@ -113,12 +113,32 @@ export function parseMarkdown(content: string): ParsedMarkdown {
 /**
  * 在 HTML 中高亮搜索关键词
  * @param html - HTML 字符串
- * @param keyword - 搜索关键词
+ * @param keyword - 搜索关键词（正则模式下为正则表达式）
+ * @param regexMode - 是否正则模式：正则模式直接用 keyword 构造 RegExp 匹配；
+ *                    普通模式按字面量匹配（多词逐个高亮，兼容 FTS5 分词匹配）
  * @returns 高亮后的 HTML 字符串
  */
-export function highlightSearchText(html: string, keyword: string): string {
+export function highlightSearchText(html: string, keyword: string, regexMode = false): string {
   if (!keyword.trim()) return html;
-  const escapedKeyword = escapeHtml(keyword);
-  const regex = new RegExp(`(${escapeRegex(escapedKeyword)})`, "gi");
-  return html.replace(regex, '<span class="search-highlight">$1</span>');
+  if (regexMode) {
+    try {
+      const regex = new RegExp(keyword, "gi");
+      return html.replace(regex, (match) => {
+        // 匹配片段可能含 HTML 特殊字符，转义后再包标签，防注入
+        return `<span class="search-highlight">${escapeHtml(match)}</span>`;
+      });
+    } catch {
+      return html;
+    }
+  }
+  // 普通模式：按空白拆词逐个高亮，兼容 FTS5 分词匹配（命中任意词即高亮）
+  const words = keyword.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return html;
+  let result = html;
+  for (const word of words) {
+    const escapedWord = escapeHtml(word);
+    const regex = new RegExp(`(${escapeRegex(escapedWord)})`, "gi");
+    result = result.replace(regex, '<span class="search-highlight">$1</span>');
+  }
+  return result;
 }

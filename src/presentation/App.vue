@@ -56,8 +56,9 @@ async function handleSearchSelect(data: {
     questionId?: string;
   };
   searchText: string;
+  regexMode: boolean;
 }) {
-  const { item, searchText } = data;
+  const { item, searchText, regexMode } = data;
 
   switch (item.type) {
     case "document":
@@ -68,8 +69,8 @@ async function handleSearchSelect(data: {
         await documentStore.selectDocument(item.documentId);
         await nextTick();
         documentStore.setActiveQuestion(item.id);
-        scrollToQuestion(item.id, searchText);
-        documentStore.setHighlightText(searchText);
+        scrollToQuestion(item.id, searchText, regexMode);
+        documentStore.setHighlightText(searchText, regexMode);
       }
       break;
     case "answer":
@@ -77,8 +78,8 @@ async function handleSearchSelect(data: {
         await documentStore.selectDocument(item.documentId);
         await nextTick();
         documentStore.setActiveQuestion(item.questionId);
-        scrollToQuestion(item.questionId, searchText);
-        documentStore.setHighlightText(searchText);
+        scrollToQuestion(item.questionId, searchText, regexMode);
+        documentStore.setHighlightText(searchText, regexMode);
       }
       break;
     case "tag":
@@ -87,11 +88,24 @@ async function handleSearchSelect(data: {
   }
 }
 
-function findTextNode(el: Element, text: string): Text | null {
+// 在文本节点中查找搜索词：正则模式用 RegExp 测试，普通模式用字面量 includes
+function findTextNode(el: Element, text: string, regexMode: boolean): Text | null {
+  let matcher: ((s: string) => boolean) | null = null;
+  if (regexMode) {
+    try {
+      const re = new RegExp(text, "i");
+      matcher = (s) => re.test(s);
+    } catch {
+      return null;
+    }
+  } else {
+    const lower = text.toLowerCase();
+    matcher = (s) => s.toLowerCase().includes(lower);
+  }
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
   let node = walker.nextNode();
   while (node) {
-    if (node.textContent?.toLowerCase().includes(text.toLowerCase())) {
+    if (node.textContent && matcher(node.textContent)) {
       return node as Text;
     }
     node = walker.nextNode();
@@ -99,7 +113,7 @@ function findTextNode(el: Element, text: string): Text | null {
   return null;
 }
 
-function scrollToQuestion(questionId: string, searchText?: string) {
+function scrollToQuestion(questionId: string, searchText?: string, regexMode = false) {
   nextTick(() => {
     const messagesContainer = document.querySelector(".conversation-view__messages");
     if (!messagesContainer) return;
@@ -114,19 +128,38 @@ function scrollToQuestion(questionId: string, searchText?: string) {
     const answerEl = qaPair.querySelector(".answer-bubble__content");
     if (!answerEl) return;
 
-    const textNode = findTextNode(answerEl, searchText);
+    const textNode = findTextNode(answerEl, searchText, regexMode);
     if (!textNode) return;
 
     const parent = textNode.parentElement;
     const textContent = textNode.textContent || "";
-    const lowerContent = textContent.toLowerCase();
-    const lowerSearch = searchText.toLowerCase();
-    const startIndex = lowerContent.indexOf(lowerSearch);
-    if (startIndex === -1 || !parent) return;
+    if (!parent) return;
+
+    // 计算匹配区间：正则模式用 exec，普通模式用 indexOf
+    let startIndex = -1;
+    let matchLength = 0;
+    if (regexMode) {
+      try {
+        const re = new RegExp(searchText, "i");
+        const m = re.exec(textContent);
+        if (m) {
+          startIndex = m.index;
+          matchLength = m[0].length;
+        }
+      } catch {
+        return;
+      }
+    } else {
+      const lowerContent = textContent.toLowerCase();
+      const lowerSearch = searchText.toLowerCase();
+      startIndex = lowerContent.indexOf(lowerSearch);
+      matchLength = searchText.length;
+    }
+    if (startIndex === -1) return;
 
     const beforeText = textContent.slice(0, startIndex);
-    const matchText = textContent.slice(startIndex, startIndex + searchText.length);
-    const afterText = textContent.slice(startIndex + searchText.length);
+    const matchText = textContent.slice(startIndex, startIndex + matchLength);
+    const afterText = textContent.slice(startIndex + matchLength);
 
     parent.textContent = beforeText;
     const highlight = document.createElement("mark");

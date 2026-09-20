@@ -100,6 +100,7 @@ export const useDocumentStore = defineStore("document", () => {
 
   // 搜索高亮状态
   const highlightText = ref<string | null>(null);
+  const highlightRegexMode = ref(false);
   let highlightTimer: ReturnType<typeof setTimeout> | null = null;
 
   // 从本地存储加载排序偏好
@@ -209,8 +210,9 @@ export const useDocumentStore = defineStore("document", () => {
     }
   }
 
-  function setHighlightText(text: string, duration = 3000) {
+  function setHighlightText(text: string, regexMode = false, duration = 3000) {
     highlightText.value = text;
+    highlightRegexMode.value = regexMode;
     if (highlightTimer) {
       clearTimeout(highlightTimer);
     }
@@ -221,6 +223,7 @@ export const useDocumentStore = defineStore("document", () => {
 
   function clearHighlightText() {
     highlightText.value = null;
+    highlightRegexMode.value = false;
     if (highlightTimer) {
       clearTimeout(highlightTimer);
       highlightTimer = null;
@@ -712,6 +715,7 @@ export const useDocumentStore = defineStore("document", () => {
     selectedDocumentId,
     activeQuestionId,
     highlightText,
+    highlightRegexMode,
     selectedDocument,
     selectedDocumentQuestions,
     documentSortField,
