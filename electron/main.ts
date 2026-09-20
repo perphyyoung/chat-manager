@@ -262,7 +262,7 @@ ipcMain.handle("document:findAllDocuments", (_, options?: { isDeleted?: boolean 
   return batch.docs.map((doc) => toDocumentDTO(doc, batch));
 });
 
-// 列表摘要 IPC：不携带 answers/questions 长文本，仅供文档列表加载使用（性能优化 A 档）
+// 列表摘要 IPC：不携带 answers/questions 长文本，仅供文档列表加载使用
 ipcMain.handle("document:listDocuments", (_, options?: { isDeleted?: boolean }) => {
   const database = getDatabase();
   const batch = loadDocumentBatch(database, options?.isDeleted);
@@ -283,8 +283,26 @@ ipcMain.handle("document:listDocuments", (_, options?: { isDeleted?: boolean }) 
   });
 });
 
-// 文档详情缓存：以 documents.updated_at 作指纹，未变更时免于重复组装查询（性能优化 C 档）
+// 文档详情缓存：以 documents.updated_at 作指纹，文档未变更时免于重复组装查询
 const documentDetailCache = new Map<string, { updatedAt: string; data: DocumentDTO }>();
+
+// 详情缓存正确性不能依赖 updated_at 指纹（子数据写操作未必刷新它），
+// 写操作后需显式失效：能确定文档删单条，否则清空，避免命中旧数据
+function invalidateDocumentDetailCache(documentId?: string): void {
+  if (documentId) {
+    documentDetailCache.delete(documentId);
+  } else {
+    documentDetailCache.clear();
+  }
+}
+
+// 子数据（问题/回答/标签关联）被修改时，文档内容确实变了，同步刷新 updated_at，
+// 使“按更新时间排序”反映真实变更，与 saveDocument/restoreDocument 的语义一致
+function touchDocument(database: DatabaseType, documentId: string): void {
+  database
+    .prepare("UPDATE documents SET updated_at = ? WHERE id = ?")
+    .run(new Date().toISOString(), documentId);
+}
 
 ipcMain.handle("document:findDocumentById", (_, id: string) => {
   const database = getDatabase();
@@ -351,6 +369,8 @@ ipcMain.handle("document:softDeleteDocument", (_, id: string) => {
   const database = getDatabase();
   const now = new Date().toISOString();
   database.prepare("UPDATE documents SET is_deleted = 1, deleted_at = ? WHERE id = ?").run(now, id);
+  touchDocument(database, id);
+  invalidateDocumentDetailCache(id);
   SearchService.deleteDocument(database, id);
 });
 
@@ -360,6 +380,7 @@ ipcMain.handle("document:restoreDocument", (_, id: string) => {
   database
     .prepare("UPDATE documents SET is_deleted = 0, deleted_at = NULL, updated_at = ? WHERE id = ?")
     .run(now, id);
+  invalidateDocumentDetailCache(id);
   SearchService.updateDocument(database, id);
 });
 
@@ -403,12 +424,30 @@ ipcMain.handle("answer:saveAnswer", (_, answerJson: string) => {
       answer.createdAt ?? now,
       answer.updatedAt ?? now,
     );
+  // 回答属问题，反查其所属文档并刷新 updated_at
+  const ownedDoc = database
+    .prepare("SELECT document_id FROM questions WHERE id = ?")
+    .get(answer.questionId) as { document_id: string } | undefined;
+  if (ownedDoc) {
+    touchDocument(database, ownedDoc.document_id);
+    invalidateDocumentDetailCache(ownedDoc.document_id);
+  }
   SearchService.updateAnswer(database, answer.id);
 });
 
 ipcMain.handle("answer:deleteAnswer", (_, id: string) => {
   const database = getDatabase();
+  // 删除前反查所属文档用于刷新 updated_at
+  const ownedDoc = database
+    .prepare(
+      "SELECT document_id FROM questions WHERE id = (SELECT question_id FROM answers WHERE id = ?)",
+    )
+    .get(id) as { document_id: string } | undefined;
   database.prepare("DELETE FROM answers WHERE id = ?").run(id);
+  if (ownedDoc) {
+    touchDocument(database, ownedDoc.document_id);
+    invalidateDocumentDetailCache(ownedDoc.document_id);
+  }
 });
 
 // Question IPC handlers (soft delete)
@@ -418,6 +457,8 @@ ipcMain.handle("question:softDeleteQuestion", (_, documentId: string, questionId
   database
     .prepare("UPDATE questions SET is_deleted = 1, deleted_at = ? WHERE id = ? AND document_id = ?")
     .run(now, questionId, documentId);
+  touchDocument(database, documentId);
+  invalidateDocumentDetailCache(documentId);
 });
 
 ipcMain.handle("question:restoreQuestion", (_, documentId: string, questionId: string) => {
@@ -428,6 +469,8 @@ ipcMain.handle("question:restoreQuestion", (_, documentId: string, questionId: s
       "UPDATE questions SET is_deleted = 0, deleted_at = NULL, updated_at = ? WHERE id = ? AND document_id = ?",
     )
     .run(now, questionId, documentId);
+  touchDocument(database, documentId);
+  invalidateDocumentDetailCache(documentId);
 });
 
 ipcMain.handle("question:getDeletedQuestions", (_, documentId: string) => {
@@ -458,6 +501,8 @@ ipcMain.handle("question:clearDeletedQuestions", (_, documentId: string) => {
   database
     .prepare("DELETE FROM questions WHERE document_id = ? AND is_deleted = 1")
     .run(documentId);
+  touchDocument(database, documentId);
+  invalidateDocumentDetailCache(documentId);
 });
 
 ipcMain.handle(
@@ -471,12 +516,22 @@ ipcMain.handle(
       .get(targetDocumentId) as { count: number };
     const newOrder = result.count;
 
+    // 更新前先反查源文档（更新后 document_id 已变为目标，无法再定位源）
+    const sourceDoc = database
+      .prepare("SELECT document_id FROM questions WHERE id = ?")
+      .get(questionId) as { document_id: string } | undefined;
+
     // 更新问题的 document_id 和 order
     database
       .prepare(
         "UPDATE questions SET document_id = ?, sort_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
       )
       .run(targetDocumentId, newOrder, questionId);
+    if (sourceDoc) {
+      touchDocument(database, sourceDoc.document_id);
+    }
+    touchDocument(database, targetDocumentId);
+    invalidateDocumentDetailCache();
   },
 );
 
@@ -524,12 +579,15 @@ ipcMain.handle("tag:saveTag", (_, tagJson: string) => {
       "INSERT INTO tags (id, name, created_at) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name",
     )
     .run(tag.id, tag.name, tag.createdAt ?? now);
+  // 标签改名影响所有关联文档，清空详情缓存以确保重新组装
+  invalidateDocumentDetailCache();
   SearchService.updateTag(database, tag.id);
 });
 
 ipcMain.handle("tag:deleteTag", (_, id: string) => {
   const database = getDatabase();
   database.prepare("DELETE FROM tags WHERE id = ?").run(id);
+  invalidateDocumentDetailCache();
   SearchService.deleteTag(database, id);
 });
 
@@ -546,6 +604,8 @@ ipcMain.handle("tag:addTagToDocument", (_, documentId: string, tagId: string) =>
   database
     .prepare("INSERT INTO document_tags (document_id, tag_id) VALUES (?, ?) ON CONFLICT DO NOTHING")
     .run(documentId, tagId);
+  touchDocument(database, documentId);
+  invalidateDocumentDetailCache(documentId);
   SearchService.updateTag(database, tagId);
   SearchService.updateDocument(database, documentId);
 });
@@ -555,6 +615,8 @@ ipcMain.handle("tag:removeTagFromDocument", (_, documentId: string, tagId: strin
   database
     .prepare("DELETE FROM document_tags WHERE document_id = ? AND tag_id = ?")
     .run(documentId, tagId);
+  touchDocument(database, documentId);
+  invalidateDocumentDetailCache(documentId);
   SearchService.updateTag(database, tagId);
   SearchService.updateDocument(database, documentId);
 });
@@ -682,6 +744,7 @@ ipcMain.handle("document:saveDocument", (_, doc: DocumentInput) => {
       "INSERT INTO documents (id, title, created_at, updated_at, is_deleted, deleted_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at",
     )
     .run(doc.id, doc.title, doc.createdAt ?? now, doc.updatedAt ?? now, 0, null);
+  invalidateDocumentDetailCache(doc.id);
   SearchService.updateDocument(database, doc.id);
 });
 
@@ -700,6 +763,7 @@ ipcMain.handle("document:deleteDocument", (_, id: string) => {
   database.prepare("DELETE FROM questions WHERE document_id = ?").run(id);
   // 删除文档
   database.prepare("DELETE FROM documents WHERE id = ?").run(id);
+  invalidateDocumentDetailCache(id);
 });
 
 ipcMain.handle("question:saveAllQuestions", (_, docId: string, questions: QuestionInput[]) => {
@@ -729,6 +793,8 @@ ipcMain.handle("question:saveAllQuestions", (_, docId: string, questions: Questi
       );
     SearchService.updateQuestion(database, q.id);
   }
+  touchDocument(database, docId);
+  invalidateDocumentDetailCache(docId);
 });
 
 ipcMain.handle("question:deleteAllQuestions", (_, ids: string[]) => {
@@ -738,6 +804,8 @@ ipcMain.handle("question:deleteAllQuestions", (_, ids: string[]) => {
     database.prepare("DELETE FROM answers WHERE question_id = ?").run(id);
     database.prepare("DELETE FROM questions WHERE id = ?").run(id);
   }
+  // 无法由问题 id 定位文档，直接清空缓存兜底
+  invalidateDocumentDetailCache();
 });
 
 ipcMain.handle("answer:saveAllAnswers", (_, docId: string, answers: AnswerInput[]) => {
@@ -771,6 +839,8 @@ ipcMain.handle("answer:saveAllAnswers", (_, docId: string, answers: AnswerInput[
       .run(a.id, a.questionId, a.content, a.createdAt ?? now, a.updatedAt ?? now);
     SearchService.updateAnswer(database, a.id);
   }
+  touchDocument(database, docId);
+  invalidateDocumentDetailCache(docId);
 });
 
 ipcMain.handle("answer:deleteAllAnswers", (_, ids: string[]) => {
@@ -779,6 +849,7 @@ ipcMain.handle("answer:deleteAllAnswers", (_, ids: string[]) => {
     SearchService.deleteAnswer(database, id);
     database.prepare("DELETE FROM answers WHERE id = ?").run(id);
   }
+  invalidateDocumentDetailCache();
 });
 
 function openSettings() {

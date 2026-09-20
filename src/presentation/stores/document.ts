@@ -578,8 +578,14 @@ export const useDocumentStore = defineStore("document", () => {
     await tagService.updateTagName(tagId, newName);
     // 刷新标签列表
     await loadTags();
-    // 刷新所有文档数据（因为标签名可能在多个文档中）
+    // 标签名可能在多个文档中关联，其详情缓存的标签名均过期，清空后重新加载
+    detailCache.clear();
+    // 刷新摘要列表（含各文档 tags）
     await loadDocuments();
+    // 刷新当前文档详情，使对话面板标签即时使用新名
+    if (selectedDocumentId.value) {
+      await refreshDocument(selectedDocumentId.value);
+    }
   }
 
   // 重新排序问题（单文档，右键入口）：sort_order 强制从 1 起连续编号
