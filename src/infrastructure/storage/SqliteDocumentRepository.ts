@@ -3,23 +3,13 @@ import type {
   QuestionRepository,
   AnswerRepository,
 } from "../../domain/repositories";
-import { Document, Question, Answer, Tag } from "../../domain/entities";
+import { Document, Answer, Tag } from "../../domain/entities";
 import type { DocumentDTO } from "../../types/dto";
+import { questionFromDTO } from "./questionFromDTO";
 
 function toDocument(stored: DocumentDTO): Document {
   // 加载所有问题（包括已删除的），传递软删除状态
-  const questions = (stored.questions ?? []).map(
-    (q) =>
-      new Question(
-        q.id,
-        q.text,
-        q.order,
-        new Date(q.createdAt),
-        !!q.isDeleted,
-        q.deletedAt ? new Date(q.deletedAt) : undefined,
-        q.updatedAt ? new Date(q.updatedAt) : undefined,
-      ),
-  );
+  const questions = (stored.questions ?? []).map((q) => questionFromDTO(q));
   const questionIds = new Set(questions.map((q) => q.id));
   const answers = (stored.answers ?? [])
     .filter((a) => questionIds.has(a.questionId))

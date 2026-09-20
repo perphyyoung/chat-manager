@@ -1,13 +1,14 @@
 import type { QuestionRepository } from "@/domain/repositories";
-import { Question } from "@/domain/entities";
+import type { Question } from "@/domain/entities";
 import type { QuestionDTO } from "@/types/dto";
+import { questionFromDTO } from "./questionFromDTO";
 
 export class SqliteQuestionRepository implements QuestionRepository {
   async findQuestionByDocumentId(documentId: string): Promise<Question[]> {
     const doc = await window.electronAPI.document.findDocumentById(documentId);
     if (!doc) return [];
     const rows = doc.questions || [];
-    return rows.map((q: unknown) => this.toQuestion(q as QuestionDTO));
+    return rows.map((q: unknown) => questionFromDTO(q as QuestionDTO));
   }
 
   async saveAllQuestions(documentId: string, questions: Question[]): Promise<void> {
@@ -48,17 +49,5 @@ export class SqliteQuestionRepository implements QuestionRepository {
 
   async deleteAllQuestions(id: string): Promise<void> {
     await window.electronAPI.question.deleteAllQuestions([id]);
-  }
-
-  private toQuestion(dto: QuestionDTO): Question {
-    return new Question(
-      dto.id,
-      dto.text,
-      dto.order,
-      new Date(dto.createdAt),
-      dto.isDeleted === 1,
-      dto.deletedAt ? new Date(dto.deletedAt) : undefined,
-      dto.updatedAt ? new Date(dto.updatedAt) : undefined,
-    );
   }
 }
