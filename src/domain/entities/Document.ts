@@ -131,6 +131,7 @@ export class Document {
       throw new NotFoundError("Answer", answerId);
     }
     answer.editContent(content);
+    this.touchQuestion(answer.questionId);
     this._updatedAt = new Date();
   }
 
@@ -203,8 +204,14 @@ export class Document {
     this._updatedAt = new Date();
   }
 
+  touchQuestion(questionId: string): void {
+    // 回答变化视为问题活跃：刷新问题的 updatedAt，供"更新时间"排序
+    this.getQuestionById(questionId)?.touch();
+  }
+
   addAnswer(answer: Answer): void {
     this._answers.push(answer);
+    this.touchQuestion(answer.questionId);
     this._updatedAt = new Date();
   }
 
@@ -213,7 +220,9 @@ export class Document {
     if (index === -1) {
       throw new NotFoundError("Answer", answerId);
     }
+    const questionId = this._answers[index]!.questionId;
     this._answers.splice(index, 1);
+    this.touchQuestion(questionId);
     this._updatedAt = new Date();
   }
 
