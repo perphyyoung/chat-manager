@@ -2,11 +2,11 @@ import { expect } from "@playwright/test";
 import { test, generateUniqueDocTitle, openSearch, createDocumentWithAnswer } from "./utils";
 
 test.describe("全局搜索功能", () => {
-  const SEARCH_TEST_DOC_TITLE = generateUniqueDocTitle("search");
-
   test.beforeEach(async ({ window }) => {
     await window.waitForSelector(".document-list", { timeout: 2000 });
-    await createDocumentWithAnswer(window, SEARCH_TEST_DOC_TITLE);
+    // file scope 下每个测试共享库，标题必须唯一，避免重复创建同名文档累积
+    const title = generateUniqueDocTitle("search");
+    await createDocumentWithAnswer(window, title);
     await window.waitForSelector(".document-list", { timeout: 2000 });
   });
 

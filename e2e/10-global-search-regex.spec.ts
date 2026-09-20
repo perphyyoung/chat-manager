@@ -1,5 +1,5 @@
 /* eslint-disable playwright/expect-expect -- 断言已封装进 expectHit/expectMiss 等辅助函数 */
-import { test, openSearch, createDocumentWithAnswerContent } from "./utils";
+import { test, openSearch, generateUniqueDocTitle, createDocumentWithAnswerContent } from "./utils";
 import { expect, type Page } from "@playwright/test";
 
 // 正则搜索 e2e：按 SearchModal“常用语法”表格逐条覆盖正例与反例。
@@ -18,12 +18,11 @@ const REGEX_SEED = [
 ].join("\n");
 
 test.describe("正则搜索功能", () => {
-  // 固定标题：无大写、无三连以上数字、无特殊符号，避免干扰反例空态
-  const SEARCH_TEST_DOC_TITLE = "e2e_regex_seed_doc";
-
   test.beforeEach(async ({ window }) => {
     await window.waitForSelector(".document-list", { timeout: 2000 });
-    await createDocumentWithAnswerContent(window, SEARCH_TEST_DOC_TITLE, REGEX_SEED);
+    // file scope 下每个测试共享库，标题必须唯一，避免重复创建同名文档累积
+    const title = generateUniqueDocTitle("regex");
+    await createDocumentWithAnswerContent(window, title, REGEX_SEED);
     await window.waitForSelector(".document-list", { timeout: 2000 });
   });
 

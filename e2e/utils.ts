@@ -19,14 +19,14 @@ export type ElectronWindow = Page & {
 
 // Test Fixtures 类型（test-scoped）
 export type TestFixtures = {
-  electronApp: ElectronApplication;
+  electronApp: { app: ElectronApplication; needsReset: boolean };
   window: Page;
 };
 
 // Worker-scoped Fixtures 类型：持有按文件复用的实例池
 export type WorkerFixtures = {
   _appInstancePool: {
-    acquire(file: string): Promise<ElectronApplication>;
+    acquire(file: string): Promise<{ app: ElectronApplication; needsReset: boolean }>;
   };
 };
 
@@ -370,15 +370,20 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   _appInstancePool: [
     async ({}, use, workerInfo) => {
       // 用对象包一层，避免闭包内赋值被 TS 窄化为 never（参考经验第五节）
-      const state: { current: { file: string; app: ElectronApplication; dataDir: string } | null } =
-        { current: null };
+      const state: {
+        current: { file: string; app: ElectronApplication; dataDir: string } | null;
+      } = { current: null };
       let seq = 0;
 
       const { _electron: electron } = await import("@playwright/test");
 
-      async function acquireInstance(file: string): Promise<ElectronApplication> {
+      async function acquireInstance(
+        file: string,
+      ): Promise<{ app: ElectronApplication; needsReset: boolean }> {
         if (state.current?.file === file) {
-          return state.current.app;
+          // 命中已有实例 = 本文件非首个用例：文件级共享实例，用例间需 reload 复位
+          // （首个用例必然走到下方新建分支，不会进入这里）
+          return { app: state.current.app, needsReset: true };
         }
         if (state.current) {
           await state.current.app.close();
@@ -394,7 +399,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
           env: { ...process.env, E2E: "1", E2E_INSTANCE: instanceName },
         });
         state.current = { file, app: electronApp, dataDir };
-        return electronApp;
+        return { app: electronApp, needsReset: false };
       }
 
       await use({ acquire: acquireInstance });
@@ -411,20 +416,27 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   // Electron App fixture - 按测试文件获取实例，文件内复用
   electronApp: [
     async ({ _appInstancePool }, use, testInfo) => {
-      const electronApp = await _appInstancePool.acquire(testInfo.file);
-      await use(electronApp);
+      const { app, needsReset } = await _appInstancePool.acquire(testInfo.file);
+      await use({ app, needsReset });
     },
     // 启动耗时不计入用例；同一文件所有用例共享该实例
     { scope: "test", timeout: 30_000 },
   ],
 
   // Window fixture - 从 electronApp 获取主窗口
+  // 文件级共享实例下：每个文件首个用例面对全新实例无残留，跳过 reload；
+  // 后续用例 reload 复位，清掉上一用例残留的弹窗/覆盖层（如 tag-selector-overlay）
   window: [
     async ({ electronApp }, use) => {
-      const window = await electronApp.firstWindow();
+      const { app, needsReset } = electronApp;
+      const window = await app.firstWindow();
       await window.waitForLoadState("domcontentloaded");
+      if (needsReset) {
+        await window.reload({ timeout: 8_000 });
+        await window.waitForSelector(".document-list", { timeout: 2_000 });
+      }
       await use(window);
     },
-    { auto: true },
+    { auto: true, timeout: 30_000 },
   ],
 });
