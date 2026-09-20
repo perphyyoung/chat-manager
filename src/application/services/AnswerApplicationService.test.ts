@@ -61,6 +61,8 @@ describe("AnswerApplicationService", () => {
       expect(answer.content).toBe("This is the answer");
       expect(mockDocumentRepo.saveDocument).toHaveBeenCalled();
       expect(mockAnswerRepo.saveAnswer).toHaveBeenCalled();
+      // 回答新增后问题视为活跃：updatedAt 后移
+      expect(question.updatedAt.getTime()).toBeGreaterThan(mockDate.getTime());
     });
 
     it("should throw NotFoundError when document not found", async () => {
@@ -118,6 +120,8 @@ describe("AnswerApplicationService", () => {
       expect(answer.content).toBe("Updated content");
       expect(mockDocumentRepo.saveDocument).toHaveBeenCalled();
       expect(mockAnswerRepo.saveAnswer).toHaveBeenCalled();
+      // 回答编辑后问题视为活跃：updatedAt 后移
+      expect(question.updatedAt.getTime()).toBeGreaterThan(mockDate.getTime());
     });
 
     it("should throw NotFoundError when document not found", async () => {
@@ -163,6 +167,8 @@ describe("AnswerApplicationService", () => {
       expect(document.answers).toHaveLength(0);
       expect(mockDocumentRepo.saveDocument).toHaveBeenCalled();
       expect(mockAnswerRepo.deleteAnswer).toHaveBeenCalledWith("a1");
+      // 回答删除后问题视为活跃：updatedAt 后移
+      expect(question.updatedAt.getTime()).toBeGreaterThan(mockDate.getTime());
     });
 
     it("should throw NotFoundError when document not found", async () => {

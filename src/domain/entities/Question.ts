@@ -68,6 +68,11 @@ export class Question {
     this._updatedAt = new Date();
   }
 
+  /** 标记活跃时间（如回答新增/编辑/删除），不修改内容与顺序 */
+  touch(): void {
+    this._updatedAt = new Date();
+  }
+
   private validateText(text: string): void {
     if (!text || text.trim().length === 0) {
       throw new ValidationError("Question text cannot be empty");

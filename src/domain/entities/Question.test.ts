@@ -67,4 +67,14 @@ describe("Question", () => {
       deletedAt: undefined,
     });
   });
+
+  it("should refresh updatedAt on touch without changing content", () => {
+    const question = new Question("q1", "Test question", 2, mockDate);
+
+    question.touch();
+
+    expect(question.updatedAt.getTime()).toBeGreaterThan(mockDate.getTime());
+    expect(question.text).toBe("Test question");
+    expect(question.order).toBe(2);
+  });
 });
