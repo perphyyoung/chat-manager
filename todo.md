@@ -26,4 +26,8 @@
 
 ### 状态
 
-未开始实施。
+已完成实施并验证通过（`pnpm check`、243 单测、正则 E2E 10 项、全局搜索 E2E 7 项均通过）。
+
+### 可选重构
+
+`SearchService.literalSnippet`（字面量子串命中片段）与 `regexSearch.makeSnippet`（正则命中片段）的截取逻辑几乎重复（半径 50、`...` 前后缀、`<mark>` 包裹），仅命中定位方式不同（`indexOf` vs `match.index`）。可抽公共 helper `buildSnippet(text, matchIndex, matchLength)` 统一，消除重复。

@@ -13,6 +13,7 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: path.resolve(__dirname, "electron/main.ts"),
+          searchWorker: path.resolve(__dirname, "electron/searchWorker.ts"),
         },
         external: ["electron"],
       },

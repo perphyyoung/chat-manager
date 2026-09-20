@@ -10,9 +10,11 @@ import {
 } from "electron";
 import path from "node:path";
 import fs from "node:fs";
+import { Worker } from "node:worker_threads";
 import { log } from "./logger";
-import { getDatabase, closeDatabase } from "./database";
+import { getDatabase, closeDatabase, getDbPath } from "./database";
 import { SearchService } from "../src/infrastructure/search/SearchService";
+import type { SearchResults } from "../src/types/search";
 import type { DocRow, QuestionRow, AnswerRow, ExistsRow, TagRow } from "../src/types/db";
 import type { DocumentInput, QuestionInput, AnswerInput, DocumentDTO } from "../src/types/dto";
 import { exportData, importData } from "./importExport";
@@ -708,10 +710,85 @@ ipcMain.handle("search:querySearch", async (_, query: string) => {
   const searchService = new SearchService(database);
   return await searchService.querySearch(query);
 });
+
+// 正则搜索 worker：惰性单例，请求用 requestId 配对响应，超时或异常时回退同步
+let regexWorker: Worker | null = null;
+let nextRegexRequestId = 0;
+const pendingRegexRequests = new Map<
+  string,
+  {
+    resolve: (results: SearchResults) => void;
+    reject: (err: Error) => void;
+    timeout: ReturnType<typeof setTimeout>;
+  }
+>();
+const REGEX_WORKER_TIMEOUT = 30_000;
+
+function getRegexWorker(): Worker {
+  if (!regexWorker) {
+    // electron-vite 构建后 searchWorker.js 与 index.js 同目录（out/main/）
+    const workerPath = path.join(__dirname, "searchWorker.js");
+    regexWorker = new Worker(workerPath);
+
+    regexWorker.on(
+      "message",
+      (msg: { requestId: string; ok: boolean; results?: SearchResults; error?: string }) => {
+        const pending = pendingRegexRequests.get(msg.requestId);
+        if (!pending) return;
+        clearTimeout(pending.timeout);
+        pendingRegexRequests.delete(msg.requestId);
+        if (msg.ok && msg.results) {
+          pending.resolve(msg.results);
+        } else {
+          pending.reject(new Error(msg.error ?? "regex search worker failed"));
+        }
+      },
+    );
+
+    regexWorker.on("error", (err) => {
+      log.error(`[search] regex worker error: ${err instanceof Error ? err.message : String(err)}`);
+      for (const [, pending] of pendingRegexRequests) {
+        clearTimeout(pending.timeout);
+        pending.reject(err);
+      }
+      pendingRegexRequests.clear();
+      regexWorker = null;
+    });
+
+    regexWorker.on("exit", () => {
+      regexWorker = null;
+    });
+  }
+  return regexWorker;
+}
+
+function runRegexInWorker(searchText: string, limit: number): Promise<SearchResults> {
+  return new Promise((resolve, reject) => {
+    const worker = getRegexWorker();
+    const requestId = String(++nextRegexRequestId);
+    const timeout = setTimeout(() => {
+      pendingRegexRequests.delete(requestId);
+      reject(new Error("regex search worker timeout"));
+    }, REGEX_WORKER_TIMEOUT);
+    pendingRegexRequests.set(requestId, { resolve, reject, timeout });
+    worker.postMessage({ requestId, dbPath: getDbPath(), searchText, limit });
+  });
+}
+
 ipcMain.handle("search:querySearchRegex", async (_, query: string) => {
   const database = getDatabase();
   const searchService = new SearchService(database);
-  return await searchService.querySearchRegex(query);
+  try {
+    // 字面量由 querySearchRegex 内部走 SQL INSTR，无需 worker；复杂正则注入 worker 执行器
+    return await searchService.querySearchRegex(query, 10, (searchText, limit) =>
+      runRegexInWorker(searchText, limit),
+    );
+  } catch (err) {
+    log.warn(
+      `[search] regex worker failed, fallback to sync: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return await searchService.querySearchRegex(query);
+  }
 });
 
 // Transaction IPC handlers for DDD repository pattern
