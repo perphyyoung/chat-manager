@@ -200,31 +200,33 @@ function handleClick(item: SearchResult) {
           {{ getTypeIcon(type) }} {{ getTypeName(type) }}
           <span class="search-results__count">({{ getItemsByType(type).length }})</span>
         </div>
-        <div
-          v-for="(item, index) in getItemsByType(type)"
-          :key="item.id"
-          class="search-results__item"
-          :class="{
-            'search-results__item--selected': getGlobalIndex(type, index) === selectedIndex,
-          }"
-          @click="
-            handleClick({
-              id: item.id,
-              type: type as 'document' | 'question' | 'answer' | 'tag',
-              content: getDisplayContent(item, type),
-              metadata: getMetadata(item, type),
-              documentId: getDocumentId(item, type),
-              questionId: getQuestionId(item, type),
-            })
-          "
-          @mouseenter="emit('hover', getGlobalIndex(type, index))"
-        >
+        <div class="search-results__items">
           <div
-            class="search-results__item-content"
-            v-html="highlight(getDisplayContent(item, type), query, regexMode)"
-          ></div>
-          <div class="search-results__item-metadata">
-            {{ getMetadata(item, type) }}
+            v-for="(item, index) in getItemsByType(type)"
+            :key="item.id"
+            class="search-results__item"
+            :class="{
+              'search-results__item--selected': getGlobalIndex(type, index) === selectedIndex,
+            }"
+            @click="
+              handleClick({
+                id: item.id,
+                type: type as 'document' | 'question' | 'answer' | 'tag',
+                content: getDisplayContent(item, type),
+                metadata: getMetadata(item, type),
+                documentId: getDocumentId(item, type),
+                questionId: getQuestionId(item, type),
+              })
+            "
+            @mouseenter="emit('hover', getGlobalIndex(type, index))"
+          >
+            <div
+              class="search-results__item-content"
+              v-html="highlight(getDisplayContent(item, type), query, regexMode)"
+            ></div>
+            <div class="search-results__item-metadata">
+              {{ getMetadata(item, type) }}
+            </div>
           </div>
         </div>
       </template>
@@ -257,28 +259,36 @@ function handleClick(item: SearchResult) {
   color: var(--color-text-secondary);
 }
 
+.search-results__items {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 14px;
+}
+
 .search-results__item {
-  padding: 12px 16px;
-  border-radius: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
   cursor: pointer;
-  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: background 0.15s ease;
 }
 
 .search-results__item:hover,
 .search-results__item--selected {
   background: var(--color-selected-bg);
-}
-
-.search-results__item:last-child {
-  margin-bottom: 0;
+  border-color: var(--color-primary, var(--color-border));
 }
 
 .search-results__item-content {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--color-text);
-  margin-bottom: 6px;
+  white-space: pre-line;
   word-break: break-word;
   line-height: 1.5;
+  flex: 1;
 }
 
 .search-results__item-content :deep(mark) {
@@ -288,7 +298,13 @@ function handleClick(item: SearchResult) {
 }
 
 .search-results__item-metadata {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--color-text-secondary);
+}
+
+@media (max-width: 640px) {
+  .search-results__items {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

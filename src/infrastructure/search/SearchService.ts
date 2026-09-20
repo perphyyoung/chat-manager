@@ -430,21 +430,68 @@ export class SearchService {
     return results;
   }
 
-  // 以命中的子串为中心截取上下文并包 <mark>，与 regexSearch.makeSnippet 输出格式一致。
-  // 文本片段必须先转义 HTML，否则含 <script> 等代码的回答会被 v-html 当作真实标签解析，吞掉 <mark> 高亮。
+  // 以命中行为中心取上下各1行（共3行），行内按字符半径截取，与 regexSearch.makeSnippet 输出格式一致。
+  // 卡片式展示只显示3行，行数在 snippet 生成阶段锁定；文本片段转义 HTML，防 <script> 等吞掉 <mark>。
   private literalSnippet(text: string, pattern: string): string {
     const index = text.toLowerCase().indexOf(pattern.toLowerCase());
     if (index === -1) {
-      const snippet = text.slice(0, 80);
-      return escapeHtml(snippet) + (text.length > 80 ? "..." : "");
+      const lines = text.split("\n").slice(0, 3);
+      return (
+        lines.map((l) => escapeHtml(l.slice(0, 100))).join("\n") +
+        (text.length > 300 ? "\n..." : "")
+      );
     }
     const matched = text.slice(index, index + pattern.length);
     const radius = 50;
-    const start = Math.max(0, index - radius);
-    const end = Math.min(text.length, index + matched.length + radius);
-    const prefix = start > 0 ? "..." : "";
-    const suffix = end < text.length ? "..." : "";
-    return `${prefix}${escapeHtml(text.slice(start, index))}<mark>${escapeHtml(matched)}</mark>${escapeHtml(text.slice(index + matched.length, end))}${suffix}`;
+    const lines = text.split("\n");
+
+    // 定位匹配覆盖的行范围 [startLine, endLine]
+    let charCount = 0;
+    let startLine = 0;
+    let endLine = 0;
+    let startLineFound = false;
+    for (let i = 0; i < lines.length; i++) {
+      const lineLen = (lines[i]?.length ?? 0) + 1;
+      if (!startLineFound && index >= charCount && index < charCount + lineLen) {
+        startLine = i;
+        startLineFound = true;
+      }
+      if (startLineFound && index + matched.length <= charCount + lineLen) {
+        endLine = i;
+        break;
+      }
+      charCount += lineLen;
+    }
+    if (endLine < startLine) endLine = startLine;
+
+    const viewStart = Math.max(0, startLine - 1);
+    const viewEnd = Math.min(lines.length - 1, endLine + 1);
+
+    const rendered: string[] = [];
+    for (let i = viewStart; i <= viewEnd; i++) {
+      const line = lines[i] ?? "";
+      if (i >= startLine && i <= endLine) {
+        let lineStartOffset = 0;
+        for (let j = 0; j < i; j++) lineStartOffset += (lines[j]?.length ?? 0) + 1;
+        const localStart = Math.max(0, index - lineStartOffset);
+        const localEnd = Math.min(line.length, index + matched.length - lineStartOffset);
+        const segStart = Math.max(0, localStart - radius);
+        const segEnd = Math.min(line.length, localEnd + radius);
+        const prefix = segStart > 0 ? "..." : "";
+        const suffix = segEnd < line.length ? "..." : "";
+        rendered.push(
+          `${prefix}${escapeHtml(line.slice(segStart, localStart))}<mark>${escapeHtml(line.slice(localStart, localEnd))}</mark>${escapeHtml(line.slice(localEnd, segEnd))}${suffix}`,
+        );
+      } else {
+        const segEnd = Math.min(line.length, radius * 2);
+        const suffix = segEnd < line.length ? "..." : "";
+        rendered.push(`${escapeHtml(line.slice(0, segEnd))}${suffix}`);
+      }
+    }
+
+    const head = viewStart > 0 ? "...\n" : "";
+    const tail = viewEnd < lines.length - 1 ? "\n..." : "";
+    return `${head}${rendered.join("\n")}${tail}`;
   }
 
   private escapeQuery(query: string): string {
