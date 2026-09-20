@@ -274,6 +274,31 @@ describe("SqliteDocumentRepository", () => {
       expect(result?.title).toBe("Doc 1");
     });
 
+    it("should restore question updatedAt from stored data", async () => {
+      mockElectronAPI.document.findDocumentById.mockResolvedValue({
+        id: "doc1",
+        title: "Doc 1",
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-01T00:00:00Z",
+        questions: [
+          {
+            id: "q1",
+            text: "Question 1",
+            order: 0,
+            createdAt: "2024-01-01T00:00:00Z",
+            updatedAt: "2024-06-01T00:00:00Z",
+            isDeleted: 0,
+          },
+        ],
+        answers: [],
+        tags: [],
+      });
+
+      const result = await repository.findDocumentById("doc1");
+
+      expect(result?.questions[0]?.updatedAt.toISOString()).toBe("2024-06-01T00:00:00.000Z");
+    });
+
     it("should return null when document not found", async () => {
       mockElectronAPI.document.findDocumentById.mockResolvedValue(null);
 

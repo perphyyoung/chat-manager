@@ -17,6 +17,7 @@ function toDocument(stored: DocumentDTO): Document {
         new Date(q.createdAt),
         !!q.isDeleted,
         q.deletedAt ? new Date(q.deletedAt) : undefined,
+        q.updatedAt ? new Date(q.updatedAt) : undefined,
       ),
   );
   const questionIds = new Set(questions.map((q) => q.id));
