@@ -937,7 +937,11 @@ ipcMain.handle("answer:deleteAllAnswers", (_, ids: string[]) => {
 });
 
 function openSettings() {
-  const window = BrowserWindow.getFocusedWindow();
+  // 生产用 getFocusedWindow（用户点击菜单时窗口必有焦点）；
+  // e2e 多实例并发时系统焦点可能在其他窗口，getFocusedWindow 返回 null，
+  // 此时 fallback 到本进程第一个窗口（e2e 单进程仅一个窗口，不会发错）。
+  const window =
+    BrowserWindow.getFocusedWindow() ?? (IS_E2E ? BrowserWindow.getAllWindows()[0] : undefined);
   if (window) {
     window.webContents.send("open-settings");
   } else {
@@ -1061,14 +1065,9 @@ function createMenu() {
         {
           label: "设置",
           accelerator: "CmdOrCtrl+,",
-          click: () => {
-            const window = BrowserWindow.getFocusedWindow();
-            if (window) {
-              window.webContents.send("open-settings");
-            } else {
-              log.error("Window is null, cannot send open-settings");
-            }
-          },
+          // applicationMenu 的 click 回调 browserWindow 参数可能为 undefined（应用菜单不属于特定窗口），
+          // 统一走 openSettings：getFocusedWindow 拿不到时 fallback 到 getAllWindows()[0]。
+          click: () => openSettings(),
         },
         { type: "separator" },
         {

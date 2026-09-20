@@ -7,7 +7,10 @@ test("settings menu opens settings modal", async ({ window, electronApp }) => {
   // 等 .document-list 出现（App onMounted 已执行）后再点菜单。
   await window.waitForSelector(".document-list", { timeout: 2000 });
 
-  await electronApp.app.evaluate(async ({ app }) => {
+  await electronApp.app.evaluate(async ({ app, BrowserWindow }) => {
+    // 先聚焦本进程窗口，再点击菜单：并发 e2e 多窗口争夺系统焦点时，
+    // 若不主动 focus，菜单回调可能拿不到本窗口，open-settings 消息发不出去。
+    BrowserWindow.getAllWindows()[0]?.focus();
     const menu = app.applicationMenu;
     const fileMenu = menu?.items.find((item) => item.label === "File");
     const settingsItem = fileMenu?.submenu?.items.find((item) => item.label === "设置");
