@@ -2,7 +2,7 @@ import { load } from "js-yaml";
 import { Marked } from "marked";
 import { createHighlighter } from "shiki";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
-import { escapeHtml, escapeRegex } from "./html";
+import { escapeHtml, escapeRegex } from "../../common/html";
 
 // 语言别名映射：将常见的非标准语言标识符映射到 Shiki 语言 id，未识别的语言回退 "text"
 const LANGUAGE_ALIASES: Record<string, string> = {

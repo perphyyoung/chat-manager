@@ -1,7 +1,7 @@
 import type { DatabaseSync as SqliteDB } from "node:sqlite";
 import type { SearchResults } from "../../types/search";
 import { searchRegexFromDb, buildLineSnippet } from "../../../electron/regexSearch";
-import { escapeHtml } from "../../presentation/utils/html";
+import { escapeHtml } from "../../common/html";
 
 interface FtsRow {
   id: string;

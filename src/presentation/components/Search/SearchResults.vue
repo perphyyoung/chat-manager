@@ -6,7 +6,7 @@ import type {
   AnswerSearchResult,
   TagSearchResult,
 } from "@/types/search";
-import { escapeHtml, escapeRegex } from "../../utils/html";
+import { escapeHtml, escapeRegex } from "../../../common/html";
 interface SearchResult {
   id: string;
   type: "document" | "question" | "answer" | "tag";

@@ -1,19 +1,9 @@
 import type { DatabaseSync as SqliteDB } from "node:sqlite";
 import type { SearchResults } from "../src/types/search";
+import { escapeHtml } from "../src/common/html";
 
 // 复杂正则搜索的纯函数实现：与 db、类实例解耦，主进程与 worker 线程共用同一份逻辑。
 // worker 无法传输 DatabaseSync 句柄，必须由调用方传入已打开/新建的连接。
-
-// 文本片段必须先转义 HTML：回答内容常含 <script>、<template> 等代码，若直接拼入 v-html 会被当作真实标签解析，
-// 导致 <mark> 高亮被吞进标签内部不可见。
-export function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
 
 // 按行截取的公共 snippet 生成：以匹配区间为中心取上下各1行（共3行），
 // 匹配行内按字符半径截取并保留 <mark>，上下文行截取前 N 字符。
