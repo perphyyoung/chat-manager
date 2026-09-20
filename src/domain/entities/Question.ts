@@ -12,8 +12,9 @@ export class Question {
     private readonly _createdAt: Date = new Date(),
     isDeleted: boolean = false,
     deletedAt?: Date,
+    updatedAt?: Date,
   ) {
-    this._updatedAt = _createdAt;
+    this._updatedAt = updatedAt ?? _createdAt;
     this._isDeleted = isDeleted;
     this._deletedAt = deletedAt;
     this.validateText(_text);

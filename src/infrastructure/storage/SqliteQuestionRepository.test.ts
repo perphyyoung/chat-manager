@@ -121,6 +121,22 @@ describe("SqliteQuestionRepository", () => {
       expect(result[0]?.isDeleted).toBe(true);
       expect(result[0]?.deletedAt).toBeDefined();
     });
+
+    it("should restore updatedAt from dto", async () => {
+      const mockDoc = {
+        questions: [
+          createQuestionDTO({
+            createdAt: "2024-01-01T00:00:00Z",
+            updatedAt: "2024-06-01T00:00:00Z",
+          }),
+        ],
+      };
+      mockElectronAPI.document.findDocumentById.mockResolvedValue(mockDoc);
+
+      const result = await repository.findQuestionByDocumentId("doc1");
+
+      expect(result[0]?.updatedAt.toISOString()).toBe("2024-06-01T00:00:00.000Z");
+    });
   });
 
   describe("softDeleteQuestion", () => {

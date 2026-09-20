@@ -58,6 +58,7 @@ export class SqliteQuestionRepository implements QuestionRepository {
       new Date(dto.createdAt),
       dto.isDeleted === 1,
       dto.deletedAt ? new Date(dto.deletedAt) : undefined,
+      dto.updatedAt ? new Date(dto.updatedAt) : undefined,
     );
   }
 }
