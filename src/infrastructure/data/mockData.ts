@@ -7,9 +7,9 @@ export const mockDocuments = [
     "1",
     "项目初始化",
     [
-      new Question("q1", "如何创建新项目？", 0, now),
-      new Question("q2", "项目需要哪些依赖？", 1, now),
-      new Question("q3", "如何配置开发环境？", 2, now),
+      new Question("q1", "如何创建新项目？", 1, now),
+      new Question("q2", "项目需要哪些依赖？", 2, now),
+      new Question("q3", "如何配置开发环境？", 3, now),
     ],
     [
       new Answer(
@@ -38,8 +38,8 @@ export const mockDocuments = [
     "2",
     "组件开发",
     [
-      new Question("q4", "如何创建组件？", 0, now),
-      new Question("q5", "组件之间如何通信？", 1, now),
+      new Question("q4", "如何创建组件？", 1, now),
+      new Question("q5", "组件之间如何通信？", 2, now),
     ],
     [
       new Answer(
@@ -62,8 +62,8 @@ export const mockDocuments = [
     "3",
     "状态管理",
     [
-      new Question("q6", "为什么使用 Pinia？", 0, now),
-      new Question("q7", "如何定义 Store？", 1, now),
+      new Question("q6", "为什么使用 Pinia？", 1, now),
+      new Question("q7", "如何定义 Store？", 2, now),
     ],
     [
       new Answer(

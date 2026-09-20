@@ -3,6 +3,7 @@ import { DocumentApplicationService } from "./DocumentApplicationService";
 import { SimpleEventBus } from "../../domain/events";
 import { NotFoundError } from "../../domain/errors";
 import { MockDocumentRepository } from "./MockDocumentRepository";
+import { Document, Question } from "../../domain/entities";
 
 describe("DocumentApplicationService", () => {
   let service: DocumentApplicationService;
@@ -110,5 +111,45 @@ describe("DocumentApplicationService", () => {
     const doc = await service.createDocument("Test Doc");
 
     await expect(service.selectQuestion(doc.id, "non-existent")).rejects.toThrow(NotFoundError);
+  });
+
+  it("should reorder questions of all documents from 1 and return updated count", async () => {
+    const repo = new MockDocumentRepository();
+    const svc = new DocumentApplicationService(repo, new SimpleEventBus());
+    // 存量数据：sort_order 从 0 起
+    const doc1 = new Document("d1", "Doc1", [
+      new Question("q1", "Q1", 0),
+      new Question("q2", "Q2", 1),
+    ]);
+    const doc2 = new Document("d2", "Doc2", [new Question("q3", "Q3", 0)]);
+    await repo.saveDocument(doc1);
+    await repo.saveDocument(doc2);
+
+    const count = await svc.reorderAllQuestions();
+
+    expect(count).toBe(2);
+    const updated1 = await svc.getDocument("d1");
+    expect(updated1?.questions[0]?.order).toBe(1);
+    expect(updated1?.questions[1]?.order).toBe(2);
+    const updated2 = await svc.getDocument("d2");
+    expect(updated2?.questions[0]?.order).toBe(1);
+  });
+
+  it("should skip documents already sequential from 1", async () => {
+    const repo = new MockDocumentRepository();
+    const svc = new DocumentApplicationService(repo, new SimpleEventBus());
+    const doc1 = new Document("d1", "Doc1", [
+      new Question("q1", "Q1", 1),
+      new Question("q2", "Q2", 2),
+    ]);
+    const doc2 = new Document("d2", "Doc2", [new Question("q3", "Q3", 0)]);
+    await repo.saveDocument(doc1);
+    await repo.saveDocument(doc2);
+
+    const count = await svc.reorderAllQuestions();
+
+    expect(count).toBe(1);
+    expect((await svc.getDocument("d1"))?.questions[0]?.order).toBe(1);
+    expect((await svc.getDocument("d2"))?.questions[0]?.order).toBe(1);
   });
 });

@@ -60,7 +60,7 @@ describe("Document", () => {
       const question = doc.addQuestion("New question");
 
       expect(question.text).toBe("New question");
-      expect(question.order).toBe(0);
+      expect(question.order).toBe(1);
       expect(doc.questions).toHaveLength(1);
     });
 
@@ -71,9 +71,9 @@ describe("Document", () => {
       doc.addQuestion("Question 2");
       doc.addQuestion("Question 3");
 
-      expect(doc.questions[0]!.order).toBe(0);
-      expect(doc.questions[1]!.order).toBe(1);
-      expect(doc.questions[2]!.order).toBe(2);
+      expect(doc.questions[0]!.order).toBe(1);
+      expect(doc.questions[1]!.order).toBe(2);
+      expect(doc.questions[2]!.order).toBe(3);
     });
 
     it("should update question text and refresh updatedAt", () => {
@@ -115,9 +115,53 @@ describe("Document", () => {
       expect(doc.questions[0]!.id).toBe("q3");
       expect(doc.questions[1]!.id).toBe("q1");
       expect(doc.questions[2]!.id).toBe("q2");
-      expect(doc.questions[0]!.order).toBe(0);
-      expect(doc.questions[1]!.order).toBe(1);
-      expect(doc.questions[2]!.order).toBe(2);
+      expect(doc.questions[0]!.order).toBe(1);
+      expect(doc.questions[1]!.order).toBe(2);
+      expect(doc.questions[2]!.order).toBe(3);
+    });
+
+    it("should renumber active questions from 1 when gaps exist", () => {
+      const q1 = new Question("q1", "Q1", 0, mockDate);
+      const q2 = new Question("q2", "Q2", 1, mockDate);
+      const q3 = new Question("q3", "Q3", 2, mockDate);
+      const doc = new Document("doc1", "Test", [q1, q2, q3], [], mockDate);
+
+      const changed = doc.renumberActiveQuestions();
+
+      expect(changed).toBe(true);
+      expect(doc.questions[0]!.order).toBe(1);
+      expect(doc.questions[1]!.order).toBe(2);
+      expect(doc.questions[2]!.order).toBe(3);
+    });
+
+    it("should return false and keep orders when already sequential from 1", () => {
+      const q1 = new Question("q1", "Q1", 1, mockDate);
+      const q2 = new Question("q2", "Q2", 2, mockDate);
+      const q3 = new Question("q3", "Q3", 3, mockDate);
+      const doc = new Document("doc1", "Test", [q1, q2, q3], [], mockDate);
+
+      const changed = doc.renumberActiveQuestions();
+
+      expect(changed).toBe(false);
+      expect(doc.questions[0]!.order).toBe(1);
+      expect(doc.questions[1]!.order).toBe(2);
+      expect(doc.questions[2]!.order).toBe(3);
+    });
+
+    it("should skip soft-deleted questions when renumbering", () => {
+      const q1 = new Question("q1", "Q1", 3, mockDate);
+      const q2 = new Question("q2", "Q2", 5, mockDate);
+      const qDeleted = new Question("q3", "Q3", 0, mockDate);
+      qDeleted.softDelete();
+      const doc = new Document("doc1", "Test", [q1, q2, qDeleted], [], mockDate);
+
+      const changed = doc.renumberActiveQuestions();
+
+      expect(changed).toBe(true);
+      expect(q1.order).toBe(1);
+      expect(q2.order).toBe(2);
+      // 软删除问题不参与编号
+      expect(qDeleted.order).toBe(0);
     });
 
     it("should throw error when reordering with wrong count", () => {

@@ -170,4 +170,20 @@ export class DocumentApplicationService {
       }),
     );
   }
+
+  /**
+   * 设置入口：遍历所有文档，将各文档活动问题的 sort_order 强制重排为 1 起连续编号，
+   * 一次性迁移存量数据（原 0 起）。返回实际发生变更的文档数。
+   */
+  async reorderAllQuestions(): Promise<number> {
+    const documents = await this.documentRepo.findAllDocuments();
+    let updatedCount = 0;
+    for (const document of documents) {
+      if (document.renumberActiveQuestions()) {
+        await this.documentRepo.saveDocument(document);
+        updatedCount += 1;
+      }
+    }
+    return updatedCount;
+  }
 }

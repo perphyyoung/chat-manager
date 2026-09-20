@@ -137,7 +137,8 @@ export class Document {
 
   addQuestion(text: string, order?: number): Question {
     const id = generateQuestionId();
-    const newOrder = order ?? this._questions.length;
+    // 新建问题的 sort_order 从 1 起：sort_order 直接作为显示序号
+    const newOrder = order ?? this._questions.length + 1;
     const question = new Question(id, text, newOrder);
     this._questions.push(question);
     this._updatedAt = new Date();
@@ -200,8 +201,27 @@ export class Document {
     }
 
     this._questions = newOrder;
-    this._questions.forEach((q, index) => q.changeOrder(index));
+    this._questions.forEach((q, index) => q.changeOrder(index + 1));
     this._updatedAt = new Date();
+  }
+
+  /**
+   * 活动问题按 sort_order 升序强制从 1 起连续编号（设置入口批量迁移存量数据）。
+   * 返回是否发生了变更，避免无变更时触发无谓保存。
+   */
+  renumberActiveQuestions(): boolean {
+    const active = this._questions.filter((q) => !q.isDeleted).sort((a, b) => a.order - b.order);
+    let changed = false;
+    active.forEach((q, index) => {
+      if (q.order !== index + 1) {
+        q.changeOrder(index + 1);
+        changed = true;
+      }
+    });
+    if (changed) {
+      this._updatedAt = new Date();
+    }
+    return changed;
   }
 
   touchQuestion(questionId: string): void {

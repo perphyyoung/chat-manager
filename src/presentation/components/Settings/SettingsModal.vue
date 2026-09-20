@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, inject } from "vue";
 import { useSettingsStore } from "../../stores/settings";
+import { useDocumentStore } from "../../stores/document";
 
 const settingsStore = useSettingsStore();
+const documentStore = useDocumentStore();
+const showToast = inject<(message: string) => void>("showToast");
 
 defineProps<{
   isOpen: boolean;
@@ -210,6 +213,19 @@ function handleClose() {
 async function handleOpenDataDir() {
   await window.electronAPI.openDataDir();
 }
+
+// 所有文档的问题序号从 1 起强制重排（迁移存量 0 起数据）；无变更时不提示改动
+async function handleReorderAllQuestions() {
+  try {
+    const count = await documentStore.reorderAllQuestions();
+    showToast?.(
+      count > 0 ? `已完成 ${count} 个文档的问题序号重排` : "所有文档的问题序号已连续，无需调整",
+    );
+  } catch (error) {
+    window.electronAPI.renderLog("error", `[SettingsModal] 问题列表重新排序失败: ${String(error)}`);
+    showToast?.("问题列表重新排序失败");
+  }
+}
 </script>
 
 <template>
@@ -276,6 +292,13 @@ async function handleOpenDataDir() {
             </span>
           </div>
           <button class="open-btn" @click="handleOpenDataDir">打开文件夹</button>
+        </div>
+        <div class="setting-item">
+          <div class="dir-info">
+            <span class="dir-label">问题列表重新排序</span>
+            <span class="dir-path">所有文档的问题序号从 1 起重新编号</span>
+          </div>
+          <button class="open-btn" @click="handleReorderAllQuestions">重新排序</button>
         </div>
       </div>
     </div>

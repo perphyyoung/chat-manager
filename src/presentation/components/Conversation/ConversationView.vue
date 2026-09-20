@@ -143,7 +143,7 @@ function handleShowInDocumentList(questionId: string) {
         >
           <!-- 问题：右对齐，主题色背景；左侧序号直接对应数据库 sort_order -->
           <div class="qa-pair__question-row">
-            <span class="qa-index" aria-hidden="true">{{ question.order + 1 }}</span>
+            <span class="qa-index" aria-hidden="true">{{ question.order }}</span>
             <QuestionBubble
               :text="question.text"
               :question-id="question.id"

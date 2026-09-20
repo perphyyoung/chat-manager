@@ -578,7 +578,7 @@ export const useDocumentStore = defineStore("document", () => {
     await loadDocuments();
   }
 
-  // 重新排序问题
+  // 重新排序问题（单文档，右键入口）：sort_order 强制从 1 起连续编号
   async function reorderQuestions(): Promise<void> {
     if (!selectedDocumentId.value) {
       throw new Error("No document selected");
@@ -594,26 +594,16 @@ export const useDocumentStore = defineStore("document", () => {
     // 按当前 order 升序排序
     const questions = [...doc.activeQuestions].sort((a, b) => a.order - b.order);
 
-    // 找到最大连续已排序位置
-    let maxOrderedIndex = -1;
-    for (let i = 0; i < questions.length; i++) {
-      if (questions[i]?.order === i) {
-        maxOrderedIndex = i;
-      } else {
-        break;
-      }
-    }
-
-    // 如果全部已排序，无需操作
-    if (maxOrderedIndex === questions.length - 1) {
+    // 已严格为 1..n 连续时无需操作
+    if (questions.every((q, i) => q.order === i + 1)) {
       return;
     }
 
-    // 从 maxOrderedIndex + 1 开始重新编号
-    for (let i = maxOrderedIndex + 1; i < questions.length; i++) {
+    // 全部重新编号 1..n
+    for (let i = 0; i < questions.length; i++) {
       const question = questions[i];
       if (question) {
-        await documentService.updateQuestionOrder(docId, question.id, i);
+        await documentService.updateQuestionOrder(docId, question.id, i + 1);
       }
     }
 
@@ -625,6 +615,14 @@ export const useDocumentStore = defineStore("document", () => {
         documents.value.splice(index, 1, updatedDoc);
       }
     }
+  }
+
+  // 重新排序所有文档的问题（设置入口）：sort_order 强制从 1 起连续编号，一次性迁移存量数据
+  async function reorderAllQuestions(): Promise<number> {
+    const updatedCount = await documentService.reorderAllQuestions();
+    // 刷新全部文档数据
+    await loadDocuments();
+    return updatedCount;
   }
 
   // 移动问题到指定位置（拖拽）
@@ -663,11 +661,11 @@ export const useDocumentStore = defineStore("document", () => {
     // 计算变化的最小索引，从该位置开始重新编号
     const minChangedIndex = Math.min(sourceIndex, adjustedTargetIndex);
 
-    // 从变化的最小索引开始重新编号
+    // 从变化的最小索引开始重新编号（sort_order 从 1 起）
     for (let i = minChangedIndex; i < questions.length; i++) {
       const question = questions[i];
-      if (question && question.order !== i) {
-        await documentService.updateQuestionOrder(docId, question.id, i);
+      if (question && question.order !== i + 1) {
+        await documentService.updateQuestionOrder(docId, question.id, i + 1);
       }
     }
 
@@ -777,6 +775,7 @@ export const useDocumentStore = defineStore("document", () => {
     permanentlyDeleteQuestion,
     clearDeletedQuestions,
     reorderQuestions,
+    reorderAllQuestions,
     moveQuestion,
     moveQuestionToDocument,
   };
