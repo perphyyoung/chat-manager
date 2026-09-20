@@ -22,8 +22,22 @@ function segmentText(text: string): string {
   return words.join(" ");
 }
 
-// 搜索结果缓存：查询本身只读索引，重复输入无需重复计算；索引变化时由写方法清空
+// 搜索结果缓存：查询本身只读索引，重复输入无需重复计算；索引变化时由写方法清空。
+// 键需带上 db 身份与 limit：避免不同数据库连接（如单测各自的内存库）互相污染，也避免 limit 不同命中错误缓存
 const searchCache = new Map<string, SearchResults>();
+
+// 为每个数据库连接分配稳定递增 id，用于区分不同 db 的缓存空间
+const dbIds = new WeakMap<SqliteDB, number>();
+let nextDbId = 0;
+
+function dbIdOf(db: SqliteDB): number {
+  let id = dbIds.get(db);
+  if (id === undefined) {
+    id = ++nextDbId;
+    dbIds.set(db, id);
+  }
+  return id;
+}
 
 function invalidateSearchCache(): void {
   searchCache.clear();
@@ -238,7 +252,7 @@ export class SearchService {
       };
     }
 
-    const cacheKey = `s:${searchText}`;
+    const cacheKey = `s:${dbIdOf(this.db)}:${searchText}:${limit}`;
     const cached = searchCache.get(cacheKey);
     if (cached) {
       return cached;
@@ -281,7 +295,7 @@ export class SearchService {
       };
     }
 
-    const cacheKey = `r:${searchText}`;
+    const cacheKey = `r:${dbIdOf(this.db)}:${searchText}:${limit}`;
     const cached = searchCache.get(cacheKey);
     if (cached) {
       return cached;
