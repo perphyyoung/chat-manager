@@ -141,13 +141,16 @@ function handleShowInDocumentList(questionId: string) {
           }"
           :data-question-id="question.id"
         >
-          <!-- 问题：右对齐，主题色背景 -->
-          <QuestionBubble
-            :text="question.text"
-            :question-id="question.id"
-            @show-in-list="handleShowInQuestionList"
-            @show-in-document-list="handleShowInDocumentList"
-          />
+          <!-- 问题：右对齐，主题色背景；左侧序号直接对应数据库 sort_order -->
+          <div class="qa-pair__question-row">
+            <span class="qa-index" aria-hidden="true">{{ question.order + 1 }}</span>
+            <QuestionBubble
+              :text="question.text"
+              :question-id="question.id"
+              @show-in-list="handleShowInQuestionList"
+              @show-in-document-list="handleShowInDocumentList"
+            />
+          </div>
 
           <!-- 回答：左对齐，表面色背景 -->
           <AnswerBubble
@@ -250,6 +253,36 @@ function handleShowInDocumentList(questionId: string) {
   padding: 12px;
   margin: -12px;
   transition: background-color 0.3s ease;
+}
+
+/* 问题行：序号与气泡横向排布，整体靠右，序号紧贴气泡左侧 */
+.qa-pair__question-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 覆盖气泡自身的 margin-left: auto（会把序号顶到最左），row 已负责整体靠右 */
+.qa-pair__question-row :deep(.question-bubble) {
+  margin-left: 0;
+}
+
+/* 序号与问题列表 .question-item__number 同款：18px 蓝底白字圆，user-select 排除复制；align-self: center 与气泡垂直居中 */
+.qa-index {
+  flex-shrink: 0;
+  align-self: center;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-primary);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 600;
+  user-select: none;
 }
 
 .qa-pair--highlighted {
