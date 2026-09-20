@@ -6,7 +6,7 @@ import type { SearchResults } from "../src/types/search";
 
 // 文本片段必须先转义 HTML：回答内容常含 <script>、<template> 等代码，若直接拼入 v-html 会被当作真实标签解析，
 // 导致 <mark> 高亮被吞进标签内部不可见。
-function escapeHtml(text: string): string {
+export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -15,11 +15,10 @@ function escapeHtml(text: string): string {
     .replace(/'/g, "&#039;");
 }
 
-// 正则命中片段：以匹配行为中心取上下各1行（共3行），行内按字符半径截取。
+// 按行截取的公共 snippet 生成：以匹配区间为中心取上下各1行（共3行），
+// 匹配行内按字符半径截取并保留 <mark>，上下文行截取前 N 字符。
 // 卡片式展示只显示3行，行数在 snippet 生成阶段就锁定，避免渲染层 line-clamp 与 pre-line 冲突。
-function makeSnippet(text: string, match: RegExpMatchArray): string {
-  const index = match.index ?? 0;
-  const matched = match[0];
+export function buildLineSnippet(text: string, matchIndex: number, matchLength: number): string {
   const radius = 50;
   const lines = text.split("\n");
 
@@ -30,11 +29,11 @@ function makeSnippet(text: string, match: RegExpMatchArray): string {
   let startLineFound = false;
   for (let i = 0; i < lines.length; i++) {
     const lineLen = (lines[i]?.length ?? 0) + 1; // +1 为换行符
-    if (!startLineFound && index >= charCount && index < charCount + lineLen) {
+    if (!startLineFound && matchIndex >= charCount && matchIndex < charCount + lineLen) {
       startLine = i;
       startLineFound = true;
     }
-    if (startLineFound && index + matched.length <= charCount + lineLen) {
+    if (startLineFound && matchIndex + matchLength <= charCount + lineLen) {
       endLine = i;
       break;
     }
@@ -53,8 +52,8 @@ function makeSnippet(text: string, match: RegExpMatchArray): string {
       // 匹配行：以匹配段为中心截取，保证 <mark> 完整
       let lineStartOffset = 0;
       for (let j = 0; j < i; j++) lineStartOffset += (lines[j]?.length ?? 0) + 1;
-      const localStart = Math.max(0, index - lineStartOffset);
-      const localEnd = Math.min(line.length, index + matched.length - lineStartOffset);
+      const localStart = Math.max(0, matchIndex - lineStartOffset);
+      const localEnd = Math.min(line.length, matchIndex + matchLength - lineStartOffset);
       const segStart = Math.max(0, localStart - radius);
       const segEnd = Math.min(line.length, localEnd + radius);
       const prefix = segStart > 0 ? "..." : "";
@@ -73,6 +72,11 @@ function makeSnippet(text: string, match: RegExpMatchArray): string {
   const head = viewStart > 0 ? "...\n" : "";
   const tail = viewEnd < lines.length - 1 ? "\n..." : "";
   return `${head}${rendered.join("\n")}${tail}`;
+}
+
+// 正则命中片段：以匹配行为中心取上下各1行（共3行），行内按字符半径截取。
+function makeSnippet(text: string, match: RegExpMatchArray): string {
+  return buildLineSnippet(text, match.index ?? 0, match[0].length);
 }
 
 /**

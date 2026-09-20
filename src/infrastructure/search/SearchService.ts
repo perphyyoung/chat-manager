@@ -1,6 +1,6 @@
 import type { DatabaseSync as SqliteDB } from "node:sqlite";
 import type { SearchResults } from "../../types/search";
-import { searchRegexFromDb } from "../../../electron/regexSearch";
+import { searchRegexFromDb, buildLineSnippet } from "../../../electron/regexSearch";
 import { escapeHtml } from "../../presentation/utils/html";
 
 interface FtsRow {
@@ -280,7 +280,10 @@ export class SearchService {
       snippet?: string;
     })[];
 
-    const result = this.groupByType(rows, limit, escapedQuery);
+    // FTS5 的 content 是 segmentText 分词后的扁平串（换行已丢失），
+    // 展示 snippet 必须用业务表原文才能保留换行；按 type 批量查回原文。
+    const originalContents = this.fetchOriginalContents(rows);
+    const result = this.groupByType(rows, limit, escapedQuery, originalContents);
     searchCache.set(cacheKey, result);
     return result;
   }
@@ -430,8 +433,8 @@ export class SearchService {
     return results;
   }
 
-  // 以命中行为中心取上下各1行（共3行），行内按字符半径截取，与 regexSearch.makeSnippet 输出格式一致。
-  // 卡片式展示只显示3行，行数在 snippet 生成阶段锁定；文本片段转义 HTML，防 <script> 等吞掉 <mark>。
+  // 字面量命中片段：在原文中定位 pattern，复用 buildLineSnippet 生成3行卡片片段，
+  // 与正则搜索输出格式一致；未命中时取前3行纯预览。
   private literalSnippet(text: string, pattern: string): string {
     const index = text.toLowerCase().indexOf(pattern.toLowerCase());
     if (index === -1) {
@@ -441,57 +444,7 @@ export class SearchService {
         (text.length > 300 ? "\n..." : "")
       );
     }
-    const matched = text.slice(index, index + pattern.length);
-    const radius = 50;
-    const lines = text.split("\n");
-
-    // 定位匹配覆盖的行范围 [startLine, endLine]
-    let charCount = 0;
-    let startLine = 0;
-    let endLine = 0;
-    let startLineFound = false;
-    for (let i = 0; i < lines.length; i++) {
-      const lineLen = (lines[i]?.length ?? 0) + 1;
-      if (!startLineFound && index >= charCount && index < charCount + lineLen) {
-        startLine = i;
-        startLineFound = true;
-      }
-      if (startLineFound && index + matched.length <= charCount + lineLen) {
-        endLine = i;
-        break;
-      }
-      charCount += lineLen;
-    }
-    if (endLine < startLine) endLine = startLine;
-
-    const viewStart = Math.max(0, startLine - 1);
-    const viewEnd = Math.min(lines.length - 1, endLine + 1);
-
-    const rendered: string[] = [];
-    for (let i = viewStart; i <= viewEnd; i++) {
-      const line = lines[i] ?? "";
-      if (i >= startLine && i <= endLine) {
-        let lineStartOffset = 0;
-        for (let j = 0; j < i; j++) lineStartOffset += (lines[j]?.length ?? 0) + 1;
-        const localStart = Math.max(0, index - lineStartOffset);
-        const localEnd = Math.min(line.length, index + matched.length - lineStartOffset);
-        const segStart = Math.max(0, localStart - radius);
-        const segEnd = Math.min(line.length, localEnd + radius);
-        const prefix = segStart > 0 ? "..." : "";
-        const suffix = segEnd < line.length ? "..." : "";
-        rendered.push(
-          `${prefix}${escapeHtml(line.slice(segStart, localStart))}<mark>${escapeHtml(line.slice(localStart, localEnd))}</mark>${escapeHtml(line.slice(localEnd, segEnd))}${suffix}`,
-        );
-      } else {
-        const segEnd = Math.min(line.length, radius * 2);
-        const suffix = segEnd < line.length ? "..." : "";
-        rendered.push(`${escapeHtml(line.slice(0, segEnd))}${suffix}`);
-      }
-    }
-
-    const head = viewStart > 0 ? "...\n" : "";
-    const tail = viewEnd < lines.length - 1 ? "\n..." : "";
-    return `${head}${rendered.join("\n")}${tail}`;
+    return buildLineSnippet(text, index, pattern.length);
   }
 
   private escapeQuery(query: string): string {
@@ -501,7 +454,8 @@ export class SearchService {
   private groupByType(
     rows: (FtsRow & { snippet?: string })[],
     limit: number,
-    escapedQuery?: string,
+    escapedQuery: string | undefined,
+    originalContents: Map<string, string>,
   ): SearchResults {
     const results: SearchResults = {
       documents: [],
@@ -512,13 +466,14 @@ export class SearchService {
 
     for (const row of rows) {
       const metadata = JSON.parse(row.metadata || "{}");
+      const original = originalContents.get(`${row.type}:${row.id}`) ?? row.content;
 
       switch (row.type) {
         case "document":
           if (results.documents.length < limit) {
             results.documents.push({
               id: row.id,
-              title: row.content,
+              title: original,
               questionCount: metadata.questionCount || 0,
               answerCount: metadata.answerCount || 0,
             });
@@ -528,8 +483,8 @@ export class SearchService {
           if (results.questions.length < limit) {
             results.questions.push({
               id: row.id,
-              text: row.content,
-              snippet: row.snippet || row.content,
+              text: original,
+              snippet: row.snippet ? this.ftsSnippetToLineSnippet(original, row.snippet) : original,
               documentId: metadata.documentId || "",
               documentTitle: metadata.documentTitle || "",
             });
@@ -539,12 +494,12 @@ export class SearchService {
           if (results.answers.length < limit) {
             results.answers.push({
               id: row.id,
-              content: row.content,
-              snippet:
-                row.snippet ||
-                (escapedQuery
-                  ? this.extractSnippet(row.content, escapedQuery)
-                  : row.content.slice(0, 80)),
+              content: original,
+              snippet: row.snippet
+                ? this.ftsSnippetToLineSnippet(original, row.snippet)
+                : escapedQuery
+                  ? this.extractSnippet(original, escapedQuery)
+                  : original.slice(0, 80),
               questionText: metadata.questionText || "",
               questionId: metadata.questionId || "",
               documentId: metadata.documentId || "",
@@ -556,7 +511,7 @@ export class SearchService {
           if (results.tags.length < limit) {
             results.tags.push({
               id: row.id,
-              name: row.content,
+              name: original,
               documentCount: metadata.documentCount || 0,
             });
           }
@@ -567,6 +522,60 @@ export class SearchService {
     return results;
   }
 
+  // 按 type 批量查业务表取原始文本（FTS5 的 content 是分词后扁平串，换行已丢失）。
+  // 返回 key = `${type}:${id}` 的 map，找不到时 groupByType 回退到 row.content。
+  private fetchOriginalContents(rows: { id: string; type: string }[]): Map<string, string> {
+    const map = new Map<string, string>();
+    const byType = new Map<string, string[]>();
+    for (const row of rows) {
+      if (!byType.has(row.type)) byType.set(row.type, []);
+      byType.get(row.type)!.push(row.id);
+    }
+
+    for (const [type, ids] of byType) {
+      const placeholders = ids.map(() => "?").join(",");
+      let sql: string;
+      switch (type) {
+        case "document":
+          sql = `SELECT id, title AS text FROM documents WHERE id IN (${placeholders})`;
+          break;
+        case "question":
+          sql = `SELECT id, text FROM questions WHERE id IN (${placeholders})`;
+          break;
+        case "answer":
+          sql = `SELECT id, content AS text FROM answers WHERE id IN (${placeholders})`;
+          break;
+        case "tag":
+          sql = `SELECT id, name AS text FROM tags WHERE id IN (${placeholders})`;
+          break;
+        default:
+          continue;
+      }
+      const records = this.db.prepare(sql).all(...ids) as {
+        id: string;
+        text: string;
+      }[];
+      for (const r of records) {
+        map.set(`${type}:${r.id}`, r.text);
+      }
+    }
+    return map;
+  }
+
+  // FTS5 snippet() 生成的是基于 token 的单行片段（换行已被折叠），
+  // 这里从中提取 <mark> 内的实际匹配词，回到原始 content 定位并复用 buildLineSnippet，
+  // 让 FTS5 结果也呈现3行卡片式、保留原始换行。定位失败时回退原始 snippet。
+  private ftsSnippetToLineSnippet(content: string, ftsSnippet: string): string {
+    const m = /<mark>(.*?)<\/mark>/.exec(ftsSnippet);
+    if (!m) return ftsSnippet;
+    const marked = m[1];
+    const idx = content.toLowerCase().indexOf(marked.toLowerCase());
+    if (idx === -1) return ftsSnippet;
+    return buildLineSnippet(content, idx, marked.length);
+  }
+
+  // FTS5 snippet 为空时的兜底：按第一个关键字在原文中定位，复用 buildLineSnippet；
+  // 找不到关键字时回退前80字符纯文本。
   private extractSnippet(text: string, keywords: string): string {
     const keywordList = keywords.split(/\s+/).filter(Boolean);
     if (keywordList.length === 0) {
@@ -578,22 +587,12 @@ export class SearchService {
       return text.slice(0, 80) + (text.length > 80 ? "..." : "");
     }
 
-    const lowerText = text.toLowerCase();
-    const index = lowerText.indexOf(firstKeyword);
-
+    const index = text.toLowerCase().indexOf(firstKeyword);
     if (index === -1) {
       return text.slice(0, 80) + (text.length > 80 ? "..." : "");
     }
 
-    const contextRadius = 50;
-    const start = Math.max(0, index - contextRadius);
-    const end = Math.min(text.length, index + firstKeyword.length + contextRadius);
-
-    let snippet = text.slice(start, end);
-    if (start > 0) snippet = "..." + snippet;
-    if (end < text.length) snippet += "...";
-
-    return snippet;
+    return buildLineSnippet(text, index, firstKeyword.length);
   }
 
   static async rebuildIndex(db: SqliteDB): Promise<void> {
