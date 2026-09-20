@@ -77,18 +77,17 @@ function handleDrop(event: DragEvent) {
     @dragleave="handleDragLeave"
     @drop="handleDrop"
   >
-    <div class="document-item__icon">📄</div>
     <div class="document-item__content">
-      <div class="document-item__title">
-        {{ document.title }}
+      <div class="document-item__title-row">
+        <span class="document-item__title">{{ document.title }}</span>
+        <span v-if="document.activeQuestions.length" class="document-item__count">
+          {{ document.activeQuestions.length }}
+        </span>
       </div>
-      <div class="document-item__meta">
-        <span>{{ document.activeQuestions.length }} 个问题</span>
-        <span v-if="document.tags?.length" class="document-item__tags">
-          <TagBadge v-for="tag in document.tags.slice(0, 2)" :key="tag.id" :name="tag.name" />
-          <span v-if="(document.tags.length || 0) > 2" class="document-item__more-tags">
-            +{{ document.tags.length - 2 }}
-          </span>
+      <div v-if="document.tags?.length" class="document-item__tags">
+        <TagBadge v-for="tag in document.tags.slice(0, 2)" :key="tag.id" :name="tag.name" />
+        <span v-if="(document.tags.length || 0) > 2" class="document-item__more-tags">
+          +{{ document.tags.length - 2 }}
         </span>
       </div>
     </div>
@@ -120,17 +119,21 @@ function handleDrop(event: DragEvent) {
   outline-offset: -2px;
 }
 
-.document-item__icon {
-  font-size: 24px;
-  margin-right: 12px;
-}
-
 .document-item__content {
   flex: 1;
   min-width: 0;
 }
 
+.document-item__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .document-item__title {
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: 14px;
   font-weight: 500;
   color: var(--color-text);
@@ -139,20 +142,27 @@ function handleDrop(event: DragEvent) {
   text-overflow: ellipsis;
 }
 
-.document-item__meta {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-  display: flex;
+/* 问题数量胶囊计数（与标签计数样式一致） */
+.document-item__count {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  background-color: var(--color-primary, #3b82f6);
+  color: white;
+  border-radius: 7px;
+  font-size: 9px;
+  font-weight: 600;
+  flex-shrink: 0;
 }
 
 .document-item__tags {
   display: flex;
   align-items: center;
   gap: 4px;
+  margin-top: 4px;
 }
 
 .document-item__more-tags {
