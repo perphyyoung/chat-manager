@@ -57,8 +57,8 @@ export class AnswerApplicationService {
       throw new NotFoundError("Answer", answerId);
     }
 
-    answer.editContent(newContent);
-    // 回答变化视为问题活跃：刷新问题的 updatedAt，供"更新时间"排序
+    // 编辑回答内容，刷新文档与问题的 updatedAt，供"更新时间"排序
+    document.updateAnswerContent(answerId, newContent);
     document.questions.find((q) => q.id === answer.questionId)?.touch();
     await this.answerRepo.saveAnswer(answer);
     await this.documentRepo.saveDocument(document);

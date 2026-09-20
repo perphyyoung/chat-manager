@@ -138,7 +138,7 @@ export class DocumentApplicationService {
       throw new NotFoundError("Question", questionId);
     }
 
-    question.updateText(newText);
+    document.updateQuestionText(questionId, newText);
     await this.documentRepo.saveDocument(document);
     this.eventBus.emit(
       new QuestionUpdatedEvent(documentId, questionId, {

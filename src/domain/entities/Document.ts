@@ -116,6 +116,24 @@ export class Document {
     this._updatedAt = new Date();
   }
 
+  updateQuestionText(questionId: string, newText: string): void {
+    const question = this.getQuestionById(questionId);
+    if (!question) {
+      throw new NotFoundError("Question", questionId);
+    }
+    question.updateText(newText);
+    this._updatedAt = new Date();
+  }
+
+  updateAnswerContent(answerId: string, content: string): void {
+    const answer = this._answers.find((a) => a.id === answerId);
+    if (!answer) {
+      throw new NotFoundError("Answer", answerId);
+    }
+    answer.editContent(content);
+    this._updatedAt = new Date();
+  }
+
   addQuestion(text: string, order?: number): Question {
     const id = generateQuestionId();
     const newOrder = order ?? this._questions.length;

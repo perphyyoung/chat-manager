@@ -76,6 +76,17 @@ describe("Document", () => {
       expect(doc.questions[2]!.order).toBe(2);
     });
 
+    it("should update question text and refresh updatedAt", () => {
+      const q1 = new Question("q1", "Old", 0, mockDate);
+      const doc = new Document("doc1", "Test", [q1], [], mockDate);
+      const originalUpdatedAt = doc.updatedAt;
+
+      doc.updateQuestionText("q1", "New");
+
+      expect(q1.text).toBe("New");
+      expect(doc.updatedAt.getTime()).toBeGreaterThanOrEqual(originalUpdatedAt.getTime());
+    });
+
     it("should permanently delete question by id", () => {
       const q1 = new Question("q1", "Q1", 0, mockDate);
       const q2 = new Question("q2", "Q2", 1, mockDate);
@@ -171,6 +182,17 @@ describe("Document", () => {
       const doc = new Document("doc1", "Test", [], [], mockDate);
 
       expect(() => doc.removeAnswer("a1")).toThrow(NotFoundError);
+    });
+
+    it("should update answer content and refresh updatedAt", () => {
+      const answer = new Answer("a1", "q1", "Old", mockDate);
+      const doc = new Document("doc1", "Test", [], [answer], mockDate);
+      const originalUpdatedAt = doc.updatedAt;
+
+      doc.updateAnswerContent("a1", "New");
+
+      expect(answer.content).toBe("New");
+      expect(doc.updatedAt.getTime()).toBeGreaterThanOrEqual(originalUpdatedAt.getTime());
     });
 
     it("should get answer by question id", () => {
