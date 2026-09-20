@@ -2,6 +2,7 @@
 import type { Page, ElectronApplication } from "@playwright/test";
 import { test as base, expect } from "@playwright/test";
 import path, { join } from "path";
+import { rm } from "node:fs/promises";
 import type { ElectronAPI } from "../src/types/api";
 import type { DocumentDTO } from "../src/types/dto";
 import log from "electron-log";
@@ -16,10 +17,17 @@ export type ElectronWindow = Page & {
   evaluate: <T, R>(fn: (arg: T) => R, arg: T) => Promise<R>;
 };
 
-// Test Fixtures 类型
+// Test Fixtures 类型（test-scoped）
 export type TestFixtures = {
   electronApp: ElectronApplication;
   window: Page;
+};
+
+// Worker-scoped Fixtures 类型：持有按文件复用的实例池
+export type WorkerFixtures = {
+  _appInstancePool: {
+    acquire(file: string): Promise<ElectronApplication>;
+  };
 };
 
 // 用于类型安全的 window 访问
@@ -351,38 +359,63 @@ export async function deleteFirstQuestion(page: Page): Promise<void> {
 /**
  * 创建带 Electron App 和自动清理功能的 test 对象
  * 使用方式: import { test } from './utils'
+ *
+ * 文件级实例隔离（参考 playground 经验）：
+ * 每个测试文件使用独立的数据目录 temp/e2e/{worker}-{seq}，文件内复用同一实例，
+ * 切换文件时关闭旧实例并删除其数据目录，因此无需清理 e2e 数据。
+ * 多 worker 下每个 worker 各自持有一组实例，实现并发。
  */
-export const test = base.extend<TestFixtures>({
-  // Electron App fixture - 每个测试前启动，测试后关闭
-  electronApp: [
-    async ({}, use) => {
-      const projectRoot = process.cwd();
+export const test = base.extend<TestFixtures, WorkerFixtures>({
+  // worker 级实例池：按文件持有当前实例，切文件时关旧起新
+  _appInstancePool: [
+    async ({}, use, workerInfo) => {
+      // 用对象包一层，避免闭包内赋值被 TS 窄化为 never（参考经验第五节）
+      const state: { current: { file: string; app: ElectronApplication; dataDir: string } | null } =
+        { current: null };
+      let seq = 0;
+
       const { _electron: electron } = await import("@playwright/test");
 
-      const electronApp = await electron.launch({
-        args: [join(projectRoot, "out/main/index.js")],
-        cwd: projectRoot,
-        env: { ...process.env, E2E: "1" },
-      });
+      async function acquireInstance(file: string): Promise<ElectronApplication> {
+        if (state.current?.file === file) {
+          return state.current.app;
+        }
+        if (state.current) {
+          await state.current.app.close();
+          await rm(state.current.dataDir, { recursive: true, force: true });
+        }
 
-      // 提供给测试使用
-      await use(electronApp);
-
-      // 测试结束后清理 e2e 数据
-      try {
-        const window = await electronApp.firstWindow();
-        await window.waitForLoadState("domcontentloaded");
-        await window.waitForSelector(".document-list", { timeout: 2000 });
-        await cleanupE2ETags(window);
-        await cleanupE2EDocuments(window);
-      } catch (e) {
-        log.error(`[E2E CLEANUP-ERROR]: ${e}`);
+        // 目录名与 E2E_INSTANCE 必须一致，否则删除时对不上真实数据目录
+        const instanceName = `w${workerInfo.workerIndex}-${seq++}`;
+        const dataDir = join(process.cwd(), "temp", "e2e", instanceName);
+        const electronApp = await electron.launch({
+          args: [join(process.cwd(), "out/main/index.js")],
+          cwd: process.cwd(),
+          env: { ...process.env, E2E: "1", E2E_INSTANCE: instanceName },
+        });
+        state.current = { file, app: electronApp, dataDir };
+        return electronApp;
       }
 
-      // 关闭应用
-      await electronApp.close();
+      await use({ acquire: acquireInstance });
+
+      // worker teardown 兜底：关闭并删除当前实例的数据目录
+      if (state.current) {
+        await state.current.app.close().catch(() => {});
+        await rm(state.current.dataDir, { recursive: true, force: true }).catch(() => {});
+      }
     },
-    { auto: true },
+    { scope: "worker" },
+  ],
+
+  // Electron App fixture - 按测试文件获取实例，文件内复用
+  electronApp: [
+    async ({ _appInstancePool }, use, testInfo) => {
+      const electronApp = await _appInstancePool.acquire(testInfo.file);
+      await use(electronApp);
+    },
+    // 启动耗时不计入用例；同一文件所有用例共享该实例
+    { scope: "test", timeout: 30_000 },
   ],
 
   // Window fixture - 从 electronApp 获取主窗口

@@ -41,6 +41,13 @@ function getAppIconPath(): string {
   return path.join(__dirname, "../../", MAIN_WINDOW_ICON);
 }
 
+// e2e 环境（多 worker 并发多实例）：为每个实例隔离 Electron userData 目录，
+// 否则单实例锁按默认 userData 命中，后启动实例 quit、已有实例反复 createWindow → 窗口错乱。
+// 必须在 requestSingleInstanceLock() 之前调用才能影响锁的 key。
+if (IS_E2E && process.env.E2E_INSTANCE) {
+  app.setPath("userData", path.join(dataDirManager.getDbDir(), "_userData"));
+}
+
 // 请求单实例锁；第二个实例会触发 first-instance 的 second-instance 事件，
 // 由第一个实例新建窗口，实现单进程多窗口。
 const gotTheLock = app.requestSingleInstanceLock();
