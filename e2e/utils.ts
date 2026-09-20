@@ -132,6 +132,94 @@ export async function createDocumentWithAnswer(page: Page, title: string): Promi
 }
 
 /**
+ * 创建带自定义回答内容(可多行)的测试文档，用于正则搜索的固定 seed；
+ * 问题文本使用纯中文，避免数字/特殊符号干扰正则断言
+ * @param page Playwright Page 对象
+ * @param title 文档标题
+ * @param answerContent 回答内容（供正则 seed）
+ * @returns 创建的文档 ID
+ */
+export async function createDocumentWithAnswerContent(
+  page: Page,
+  title: string,
+  answerContent: string,
+): Promise<string> {
+  const docId = crypto.randomUUID();
+  const questionId = crypto.randomUUID();
+  const answerId = crypto.randomUUID();
+  const now = new Date().toISOString();
+
+  const document: DocumentDTO = {
+    id: docId,
+    title,
+    createdAt: now,
+    updatedAt: now,
+    questions: [
+      {
+        id: questionId,
+        text: "正则测试题目",
+        order: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
+    answers: [
+      {
+        id: answerId,
+        questionId: questionId,
+        content: answerContent,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
+    tags: [],
+  };
+
+  await page.evaluate(async (doc: DocumentDTO) => {
+    const win = window as unknown as WindowWithElectronAPI;
+    const { id, title, createdAt, updatedAt, questions, answers } = doc;
+
+    await win.electronAPI.document.saveDocument({
+      id,
+      title,
+      createdAt,
+      updatedAt,
+    });
+
+    if (questions.length > 0) {
+      await win.electronAPI.question.saveAllQuestions(
+        id,
+        questions.map((q) => ({
+          id: q.id,
+          text: q.text,
+          order: q.order,
+          createdAt: q.createdAt,
+          updatedAt: q.updatedAt,
+          isDeleted: q.isDeleted === 1,
+          deletedAt: q.deletedAt,
+        })),
+      );
+    }
+
+    if (answers.length > 0) {
+      await win.electronAPI.answer.saveAllAnswers(
+        id,
+        answers.map((a) => ({
+          id: a.id,
+          questionId: a.questionId,
+          content: a.content,
+          createdAt: a.createdAt,
+          updatedAt: a.updatedAt,
+        })),
+      );
+    }
+  }, document);
+
+  await page.reload();
+  return docId;
+}
+
+/**
  * 清理所有 e2e 开头的标签
  * @param page Playwright Page 对象
  */
