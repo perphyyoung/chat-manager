@@ -551,10 +551,17 @@ export class SearchService {
         default:
           continue;
       }
-      const records = this.db.prepare(sql).all(...ids) as {
-        id: string;
-        text: string;
-      }[];
+      let records: { id: string; text: string }[];
+      try {
+        records = this.db.prepare(sql).all(...ids) as { id: string; text: string }[];
+      } catch (err) {
+        // 业务表不存在（如单测仅建 search_fts）时跳过该 type，
+        // groupByType 会回退到 row.content，功能不中断
+        console.warn(
+          `[search] fetchOriginalContents failed for type=${type}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        continue;
+      }
       for (const r of records) {
         map.set(`${type}:${r.id}`, r.text);
       }
