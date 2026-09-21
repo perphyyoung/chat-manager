@@ -149,10 +149,13 @@ function closeContextMenu() {
   display: flex;
   justify-content: flex-start;
   margin-right: auto;
-  max-width: 85%;
+  max-width: 100%;
 }
 
+/* min-width:0 允许 flex 子项收缩，防止宽表格的 min-content 撑破气泡上限 */
 .answer-bubble__content {
+  min-width: 0;
+  max-width: 100%;
   padding: 12px 16px;
   background-color: var(--color-surface);
   color: var(--color-text);

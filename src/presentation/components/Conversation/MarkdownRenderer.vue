@@ -252,8 +252,12 @@ const onContentClick = async (e: MouseEvent) => {
   margin: 12px 0;
 }
 
-/* 表格样式 */
+/* 表格样式
+ * display:block + overflow-x:auto：宽表格（多列长单元格）的 min-content 会向外传播撑破气泡，
+ * 块级化后超宽部分在表内横向滚动，不再入侵右侧面板 */
 .markdown-renderer :deep(table) {
+  display: block;
+  overflow-x: auto;
   border-collapse: collapse;
   width: 100%;
   margin: 8px 0;
