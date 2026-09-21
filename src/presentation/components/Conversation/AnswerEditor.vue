@@ -33,6 +33,7 @@ const {
 } = useCodeMirror({
   initialContent: props.content,
   showLineNumbers: true,
+  wordWrap: true, // 长文本换行默认启用，右键菜单仍可切换
   onContentChange: () => {
     // 内容变化时同步置空状态，用于禁用保存按钮
     isContentEmpty.value = !getContent().trim();
