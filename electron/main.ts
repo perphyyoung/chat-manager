@@ -1146,9 +1146,14 @@ app.whenReady().then(() => {
       });
   }
 
-  const shortcutRegistered = globalShortcut.register("Ctrl+,", openSettings);
-  if (!shortcutRegistered) {
-    log.error("Failed to register global shortcut Ctrl+,");
+  // E2E 多 worker 并发多实例时系统级快捷键必然争抢失败，测试也不需要全局快捷键，跳过注册
+  if (!IS_E2E) {
+    // 应用支持多开（不同数据目录共存），系统级快捷键只能被一个实例持有，
+    // 后启动实例注册失败属预期，降级为 warn 而非 error
+    const shortcutRegistered = globalShortcut.register("Ctrl+,", openSettings);
+    if (!shortcutRegistered) {
+      log.warn("Failed to register global shortcut Ctrl+, (多开时，可能已被其他实例占用，属正常)");
+    }
   }
 
   // Ctrl+F 打开搜索面板（已在渲染进程通过 keydown 处理）
