@@ -81,6 +81,17 @@ button.tag-badge {
   background-color: #c084fc;
 }
 
+/* 浅色主题（html 无 .dark）下底色为淡紫，白字不可读，改用深紫文字。
+ * 整段选择器包进 :global()：只包前缀会丢掉 .tag-badge 并污染 <html> 的全局文字色 */
+:global(html:not(.dark) .tag-badge) {
+  color: #4c1d95;
+}
+
+/* 选中态是实心紫底，白字对比度优于深紫字，两主题都保持白字；须排在上一规则之后才能覆盖 */
+:global(html:not(.dark) .tag-badge--active) {
+  color: #fff;
+}
+
 /* 计数徽章恒为蓝底白字，选中与否都不变色 */
 .tag-badge__count {
   flex-shrink: 0;
