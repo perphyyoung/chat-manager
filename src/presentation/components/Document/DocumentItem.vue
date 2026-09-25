@@ -77,7 +77,12 @@ function handleDrop(event: DragEvent) {
         </span>
       </div>
       <div v-if="document.tags?.length" class="document-item__tags">
-        <TagBadge v-for="tag in document.tags.slice(0, 2)" :key="tag.id" :name="tag.name" />
+        <TagBadge
+          v-for="tag in document.tags.slice(0, 2)"
+          :key="tag.id"
+          size="sm"
+          :name="tag.name"
+        />
         <span v-if="(document.tags.length || 0) > 2" class="document-item__more-tags">
           +{{ document.tags.length - 2 }}
         </span>
@@ -153,12 +158,19 @@ function handleDrop(event: DragEvent) {
 .document-item__tags {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   margin-top: 4px;
 }
 
+/* 更多标签徽章：与 paim 卡片标签行的 +n 一致（黑底琥珀字） */
 .document-item__more-tags {
-  font-size: 11px;
-  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  padding: 0 4px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fbbf24;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
 }
 </style>

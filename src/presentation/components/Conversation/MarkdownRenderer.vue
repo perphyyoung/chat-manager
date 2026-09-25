@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useDocumentStore } from "../../stores/document";
 import { parseMarkdown, highlightSearchText } from "../../utils/markdown";
+import TagBadge from "../common/TagBadge.vue";
 
 interface Props {
   content: string;
@@ -62,9 +63,7 @@ const onContentClick = async (e: MouseEvent) => {
       >
         <span class="markdown-renderer__frontmatter-key">{{ item.key }}</span>
         <span v-if="item.isArray" class="markdown-renderer__frontmatter-tags">
-          <span v-for="tag in item.items" :key="tag" class="markdown-renderer__frontmatter-tag">{{
-            tag
-          }}</span>
+          <TagBadge v-for="tag in item.items" :key="tag" :name="tag" />
         </span>
         <span v-else class="markdown-renderer__frontmatter-value">{{ item.items[0] }}</span>
       </div>
@@ -110,15 +109,6 @@ const onContentClick = async (e: MouseEvent) => {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-}
-
-.markdown-renderer__frontmatter-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  background: var(--color-border);
-  border-radius: 4px;
-  font-size: 12px;
-  color: var(--color-text);
 }
 
 /* Markdown 渲染样式 */

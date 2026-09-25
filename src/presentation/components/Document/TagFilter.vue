@@ -4,6 +4,7 @@ import { useDocumentStore } from "../../stores/document";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
 import ContextMenu, { type MenuItem } from "../common/ContextMenu.vue";
 import DropdownMenu from "../common/DropdownMenu.vue";
+import TagBadge from "../common/TagBadge.vue";
 
 const documentStore = useDocumentStore();
 const showToast = inject("showToast") as (message: string) => void;
@@ -349,21 +350,17 @@ function cancelDeleteTag() {
     </Teleport>
 
     <div v-if="!isCollapsed" class="tag-filter__list">
-      <button
+      <TagBadge
         v-for="tag in sortedTags"
         :key="tag.id"
         class="tag-filter__item"
-        :class="{
-          'tag-filter__item--active': documentStore.selectedTagId === tag.id,
-        }"
+        :name="tag.name"
+        :count="documentStore.getTagDocumentCount(tag.id)"
+        :active="documentStore.selectedTagId === tag.id"
+        interactive
         @click="handleTagClick(tag.id)"
         @contextmenu="showContextMenu($event, tag.id, tag.name)"
-      >
-        <span class="tag-filter__name">{{ tag.name }}</span>
-        <span class="tag-filter__count" v-if="documentStore.getTagDocumentCount(tag.id) > 0">
-          {{ documentStore.getTagDocumentCount(tag.id) }}
-        </span>
-      </button>
+      />
     </div>
 
     <!-- 排序下拉菜单 -->
@@ -544,7 +541,12 @@ function cancelDeleteTag() {
 .tag-filter__list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
+}
+
+/* 超长标签名截断，避免单个标签撑破筛选区宽度 */
+.tag-filter__item :deep(.tag-badge__name) {
+  max-width: 120px;
 }
 
 .tag-filter__title-count {
@@ -552,60 +554,5 @@ function cancelDeleteTag() {
   font-weight: normal;
   font-size: 11px;
   margin-left: 2px;
-}
-
-.tag-filter__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  background-color: var(--color-primary-light, rgba(59, 130, 246, 0.1));
-  color: var(--color-primary, #3b82f6);
-  font-size: 12px;
-  border-radius: 4px;
-  border: 1px solid var(--color-primary-border, rgba(59, 130, 246, 0.2));
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tag-filter__item:hover {
-  opacity: 0.8;
-}
-
-.tag-filter__item--active {
-  background-color: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-.tag-filter__item--active:hover {
-  opacity: 0.9;
-}
-
-.tag-filter__name {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tag-filter__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 14px;
-  height: 14px;
-  padding: 0 3px;
-  background-color: var(--color-primary, #3b82f6);
-  color: white;
-  border-radius: 7px;
-  font-size: 9px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.tag-filter__item--active .tag-filter__count {
-  background-color: rgba(255, 255, 255, 0.9);
-  color: var(--color-primary, #3b82f6);
 }
 </style>

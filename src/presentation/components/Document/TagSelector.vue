@@ -190,14 +190,14 @@ async function createAndAddTag() {
           </div>
           <div v-if="hasAvailableTags" class="tag-selector__section">
             <div class="tag-selector__list">
-              <button
+              <TagBadge
                 v-for="tag in availableTags"
                 :key="tag.id"
                 class="tag-selector__option"
+                :name="tag.name"
+                interactive
                 @click="addTag(tag.id)"
-              >
-                {{ tag.name }}
-              </button>
+              />
             </div>
           </div>
 
@@ -268,7 +268,7 @@ async function createAndAddTag() {
 .tag-selector__current {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -356,23 +356,7 @@ async function createAndAddTag() {
 .tag-selector__list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tag-selector__option {
-  padding: 4px 10px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background-color: var(--color-background);
-  color: var(--color-text);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tag-selector__option:hover {
-  background-color: var(--color-hover);
-  border-color: var(--color-primary);
+  gap: 8px;
 }
 
 .tag-selector__empty {
