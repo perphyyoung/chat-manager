@@ -1,5 +1,6 @@
 import { defineConfig } from "electron-vite";
 import vue from "@vitejs/plugin-vue";
+import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import { fileURLToPath } from "node:url";
 
@@ -36,7 +37,8 @@ export default defineConfig({
   },
   renderer: {
     root: ".",
-    plugins: [vue()],
+    // Tailwind 只服务 FontSelect 一个组件（按需，preflight 未引入），不影响主/preload
+    plugins: [vue(), tailwindcss()],
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),

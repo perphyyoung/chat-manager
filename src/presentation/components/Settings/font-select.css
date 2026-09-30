@@ -1,0 +1,9 @@
+/*
+ * Tailwind 按需入口：仅服务 FontSelect 一个组件。
+ * 不引入 preflight（Tailwind 的基础样式重置），避免 margin/border/标题字号等重置污染现有界面；
+ * source(none) 关闭全项目自动扫描，只显式扫描 FontSelect.vue，产物只含该组件实际用到的工具类。
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "./FontSelect.vue";
