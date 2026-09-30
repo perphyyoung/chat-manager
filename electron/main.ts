@@ -86,27 +86,19 @@ ipcMain.handle("get-data-path", () => dataDirManager.getDbDir());
 
 ipcMain.handle("open-data-dir", () => shell.openPath(dataDirManager.getDbDir()));
 
-// 默认字体中文名映射：首次生成 font-family-map.toml 时写入，用户可自行维护
-const DEFAULT_FONT_FAMILY_MAP: Record<string, string> = {
-  "Microsoft YaHei": "微软雅黑",
-  "Microsoft YaHei UI": "微软雅黑 UI",
-  "PingFang SC": "苹方",
-  "Hiragino Sans GB": "冬青黑体",
-  "Noto Sans SC": "思源黑体",
-  "Noto Serif SC": "思源宋体",
-  "Source Han Sans SC": "思源黑体",
-  "Source Han Serif SC": "思源宋体",
-  SimSun: "宋体",
-  NSimSun: "新宋体",
-  SimHei: "黑体",
-  KaiTi: "楷体",
-  FangSong: "仿宋",
-  DengXian: "等线",
-  "Sarasa Mono SC": "更纱黑体",
-  "Sarasa UI SC": "更纱黑体",
-  "Sarasa Term SC": "更纱黑体",
-  "Sarasa Gothic SC": "更纱黑体",
-};
+// 默认字体中文名映射模板：文件不存在时原样复制到数据目录，其他项目复用只需复制该模板
+// public 目录由 vite 原样拷贝到 out/renderer；三种运行位置都要兼容：
+// 打包后（getAppPath 为 asar 根）、e2e（getAppPath 为 out/main，isPackaged 仍为 false）、dev（项目根）
+function getFontFamilyMapTemplatePath(): string {
+  const appPath = app.getAppPath();
+  const candidates = app.isPackaged
+    ? [path.join(appPath, "out", "renderer", "font-family-map-template.toml")]
+    : [
+        path.join(appPath, "..", "renderer", "font-family-map-template.toml"),
+        path.join(appPath, "public", "font-family-map-template.toml"),
+      ];
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? candidates[0];
+}
 
 // 逐行解析字体映射 toml：注释、空行与不规范行直接跳过，单个坏行不影响其余行
 function parseFontFamilyMap(content: string): Record<string, string> {
@@ -129,29 +121,22 @@ function parseFontFamilyMap(content: string): Record<string, string> {
   return map;
 }
 
-// 读取字体中文名映射：文件不存在时写入默认模板；读取失败时回退默认映射
+// 读取字体中文名映射：文件不存在时从随程序分发的模板复制；读取失败回退模板内容
 ipcMain.handle("read-font-family-map", () => {
   const filePath = path.join(dataDirManager.getDbDir(), "font-family-map.toml");
   try {
     if (!fs.existsSync(filePath)) {
-      const lines = Object.entries(DEFAULT_FONT_FAMILY_MAP).map(
-        ([key, value]) => `"${key}" = "${value}"`,
-      );
-      fs.writeFileSync(
-        filePath,
-        [
-          "# 字体英文 family → 中文显示名映射",
-          '# 每行一个映射，语法："英文族名" = "中文名"',
-          "# 不规范的行会被跳过，不影响其他行",
-          ...lines,
-          "",
-        ].join("\n"),
-      );
+      fs.copyFileSync(getFontFamilyMapTemplatePath(), filePath);
     }
     return parseFontFamilyMap(fs.readFileSync(filePath, "utf8"));
   } catch (error) {
     log.error(`read font-family-map failed: ${String(error)}`);
-    return { ...DEFAULT_FONT_FAMILY_MAP };
+    try {
+      return parseFontFamilyMap(fs.readFileSync(getFontFamilyMapTemplatePath(), "utf8"));
+    } catch (templateError) {
+      log.error(`read font-family-map template failed: ${String(templateError)}`);
+      return {};
+    }
   }
 });
 
