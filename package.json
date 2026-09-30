@@ -81,8 +81,7 @@
       "output": "release"
     },
     "files": [
-      "out/**/*",
-      ".markdownlint.jsonc"
+      "out/**/*"
     ],
     "icon": "public/favicon.ico",
     "extraResources": [

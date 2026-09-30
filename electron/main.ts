@@ -76,7 +76,7 @@ ipcMain.handle("render-log", (_, level: string, message: string) => {
 // 版本信息 IPC handler（仅应用版本号）
 ipcMain.handle("get-version", () => app.getVersion());
 
-// markdown 格式化 IPC：按 .markdownlint.jsonc 规则 fix 回答内容
+// markdown 格式化 IPC：按 public/markdownlint.jsonc 规则 fix 回答内容
 ipcMain.handle("answer:formatMarkdown", async (_event, content: string) => {
   return formatMarkdown(content);
 });
