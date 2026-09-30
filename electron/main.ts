@@ -20,6 +20,7 @@ import type { DocumentInput, QuestionInput, AnswerInput, DocumentDTO } from "../
 import { exportData, importData } from "./importExport";
 import { dataDirManager } from "./DataDirManager";
 import { formatMarkdown } from "./formatMarkdown";
+import { resolvePublicResource } from "./resourcePaths";
 
 // 初始化数据目录（确保 py-data 目录存在）
 dataDirManager.init();
@@ -86,20 +87,6 @@ ipcMain.handle("get-data-path", () => dataDirManager.getDbDir());
 
 ipcMain.handle("open-data-dir", () => shell.openPath(dataDirManager.getDbDir()));
 
-// 默认字体中文名映射模板：文件不存在时原样复制到数据目录，其他项目复用只需复制该模板
-// public 目录由 vite 原样拷贝到 out/renderer；三种运行位置都要兼容：
-// 打包后（getAppPath 为 asar 根）、e2e（getAppPath 为 out/main，isPackaged 仍为 false）、dev（项目根）
-function getFontFamilyMapTemplatePath(): string {
-  const appPath = app.getAppPath();
-  const candidates = app.isPackaged
-    ? [path.join(appPath, "out", "renderer", "font-family-map-template.toml")]
-    : [
-        path.join(appPath, "..", "renderer", "font-family-map-template.toml"),
-        path.join(appPath, "public", "font-family-map-template.toml"),
-      ];
-  return candidates.find((candidate) => fs.existsSync(candidate)) ?? candidates[0];
-}
-
 // 逐行解析字体映射 toml：注释、空行与不规范行直接跳过，单个坏行不影响其余行
 function parseFontFamilyMap(content: string): Record<string, string> {
   const map: Record<string, string> = {};
@@ -124,15 +111,16 @@ function parseFontFamilyMap(content: string): Record<string, string> {
 // 读取字体中文名映射：文件不存在时从随程序分发的模板复制；读取失败回退模板内容
 ipcMain.handle("read-font-family-map", () => {
   const filePath = path.join(dataDirManager.getDbDir(), "font-family-map.toml");
+  const templatePath = resolvePublicResource("font-family-map-template.toml");
   try {
     if (!fs.existsSync(filePath)) {
-      fs.copyFileSync(getFontFamilyMapTemplatePath(), filePath);
+      fs.copyFileSync(templatePath, filePath);
     }
     return parseFontFamilyMap(fs.readFileSync(filePath, "utf8"));
   } catch (error) {
     log.error(`read font-family-map failed: ${String(error)}`);
     try {
-      return parseFontFamilyMap(fs.readFileSync(getFontFamilyMapTemplatePath(), "utf8"));
+      return parseFontFamilyMap(fs.readFileSync(templatePath, "utf8"));
     } catch (templateError) {
       log.error(`read font-family-map template failed: ${String(templateError)}`);
       return {};
