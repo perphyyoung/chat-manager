@@ -24,16 +24,15 @@ const emit = defineEmits<Emits>();
 const documentStore = useDocumentStore();
 const settingsStore = useSettingsStore();
 
-// 正文按 14px 字号、1.6 行高排版；上下 padding 12px×2、边框 1px×2 一并计入截断高度
+// 正文按 14px 字号、1.6 行高排版，按设置行数直接换算截断高度
 const LINE_HEIGHT_PX = 14 * 1.6;
-const BOX_EXTRA_PX = 12 * 2 + 1 * 2;
 
 const contentRef = ref<HTMLElement | null>(null);
 const hasOverflow = ref(false);
 
 const maxLines = computed(() => settingsStore.answerMaxLines);
 const isExpanded = computed(() => documentStore.isAnswerExpanded(props.answerId));
-const maxHeightPx = computed(() => maxLines.value * LINE_HEIGHT_PX + BOX_EXTRA_PX);
+const maxHeightPx = computed(() => maxLines.value * LINE_HEIGHT_PX);
 const isClamped = computed(() => maxLines.value > 0 && !isExpanded.value);
 
 const clampStyle = computed(() => {
@@ -175,26 +174,37 @@ function closeContextMenu() {
 
 <template>
   <div class="answer-bubble">
-    <!-- 渲染模式：默认按设置行数截断，超出才给展开入口 -->
-    <div
-      v-if="!isEditing"
-      ref="contentRef"
-      class="answer-bubble__content"
-      :class="{ 'answer-bubble__content--clamped': isClamped }"
-      :style="clampStyle"
-      @contextmenu="handleContextMenu"
-    >
-      <MarkdownRenderer :content="content" />
+    <!-- 渲染模式：正文默认按设置行数截断，超出时在气泡四角提供展开/收起 -->
+    <div v-if="!isEditing" class="answer-bubble__content" @contextmenu="handleContextMenu">
+      <button
+        v-if="hasOverflow && isExpanded"
+        class="answer-bubble__toggle answer-bubble__toggle--top"
+        type="button"
+        aria-label="收起回答（右上角）"
+        aria-expanded="true"
+        @click="handleToggle"
+      >
+        收起
+      </button>
+      <div
+        ref="contentRef"
+        class="answer-bubble__body"
+        :class="{ 'answer-bubble__body--clamped': isClamped }"
+        :style="clampStyle"
+      >
+        <MarkdownRenderer :content="content" />
+      </div>
+      <button
+        v-if="hasOverflow"
+        class="answer-bubble__toggle answer-bubble__toggle--bottom"
+        type="button"
+        :aria-label="isExpanded ? '收起回答（右下角）' : '展开全文'"
+        :aria-expanded="isExpanded"
+        @click="handleToggle"
+      >
+        {{ isExpanded ? "收起" : "展开全文" }}
+      </button>
     </div>
-    <button
-      v-if="!isEditing && hasOverflow"
-      class="answer-bubble__toggle"
-      type="button"
-      :aria-expanded="isExpanded"
-      @click="handleToggle"
-    >
-      {{ isExpanded ? "收起" : "展开全文" }}
-    </button>
 
     <!-- 右键菜单 -->
     <ContextMenu
@@ -223,9 +233,7 @@ function closeContextMenu() {
  */
 .answer-bubble {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  justify-content: flex-start;
   margin-right: auto;
   max-width: 100%;
 }
@@ -233,6 +241,7 @@ function closeContextMenu() {
 /* min-width:0 允许 flex 子项收缩，防止宽表格的 min-content 撑破气泡上限 */
 .answer-bubble__content {
   box-sizing: border-box;
+  position: relative;
   min-width: 0;
   max-width: 100%;
   padding: 12px 16px;
@@ -245,19 +254,38 @@ function closeContextMenu() {
   word-wrap: break-word;
 }
 
-/* 截断态：高度由模板按设置行数计算，超出部分隐藏 */
-.answer-bubble__content--clamped {
+/* 正文容器：高度按设置行数截断，超出部分隐藏 */
+.answer-bubble__body {
+  min-width: 0;
+}
+
+.answer-bubble__body--clamped {
   overflow: hidden;
 }
 
-/* 展开/收起入口：弱化为文字操作 */
+/* 展开/收起入口：压在上下边框线上，不占布局行，展开/收起不引起正文跳变 */
 .answer-bubble__toggle {
-  padding: 2px 4px;
-  background: none;
+  position: absolute;
+  right: 14px;
+  z-index: 1;
+  padding: 0 6px;
+  background-color: var(--color-surface);
   border: none;
+  border-radius: 4px;
   color: var(--color-text-secondary);
   font-size: 12px;
+  line-height: 1.4;
   cursor: pointer;
+}
+
+.answer-bubble__toggle--top {
+  top: 0;
+  transform: translateY(-50%);
+}
+
+.answer-bubble__toggle--bottom {
+  bottom: 0;
+  transform: translateY(50%);
 }
 
 .answer-bubble__toggle:hover {
