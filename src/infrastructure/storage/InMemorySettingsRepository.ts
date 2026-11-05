@@ -2,6 +2,7 @@ import type { SettingsRepository, Settings } from "../../domain/repositories";
 
 const DEFAULT_SETTINGS: Settings = {
   darkMode: true,
+  answerMaxLines: 10,
 };
 
 export class InMemorySettingsRepository implements SettingsRepository {

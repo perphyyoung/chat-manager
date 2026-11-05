@@ -103,6 +103,25 @@ export const useDocumentStore = defineStore("document", () => {
   const highlightRegexMode = ref(false);
   let highlightTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // 已展开的回答（纯 UI 状态）：默认按设置行数截断，搜索命中时强制展开
+  const expandedAnswerIds = ref<Set<string>>(new Set());
+
+  function isAnswerExpanded(answerId: string): boolean {
+    return expandedAnswerIds.value.has(answerId);
+  }
+
+  function setAnswerExpanded(answerId: string, expanded: boolean): void {
+    if (expanded) {
+      expandedAnswerIds.value.add(answerId);
+    } else {
+      expandedAnswerIds.value.delete(answerId);
+    }
+  }
+
+  function toggleAnswerExpanded(answerId: string): void {
+    setAnswerExpanded(answerId, !isAnswerExpanded(answerId));
+  }
+
   // 从本地存储加载排序偏好
   const savedPreferences = loadSortPreferences();
 
@@ -188,6 +207,8 @@ export const useDocumentStore = defineStore("document", () => {
   async function selectDocument(id: string) {
     selectedDocumentId.value = id;
     activeQuestionId.value = null;
+    // 换文档后回答回到默认截断行数
+    expandedAnswerIds.value.clear();
     documentService.selectDocument(id).catch(() => {});
     loadDeletedQuestions().catch(() => {});
     const cached = detailCache.get(id);
@@ -337,6 +358,7 @@ export const useDocumentStore = defineStore("document", () => {
     // 先删除回答（如果存在）
     if (answer) {
       await answerService.deleteAnswer(docId, answer.id);
+      expandedAnswerIds.value.delete(answer.id);
     }
 
     // 再删除问题
@@ -718,6 +740,10 @@ export const useDocumentStore = defineStore("document", () => {
     highlightRegexMode,
     selectedDocument,
     selectedDocumentQuestions,
+    expandedAnswerIds,
+    isAnswerExpanded,
+    setAnswerExpanded,
+    toggleAnswerExpanded,
     documentSortField,
     documentSortOrder,
     questionSortField,

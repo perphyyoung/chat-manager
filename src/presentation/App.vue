@@ -76,6 +76,8 @@ async function handleSearchSelect(data: {
     case "answer":
       if (item.documentId && item.questionId) {
         await documentStore.selectDocument(item.documentId);
+        // 命中回答：强制展开目标回答，再滚动/高亮（避免只看到截断的前几行）
+        documentStore.setAnswerExpanded(item.id, true);
         await nextTick();
         documentStore.setActiveQuestion(item.questionId);
         scrollToQuestion(item.questionId, searchText, regexMode);

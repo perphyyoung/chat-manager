@@ -32,6 +32,26 @@ async function handleOpenDataDir() {
   await window.electronAPI.openDataDir();
 }
 
+// 回答行数输入：0 表示不限制；非法输入回显当前值，保存失败明确提示
+async function handleAnswerMaxLinesChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const raw = input.value.trim();
+  const parsed = Number(raw);
+  if (!raw || !Number.isFinite(parsed)) {
+    input.value = String(settingsStore.answerMaxLines);
+    return;
+  }
+  try {
+    await settingsStore.setAnswerMaxLines(parsed);
+  } catch (error) {
+    window.electronAPI.renderLog("error", `[SettingsModal] 保存回答行数失败: ${String(error)}`);
+    showToast?.("保存回答行数失败");
+  } finally {
+    // 回显归一化后的值（负数/超上限会被修正）
+    input.value = String(settingsStore.answerMaxLines);
+  }
+}
+
 // 所有文档的问题序号从 1 起强制重排（迁移存量 0 起数据）；无变更时不提示改动
 async function handleReorderAllQuestions() {
   try {
@@ -85,6 +105,21 @@ async function handleReorderAllQuestions() {
             mono-only
             :model-value="settingsStore.monoFontFamily"
             @update:model-value="settingsStore.setMonoFontFamily"
+          />
+        </div>
+        <div class="setting-item">
+          <div class="font-info">
+            <span class="font-label">回答默认显示行数</span>
+            <span class="font-desc">超出后显示「展开全文」，0 表示不限制</span>
+          </div>
+          <input
+            class="line-input"
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            :value="settingsStore.answerMaxLines"
+            @change="handleAnswerMaxLinesChange"
           />
         </div>
         <div class="setting-item">
@@ -205,6 +240,18 @@ async function handleReorderAllQuestions() {
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+}
+
+.line-input {
+  width: 72px;
+  padding: 6px 8px;
+  font-size: 13px;
+  text-align: center;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  flex-shrink: 0;
 }
 
 .dir-label {

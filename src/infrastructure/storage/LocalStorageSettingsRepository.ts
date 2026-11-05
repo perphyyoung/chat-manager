@@ -4,6 +4,7 @@ const STORAGE_KEY = "chat-manager-settings";
 
 const DEFAULT_SETTINGS: Settings = {
   darkMode: true,
+  answerMaxLines: 10,
 };
 
 export class LocalStorageSettingsRepository implements SettingsRepository {
